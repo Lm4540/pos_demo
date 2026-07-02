@@ -119,13 +119,13 @@ const handleLogin = async (req, res) => {
 
     // Update custom column in Sessions table for revocation mapping
     try {
-      await sequelize.query('UPDATE Sessions SET userId = ? WHERE session_id = ?', {
+      await sequelize.query('UPDATE sessions SET userId = ? WHERE session_id = ?', {
         replacements: [user.id, req.sessionID]
       });
     } catch (e) {
       // If Sequelize connection is in index we can get it
       const { sequelize } = require('../../core/models');
-      await sequelize.query('UPDATE Sessions SET userId = ? WHERE session_id = ?', {
+      await sequelize.query('UPDATE sessions SET userId = ? WHERE session_id = ?', {
         replacements: [user.id, req.sessionID]
       });
     }
@@ -306,7 +306,7 @@ const verifyLogin = async (req, res) => {
 
       // Update Session DB column
       const { sequelize } = require('../../core/models');
-      await sequelize.query('UPDATE Sessions SET userId = ? WHERE session_id = ?', {
+      await sequelize.query('UPDATE sessions SET userId = ? WHERE session_id = ?', {
         replacements: [user.id, req.sessionID]
       });
 
