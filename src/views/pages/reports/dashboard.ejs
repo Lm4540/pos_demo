@@ -1,0 +1,335 @@
+<%- include('../../partials/head', { title: 'Reporte Financiero' }) %>
+
+<div class="min-h-screen bg-neutral-950 flex flex-col">
+  <!-- Nav Bar -->
+  <nav class="bg-neutral-900 border-b border-neutral-800 px-6 py-4 flex items-center justify-between shadow-md">
+    <div class="flex items-center gap-3">
+      <a href="/dashboard" class="text-neutral-400 hover:text-white transition-colors">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+      </a>
+      <div>
+        <span class="text-xl font-bold text-white tracking-wide">Reportes y Estadísticas</span>
+        <span class="text-xs block text-neutral-400 font-medium">Análisis de ventas, costos, gastos y ganancias de: <strong class="text-blue-400"><%= branchName %></strong></span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <a href="/reports/stock" class="bg-neutral-800 hover:bg-neutral-750 border border-neutral-750 text-neutral-200 px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5">
+        <svg class="h-4 w-4 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+        </svg>
+        <span>Stock Completo</span>
+      </a>
+      <a href="/reports/pdf?startDate=<%= startDate %>&endDate=<%= endDate %>&branchId=<%= selectedBranchId %>" class="bg-blue-600 hover:bg-blue-500 px-4 py-2.5 rounded-xl text-xs font-bold text-white transition-all shadow-md shadow-blue-500/10 flex items-center gap-1.5 cursor-pointer">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+        </svg>
+        <span>Exportar PDF</span>
+      </a>
+    </div>
+  </nav>
+
+  <main class="flex-grow p-6 max-w-7xl w-full mx-auto space-y-8">
+    
+    <!-- Filtros de Fecha y Sucursal -->
+    <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm">
+      <form method="GET" action="/reports" class="flex flex-col md:flex-row md:items-end gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 flex-grow">
+          <div>
+            <label for="startDate" class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Fecha de Inicio</label>
+            <input type="date" id="startDate" name="startDate" value="<%= startDate %>" class="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-2.5 text-white text-sm focus:border-blue-500 focus:outline-none transition-all">
+          </div>
+          <div>
+            <label for="endDate" class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Fecha de Fin</label>
+            <input type="date" id="endDate" name="endDate" value="<%= endDate %>" class="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-2.5 text-white text-sm focus:border-blue-500 focus:outline-none transition-all">
+          </div>
+        </div>
+
+        <% if (user.roleId === 'admin') { %>
+          <div class="w-full md:w-64">
+            <label for="branchId" class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Sucursal</label>
+            <select id="branchId" name="branchId" class="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-2.5 text-white text-sm focus:border-blue-500 focus:outline-none transition-all">
+              <option value="all" <%= selectedBranchId === 'all' ? 'selected' : '' %>>Todas las sucursales</option>
+              <% branches.forEach(b => { %>
+                <option value="<%= b.id %>" <%= parseInt(selectedBranchId, 10) === b.id ? 'selected' : '' %>><%= b.name %></option>
+              <% }) %>
+            </select>
+          </div>
+        <% } %>
+
+        <button type="submit" class="w-full md:w-auto bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-sm px-6 py-3 transition-all cursor-pointer shadow-md shadow-blue-500/10">
+          Aplicar Filtros
+        </button>
+      </form>
+    </div>
+
+    <!-- KPIs Financieros -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <!-- Ventas -->
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+        <div>
+          <span class="text-xs font-bold text-neutral-500 uppercase tracking-wider block">Ingresos por Ventas</span>
+          <span class="text-3xl font-extrabold text-white mt-2 block font-mono">$<%= totalSales.toFixed(2) %></span>
+        </div>
+        <div class="mt-4 pt-3 border-t border-neutral-800 flex justify-between text-xs text-neutral-400">
+          <span>Contado: <strong class="text-white">$<%= cashSales.toFixed(2) %></strong></span>
+          <span>Crédito: <strong class="text-white">$<%= creditSales.toFixed(2) %></strong></span>
+        </div>
+      </div>
+
+      <!-- COGS -->
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+        <div>
+          <span class="text-xs font-bold text-neutral-500 uppercase tracking-wider block">Costo de Ventas (COGS)</span>
+          <span class="text-3xl font-extrabold text-blue-400 mt-2 block font-mono">$<%= totalCogs.toFixed(2) %></span>
+        </div>
+        <p class="text-[10px] text-neutral-500 mt-2">Inversión en los productos que fueron vendidos.</p>
+      </div>
+
+      <!-- Gastos -->
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+        <div>
+          <span class="text-xs font-bold text-neutral-500 uppercase tracking-wider block">Gastos Generales</span>
+          <span class="text-3xl font-extrabold text-red-400 mt-2 block font-mono">$<%= totalExpenses.toFixed(2) %></span>
+        </div>
+        <p class="text-[10px] text-neutral-500 mt-2">Salidas de dinero de caja chica por servicios, etc.</p>
+      </div>
+
+      <!-- Utilidad Bruta -->
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+        <div>
+          <span class="text-xs font-bold text-neutral-500 uppercase tracking-wider block">Ganancia del Periodo</span>
+          <span class="text-3xl font-extrabold mt-2 block font-mono <%= grossProfit >= 0 ? 'text-emerald-400' : 'text-red-500' %>">
+            $<%= grossProfit.toFixed(2) %>
+          </span>
+        </div>
+        <p class="text-[10px] text-neutral-500 mt-2">Fórmula: Ingresos - Costo Ventas - Gastos.</p>
+      </div>
+    </div>
+
+    <!-- Estadísticas de volumen -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="bg-neutral-900 border border-neutral-800 rounded-xl p-4 flex items-center justify-between">
+        <span class="text-xs font-semibold text-neutral-400 uppercase">Cantidad de Tickets</span>
+        <span class="text-xl font-bold text-white font-mono"><%= salesCount %></span>
+      </div>
+      <div class="bg-neutral-900 border border-neutral-800 rounded-xl p-4 flex items-center justify-between">
+        <span class="text-xs font-semibold text-neutral-400 uppercase">Cantidad de Compras</span>
+        <span class="text-xl font-bold text-white font-mono"><%= purchasesCount %></span>
+      </div>
+      <div class="bg-neutral-900 border border-neutral-800 rounded-xl p-4 flex items-center justify-between">
+        <span class="text-xs font-semibold text-neutral-400 uppercase">Cantidad de Gastos</span>
+        <span class="text-xl font-bold text-white font-mono"><%= expensesCount %></span>
+      </div>
+    </div>
+
+    <!-- Detalle / Transacciones Recientes del Periodo -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      
+      <!-- Ventas Recientes -->
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm space-y-4">
+        <h3 class="text-md font-bold text-white">Ventas Recientes (Periodo)</h3>
+        <% if (recentSales.length === 0) { %>
+          <p class="text-xs text-neutral-500 py-8 text-center">No se registran ventas en este periodo.</p>
+        <% } else { %>
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-left text-xs text-neutral-300">
+              <thead>
+                <tr class="text-neutral-500 font-semibold uppercase tracking-wider border-b border-neutral-800 pb-2">
+                  <th class="py-2">Ticket No.</th>
+                  <th class="py-2">Método</th>
+                  <th class="py-2 text-right">Total</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-neutral-800">
+                <% recentSales.forEach(s => { %>
+                  <tr>
+                    <td class="py-3 font-mono font-bold text-white"><%= s.ticketNumber %></td>
+                    <td class="py-3 capitalize">
+                      <% if (s.paymentMethod === 'cash') { %>
+                        <span class="text-emerald-400">Contado</span>
+                      <% } else { %>
+                        <span class="text-amber-500">Crédito</span>
+                      <% } %>
+                    </td>
+                    <td class="py-3 text-right font-mono font-semibold text-white">$<%= parseFloat(s.totalAmount).toFixed(2) %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+
+      <!-- Gastos Recientes -->
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm space-y-4">
+        <h3 class="text-md font-bold text-white">Gastos Recientes (Periodo)</h3>
+        <% if (recentExpenses.length === 0) { %>
+          <p class="text-xs text-neutral-500 py-8 text-center">No se registran gastos en este periodo.</p>
+        <% } else { %>
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-left text-xs text-neutral-300">
+              <thead>
+                <tr class="text-neutral-500 font-semibold uppercase tracking-wider border-b border-neutral-800 pb-2">
+                  <th class="py-2">Fecha</th>
+                  <th class="py-2">Descripción</th>
+                  <th class="py-2 text-right">Monto</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-neutral-800">
+                <% recentExpenses.forEach(e => { %>
+                  <tr>
+                    <td class="py-3 font-mono text-neutral-400"><%= e.expenseDate %></td>
+                    <td class="py-3 text-neutral-200 truncate max-w-[150px]"><%= e.description %></td>
+                    <td class="py-3 text-right font-mono font-semibold text-red-400">$<%= parseFloat(e.amount).toFixed(2) %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Rotación de Productos y Evolución de Ventas -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      
+      <!-- Top Sellers -->
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm space-y-4">
+        <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+          <h3 class="text-md font-bold text-white">Productos Más Vendidos (Top Sellers)</h3>
+          <span class="text-[10px] bg-blue-950 text-blue-400 font-bold uppercase px-2 py-0.5 rounded border border-blue-900">Rotación de Inventario</span>
+        </div>
+        <% if (topSellers.length === 0) { %>
+          <p class="text-xs text-neutral-500 py-8 text-center">No hay datos de productos vendidos en este periodo.</p>
+        <% } else { %>
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-left text-xs text-neutral-300">
+              <thead>
+                <tr class="text-neutral-500 font-semibold uppercase tracking-wider border-b border-neutral-800 pb-2 text-[10px]">
+                  <th class="py-2">Producto</th>
+                  <th class="py-2">Cód. Barras</th>
+                  <th class="py-2 text-center">Cant. Vendida</th>
+                  <th class="py-2 text-right">Total Ingresos</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-neutral-800">
+                <% topSellers.forEach(ts => { %>
+                  <tr class="hover:bg-neutral-950/25">
+                    <td class="py-3 font-bold text-white"><%= ts.name %></td>
+                    <td class="py-3 font-mono text-neutral-500"><%= ts.barCode || 'N/A' %></td>
+                    <td class="py-3 text-center font-mono font-bold text-neutral-200"><%= ts.totalQty %></td>
+                    <td class="py-3 text-right font-mono font-semibold text-emerald-400">$<%= parseFloat(ts.totalRevenue).toFixed(2) %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+
+      <!-- Evolución de Ingresos Diarios -->
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm space-y-4">
+        <h3 class="text-md font-bold text-white">Tendencia de Ingresos Diarios</h3>
+        <% if (dailyTrend.length === 0) { %>
+          <p class="text-xs text-neutral-500 py-8 text-center">No se registran transacciones diarias en este periodo.</p>
+        <% } else { %>
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-left text-xs text-neutral-300">
+              <thead>
+                <tr class="text-neutral-500 font-semibold uppercase tracking-wider border-b border-neutral-800 pb-2 text-[10px]">
+                  <th class="py-2">Fecha</th>
+                  <th class="py-2 text-right">Total Facturado por Día</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-neutral-800">
+                <% dailyTrend.forEach(dt => { %>
+                  <tr class="hover:bg-neutral-950/25">
+                    <td class="py-3 font-mono text-neutral-400"><%= new Date(dt.dateStr).toLocaleDateString('es-SV') %></td>
+                    <td class="py-3 text-right font-mono font-bold text-white">$<%= parseFloat(dt.total).toFixed(2) %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Módulo de Cuentas por Cobrar (CxC) en Reportes -->
+    <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-neutral-800 pb-4 gap-4">
+        <div>
+          <h3 class="text-md font-bold text-white">Estado General de Cuentas por Cobrar (Créditos)</h3>
+          <p class="text-xs text-neutral-500 mt-0.5">Control de saldos activos y antigüedad de saldos en cartera</p>
+        </div>
+        <div class="flex gap-4">
+          <div class="bg-neutral-950 border border-neutral-850 px-4 py-2 rounded-xl text-center">
+            <span class="block text-[9px] font-bold text-neutral-500 uppercase tracking-wider">Crédito Vigente</span>
+            <span class="text-sm font-bold text-white font-mono">$<%= totalVigente.toFixed(2) %></span>
+          </div>
+          <div class="bg-neutral-950 border border-neutral-850 px-4 py-2 rounded-xl text-center">
+            <span class="block text-[9px] font-bold text-neutral-500 uppercase tracking-wider">Crédito Vencido</span>
+            <span class="text-sm font-bold <%= totalOverdue > 0 ? 'text-red-400 animate-pulse' : 'text-neutral-400' %> font-mono">$<%= totalOverdue.toFixed(2) %></span>
+          </div>
+          <div class="bg-neutral-950 border border-neutral-850 px-4 py-2 rounded-xl text-center">
+            <span class="block text-[9px] font-bold text-neutral-500 uppercase tracking-wider font-bold">Total Cartera</span>
+            <span class="text-sm font-bold text-blue-400 font-mono">$<%= totalCreditBalance.toFixed(2) %></span>
+          </div>
+        </div>
+      </div>
+
+      <% if (clientsWithDebtAlerts.length === 0) { %>
+        <p class="text-xs text-neutral-500 py-6 text-center">No hay clientes con saldos deudores pendientes en el sistema para esta sucursal.</p>
+      <% } else { %>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-neutral-800 text-left text-xs text-neutral-300">
+            <thead>
+              <tr class="text-neutral-500 font-semibold uppercase tracking-wider text-[10px] border-b border-neutral-800 pb-2">
+                <th class="py-2.5 px-3">Cliente</th>
+                <th class="py-2.5 px-3">Teléfono</th>
+                <th class="py-2.5 px-3">Sucursal Asignada</th>
+                <th class="py-2.5 px-3 text-center">Plazo Límite</th>
+                <th class="py-2.5 px-3 text-right">Límite Aprobado</th>
+                <th class="py-2.5 px-3 text-center">Venta Más Antigua</th>
+                <th class="py-2.5 px-3 text-right">Saldo Pendiente</th>
+                <th class="py-2.5 px-3 text-right">Estado Alerta</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-neutral-800">
+              <% clientsWithDebtAlerts.forEach(c => { %>
+                <tr class="hover:bg-neutral-950/25">
+                  <td class="py-3 px-3 font-bold text-white"><%= c.name %></td>
+                  <td class="py-3 px-3 font-mono text-neutral-400"><%= c.phone || 'N/A' %></td>
+                  <td class="py-3 px-3 text-neutral-450"><%= c.branchName %></td>
+                  <td class="py-3 px-3 text-center text-neutral-300"><%= c.creditDays %> días</td>
+                  <td class="py-3 px-3 text-right font-mono text-neutral-400">$<%= parseFloat(c.creditLimit).toFixed(2) %></td>
+                  <td class="py-3 px-3 text-center font-mono text-neutral-500">
+                    <%= c.oldestSaleDate ? new Date(c.oldestSaleDate).toLocaleDateString('es-SV') : 'N/A' %>
+                  </td>
+                  <td class="py-3 px-3 text-right font-mono font-bold text-neutral-200">$<%= parseFloat(c.currentBalance).toFixed(2) %></td>
+                  <td class="py-3 px-3 text-right">
+                    <% if (c.isOverdue) { %>
+                      <span class="px-2 py-0.5 text-[9px] font-bold uppercase rounded bg-red-950/60 text-red-400 border border-red-900/60">
+                        ⚠️ Mora: <%= c.overdueDays %> días
+                      </span>
+                    <% } else { %>
+                      <span class="px-2 py-0.5 text-[9px] font-bold uppercase rounded bg-emerald-950/60 text-emerald-400 border border-emerald-900/60">
+                        Al Corriente
+                      </span>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+
+  </main>
+</div>
+
+<%- include('../../partials/foot') %>

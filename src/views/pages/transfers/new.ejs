@@ -1,0 +1,289 @@
+<%- include('../../partials/head', { title: 'Nuevo Traslado de Stock' }) %>
+
+<div class="min-h-screen bg-neutral-950 flex flex-col">
+  <!-- Nav Bar -->
+  <nav class="bg-neutral-900 border-b border-neutral-800 px-6 py-4 flex items-center justify-between shadow-md">
+    <div class="flex items-center gap-3">
+      <a href="/transfers" class="text-neutral-400 hover:text-white transition-colors">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+      </a>
+      <div>
+        <span class="text-xl font-bold text-white tracking-wide">Nuevo Traslado de Inventario</span>
+        <span class="text-xs block text-neutral-400 font-medium">Origen: <strong class="text-blue-400"><%= user.branch ? user.branch.name : 'N/A' %></strong></span>
+      </div>
+    </div>
+  </nav>
+
+  <main class="flex-grow p-6 max-w-7xl w-full mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Left Column: Add Product & Destination (1/3) -->
+    <div class="space-y-6">
+      <!-- Destination Form -->
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm">
+        <h2 class="text-lg font-bold text-white mb-4">Destino del Traslado</h2>
+        
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Sucursal Destinataria *</label>
+            <select id="transfer-toBranchId" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+              <option value="">Selecciona sucursal destino...</option>
+              <% branches.forEach(b => { %>
+                <option value="<%= b.id %>"><%= b.name %></option>
+              <% }) %>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add Product Form -->
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm space-y-4">
+        <h2 class="text-base font-bold text-white">Agregar Producto a Trasladar</h2>
+        
+        <div>
+          <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Producto a trasladar *</label>
+          <select id="select-product" onchange="loadProductBatches()" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+            <option value="">Selecciona un producto con stock...</option>
+            <% branchProducts.forEach(bp => { %>
+              <option value="<%= bp.productId %>" data-name="<%= bp.product.name %>">
+                <%= bp.product.name %> (Disp: <%= bp.totalStock %> uds)
+              </option>
+            <% }) %>
+          </select>
+        </div>
+
+        <div id="batches-selection-container" class="hidden space-y-3">
+          <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider">Lotes Disponibles en tu Sucursal</label>
+          <select id="select-batch" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+            <!-- Populated via AJAX -->
+          </select>
+          
+          <div>
+            <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Cantidad a Trasladar *</label>
+            <input type="number" id="transfer-qty" min="1" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono" placeholder="Cantidad">
+          </div>
+
+          <button type="button" onclick="addProductToList()" class="w-full py-2.5 bg-neutral-800 hover:bg-neutral-750 border border-neutral-700 text-white font-semibold rounded-xl text-xs transition-all cursor-pointer text-center">
+            Agregar a la Lista
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Transfer Cart / Invoice Details (2/3) -->
+    <div class="lg:col-span-2 bg-neutral-900 border border-neutral-800 rounded-2xl p-6 flex flex-col justify-between shadow-sm">
+      <div>
+        <h2 class="text-lg font-bold text-white mb-4">Detalles del Documento de Traslado</h2>
+        
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-neutral-800 text-left text-sm text-neutral-300">
+            <thead>
+              <tr class="text-neutral-500 font-semibold uppercase tracking-wider text-xs">
+                <th class="py-2.5 px-3">Producto</th>
+                <th class="py-2.5 px-3">Lote Origen</th>
+                <th class="py-2.5 px-3">Costo Unit.</th>
+                <th class="py-2.5 px-3">Cant. Trasladada</th>
+                <th class="py-2.5 px-3">Subtotal Costo</th>
+                <th class="py-2.5 px-3 text-right">Acción</th>
+              </tr>
+            </thead>
+            <tbody id="transfer-items-tbody" class="divide-y divide-neutral-800">
+              <tr>
+                <td colspan="6" class="py-8 text-center text-neutral-500 text-xs">Aún no has agregado productos al traslado.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="border-t border-neutral-800 pt-6 mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <span class="text-xs text-neutral-500 font-semibold block uppercase">Costo Total del Envío</span>
+          <span id="transfer-total-cost" class="text-2xl font-black text-blue-400">$0.00</span>
+        </div>
+        
+        <button onclick="submitTransfer()" id="btn-submit-transfer" class="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-sm transition-all shadow-md shadow-blue-500/10 cursor-pointer">
+          Procesar Traslado
+        </button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  let transferItems = [];
+
+  async function loadProductBatches() {
+    const productId = document.getElementById('select-product').value;
+    const container = document.getElementById('batches-selection-container');
+    const batchSelect = document.getElementById('select-batch');
+
+    if (!productId) {
+      container.classList.add('hidden');
+      return;
+    }
+
+    try {
+      const resp = await fetch(`/products/${productId}/batches`);
+      if (!resp.ok) throw new Error('Error al consultar lotes.');
+      const batches = await resp.json();
+
+      if (batches.length === 0) {
+        batchSelect.innerHTML = '<option value="">Sin lotes con stock en esta sucursal</option>';
+      } else {
+        batchSelect.innerHTML = batches.map(b => {
+          const expText = b.expirationDate ? ` - Vence: ${new Date(b.expirationDate).toLocaleDateString('es-SV')}` : '';
+          return `<option value="${b.id}" data-code="${b.batchCode}" data-max="${b.currentQuantity}" data-cost="${b.unitCost}">Lote: ${b.batchCode} (Disp: ${b.currentQuantity} uds - Costo: $${parseFloat(b.unitCost).toFixed(2)})${expText}</option>`;
+        }).join('');
+      }
+      container.classList.remove('hidden');
+    } catch (err) {
+      console.error(err);
+      showToast('Error al cargar lotes.', 'error');
+    }
+  }
+
+  function addProductToList() {
+    const prodSelect = document.getElementById('select-product');
+    const batchSelect = document.getElementById('select-batch');
+    const qtyInput = document.getElementById('transfer-qty');
+
+    const productId = prodSelect.value;
+    const productName = prodSelect.options[prodSelect.selectedIndex].dataset.name;
+    const batchId = batchSelect.value;
+    
+    if (!productId || !batchId) {
+      showToast('Seleccione un producto y un lote válido.', 'warning');
+      return;
+    }
+
+    const selectedBatchOpt = batchSelect.options[batchSelect.selectedIndex];
+    const batchCode = selectedBatchOpt.dataset.code;
+    const maxQty = parseInt(selectedBatchOpt.dataset.max, 10);
+    const cost = parseFloat(selectedBatchOpt.dataset.cost);
+    const qty = parseInt(qtyInput.value, 10);
+
+    if (isNaN(qty) || qty <= 0) {
+      showToast('Ingrese una cantidad válida mayor a cero.', 'warning');
+      return;
+    }
+
+    if (qty > maxQty) {
+      showToast(`Cantidad supera la existencia en el lote (${maxQty} uds disponibles).`, 'error');
+      return;
+    }
+
+    // Check if batch is already in the list
+    const existing = transferItems.find(item => item.batchId == batchId);
+    if (existing) {
+      if (existing.quantity + qty > maxQty) {
+        showToast(`La cantidad total en la lista supera el límite disponible del lote (${maxQty} uds).`, 'error');
+        return;
+      }
+      existing.quantity += qty;
+    } else {
+      transferItems.push({
+        productId,
+        productName,
+        batchId,
+        batchCode,
+        quantity: qty,
+        unitCost: cost
+      });
+    }
+
+    qtyInput.value = '';
+    renderItemsList();
+  }
+
+  function removeItem(index) {
+    transferItems.splice(index, 1);
+    renderItemsList();
+  }
+
+  function renderItemsList() {
+    const tbody = document.getElementById('transfer-items-tbody');
+    const totalSpan = document.getElementById('transfer-total-cost');
+    
+    if (transferItems.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" class="py-8 text-center text-neutral-500 text-xs">Aún no has agregado productos al traslado.</td>
+        </tr>
+      `;
+      totalSpan.innerText = '$0.00';
+      return;
+    }
+
+    let total = 0;
+    tbody.innerHTML = transferItems.map((item, idx) => {
+      const subtotal = item.quantity * item.unitCost;
+      total += subtotal;
+      return `
+        <tr class="hover:bg-neutral-950/20">
+          <td class="py-3 px-3 font-bold text-white">${item.productName}</td>
+          <td class="py-3 px-3 font-mono">${item.batchCode}</td>
+          <td class="py-3 px-3 font-mono">$${item.unitCost.toFixed(2)}</td>
+          <td class="py-3 px-3 font-mono font-bold">${item.quantity}</td>
+          <td class="py-3 px-3 font-mono text-blue-400">$${subtotal.toFixed(2)}</td>
+          <td class="py-3 px-3 text-right">
+            <button onclick="removeItem(${idx})" class="text-red-500 hover:text-red-400 font-bold hover:underline cursor-pointer">Eliminar</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    totalSpan.innerText = `$${total.toFixed(2)}`;
+  }
+
+  async function submitTransfer() {
+    const toBranchId = document.getElementById('transfer-toBranchId').value;
+    
+    if (!toBranchId) {
+      showToast('Seleccione la sucursal destino.', 'warning');
+      return;
+    }
+
+    if (transferItems.length === 0) {
+      showToast('Agregue al menos un producto para trasladar.', 'warning');
+      return;
+    }
+
+    const btnSubmit = document.getElementById('btn-submit-transfer');
+    btnSubmit.disabled = true;
+    btnSubmit.innerText = 'Procesando...';
+
+    try {
+      const resp = await fetch('/transfers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          toBranchId,
+          items: transferItems.map(i => ({
+            productId: i.productId,
+            batchId: i.batchId,
+            quantity: i.quantity
+          }))
+        })
+      });
+
+      const resData = await resp.json();
+      if (resp.ok && resData.success) {
+        showToast(resData.message, 'success');
+        setTimeout(() => {
+          window.location.href = `/transfers/${resData.transferId}`;
+        }, 1000);
+      } else {
+        showToast(resData.message || 'Error al procesar traslado.', 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Error de red al procesar el traslado.', 'error');
+    } finally {
+      btnSubmit.disabled = false;
+      btnSubmit.innerText = 'Procesar Traslado';
+    }
+  }
+</script>
+
+<%- include('../../partials/foot') %>

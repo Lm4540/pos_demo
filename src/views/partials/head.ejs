@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-neutral-950 text-neutral-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' && title ? title + ' - RG Simple POS' : 'RG Simple POS' %></title>
+  
+  <!-- Tailwind CSS v4 browser runtime -->
+  <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+  
+  <!-- Inter Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="manifest" href="/manifest.json">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* Custom scrollbars styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0a0a0a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #262626;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #404040;
+    }
+
+    /* Global light mode override styles */
+    .light-mode {
+      background-color: #f3f4f6 !important;
+      color: #1f2937 !important;
+    }
+    .light-mode body {
+      background-color: #f3f4f6 !important;
+      color: #1f2937 !important;
+    }
+    /* Webkit scrollbars light mode */
+    .light-mode ::-webkit-scrollbar-track {
+      background: #f3f4f6;
+    }
+    .light-mode ::-webkit-scrollbar-thumb {
+      background: #d1d5db;
+    }
+    .light-mode ::-webkit-scrollbar-thumb:hover {
+      background: #9ca3af;
+    }
+
+    /* Layout overrides for light mode */
+    .light-mode nav, .light-mode header, .light-mode aside {
+      background-color: #ffffff !important;
+      border-color: #e5e7eb !important;
+      color: #1f2937 !important;
+    }
+    .light-mode nav a, .light-mode header a, .light-mode aside a {
+      color: #4b5563 !important;
+    }
+    .light-mode nav a:hover, .light-mode header a:hover, .light-mode aside a:hover {
+      background-color: #f3f4f6 !important;
+      color: #111827 !important;
+    }
+    .light-mode main {
+      background-color: #f3f4f6 !important;
+    }
+    .light-mode .bg-neutral-900, .light-mode .bg-neutral-800, .light-mode .bg-neutral-850 {
+      background-color: #ffffff !important;
+      border-color: #e5e7eb !important;
+      color: #1f2937 !important;
+    }
+    .light-mode .bg-neutral-950, .light-mode .bg-neutral-950\/40, .light-mode .bg-neutral-950\/60, .light-mode .bg-neutral-950\/50, .light-mode .bg-neutral-950\/80 {
+      background-color: #f9fafb !important;
+      border-color: #e5e7eb !important;
+    }
+    .light-mode .text-white, .light-mode .text-neutral-100, .light-mode .text-neutral-200 {
+      color: #111827 !important;
+    }
+    .light-mode .text-neutral-300, .light-mode .text-neutral-400 {
+      color: #374151 !important;
+    }
+    .light-mode .text-neutral-500 {
+      color: #6b7280 !important;
+    }
+    .light-mode .border-neutral-800, .light-mode .border-neutral-700, .light-mode .border-neutral-900, .light-mode .border-neutral-850 {
+      border-color: #e5e7eb !important;
+    }
+    .light-mode input, .light-mode select, .light-mode textarea {
+      background-color: #ffffff !important;
+      border-color: #d1d5db !important;
+      color: #111827 !important;
+    }
+    .light-mode input::placeholder, .light-mode textarea::placeholder {
+      color: #9ca3af !important;
+    }
+    .light-mode table {
+      border-color: #e5e7eb !important;
+    }
+    .light-mode th {
+      background-color: #f9fafb !important;
+      color: #374151 !important;
+      border-color: #e5e7eb !important;
+    }
+    .light-mode td {
+      border-color: #e5e7eb !important;
+      color: #374151 !important;
+    }
+    .light-mode tr:hover {
+      background-color: #f9fafb !important;
+    }
+    .light-mode button {
+      background-color: #ffffff;
+      border-color: #e5e7eb;
+      color: #374151;
+    }
+    .light-mode button:hover {
+      background-color: #f3f4f6;
+    }
+    .light-mode .bg-indigo-950 {
+      background-color: #e0e7ff !important;
+      color: #4338ca !important;
+      border-color: #c7d2fe !important;
+    }
+    .light-mode .bg-indigo-950:hover {
+      background-color: #c7d2fe !important;
+    }
+    .light-mode .bg-emerald-950\/40 {
+      background-color: #d1fae5 !important;
+      color: #065f46 !important;
+      border-color: #a7f3d0 !important;
+    }
+    .light-mode .bg-red-950\/40 {
+      background-color: #fee2e2 !important;
+      color: #991b1b !important;
+      border-color: #fca5a5 !important;
+    }
+    .light-mode .bg-amber-950\/40 {
+      background-color: #fef3c7 !important;
+      color: #92400e !important;
+      border-color: #fde68a !important;
+    }
+    .light-mode .text-blue-400 {
+      color: #1d4ed8 !important;
+    }
+    .light-mode .text-emerald-400 {
+      color: #047857 !important;
+    }
+    .light-mode .text-violet-400 {
+      color: #6d28d9 !important;
+    }
+    .light-mode .text-amber-400 {
+      color: #b45309 !important;
+    }
+    .light-mode .text-indigo-400 {
+      color: #4338ca !important;
+    }
+    .light-mode .text-red-400 {
+      color: #b91c1c !important;
+    }
+    .light-mode .bg-blue-600 {
+      background-color: #2563eb !important;
+    }
+    .light-mode .bg-blue-600:hover {
+      background-color: #1d4ed8 !important;
+    }
+    .light-mode .bg-red-950\/50 {
+      background-color: #fee2e2 !important;
+    }
+    .light-mode .border-red-900 {
+      border-color: #fca5a5 !important;
+    }
+    .light-mode .text-red-300 {
+      color: #b91c1c !important;
+    }
+    .light-mode .hover\:bg-red-900:hover {
+      background-color: #fca5a5 !important;
+    }
+    .light-mode .bg-neutral-950 button {
+      background-color: #ffffff !important;
+      border-color: #d1d5db !important;
+      color: #374151 !important;
+    }
+    .light-mode .bg-neutral-950 button:hover {
+      background-color: #f3f4f6 !important;
+      border-color: #2563eb !important;
+    }
+    .light-mode .bg-blue-950 {
+      background-color: #dbeafe !important;
+      color: #1d4ed8 !important;
+      border-color: #bfdbfe !important;
+    }
+    .light-mode .bg-emerald-950 {
+      background-color: #d1fae5 !important;
+      color: #047857 !important;
+      border-color: #a7f3d0 !important;
+    }
+    .light-mode .bg-violet-950 {
+      background-color: #f5f3ff !important;
+      color: #6d28d9 !important;
+      border-color: #ddd6fe !important;
+    }
+    .light-mode .bg-amber-950 {
+      background-color: #fef3c7 !important;
+      color: #b45309 !important;
+      border-color: #fde68a !important;
+    }
+    .light-mode .bg-red-950 {
+      background-color: #fee2e2 !important;
+      color: #b91c1c !important;
+      border-color: #fca5a5 !important;
+    }
+    .light-mode .bg-gradient-to-br, 
+    .light-mode .bg-gradient-to-r {
+      background-image: none !important;
+    }
+    .light-mode .bg-gradient-to-r.from-blue-600.to-indigo-600 {
+      background-image: none !important;
+      background-color: #2563eb !important;
+    }
+    .light-mode svg {
+      color: currentColor;
+    }
+    .light-mode .text-neutral-600, 
+    .light-mode .text-neutral-700, 
+    .light-mode .text-neutral-750 {
+      color: #6b7280 !important;
+    }
+  </style>
+  <script>
+    // Theme setter script - runs before body parses to prevent screen flash
+    const currentTheme = localStorage.getItem('theme') || 'dark';
+    if (currentTheme === 'light') {
+      document.documentElement.classList.add('light-mode');
+    }
+
+    function toggleTheme() {
+      const isLight = document.documentElement.classList.toggle('light-mode');
+      localStorage.setItem('theme', isLight ? 'light' : 'dark');
+      
+      // Update sun/moon icons globally on the page
+      const sunIcons = document.querySelectorAll('#theme-sun-icon');
+      const moonIcons = document.querySelectorAll('#theme-moon-icon');
+      
+      sunIcons.forEach(icon => {
+        if (isLight) icon.classList.add('hidden');
+        else icon.classList.remove('hidden');
+      });
+      moonIcons.forEach(icon => {
+        if (isLight) icon.classList.remove('hidden');
+        else icon.classList.add('hidden');
+      });
+    }
+
+    // Auto injection script for all navbars
+    window.addEventListener('DOMContentLoaded', () => {
+      // Apply theme class to body for Tailwind overrides to take effect fully
+      const currentTheme = localStorage.getItem('theme') || 'dark';
+      if (currentTheme === 'light') {
+        document.body.classList.add('light-mode');
+      }
+
+      if (!document.getElementById('btn-theme-toggle')) {
+        const nav = document.querySelector('nav');
+        if (nav) {
+          // Find or create a right-side container
+          let rightDiv = nav.querySelector('div.flex.items-center.gap-3') || nav.querySelector('div.flex.items-center.gap-4');
+          if (!rightDiv) {
+            rightDiv = document.createElement('div');
+            rightDiv.className = 'flex items-center gap-3';
+            nav.appendChild(rightDiv);
+          }
+          
+          // Create the theme toggle button
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.id = 'btn-theme-toggle';
+          btn.onclick = toggleTheme;
+          btn.className = 'bg-neutral-800 border border-neutral-700 hover:bg-neutral-750 p-2 rounded-xl text-neutral-300 transition-all cursor-pointer flex items-center justify-center';
+          btn.innerHTML = `
+            <!-- Sun icon (shown in dark mode) -->
+            <svg id="theme-sun-icon" class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
+            </svg>
+            <!-- Moon icon (shown in light mode) -->
+            <svg id="theme-moon-icon" class="h-4.5 w-4.5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
+          `;
+          rightDiv.appendChild(btn);
+          
+          // Sync icon display based on active theme
+          const sunIcon = btn.querySelector('#theme-sun-icon');
+          const moonIcon = btn.querySelector('#theme-moon-icon');
+          if (currentTheme === 'light') {
+            if (sunIcon) sunIcon.classList.add('hidden');
+            if (moonIcon) moonIcon.classList.remove('hidden');
+          }
+        }
+      }
+    });
+  </script>
+</head>
+<body class="h-full flex flex-col antialiased">

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title><%= title %></title>
+  <style>
+    body {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      color: #333;
+      font-size: 11px;
+      line-height: 1.4;
+      margin: 20px;
+    }
+    .header {
+      border-bottom: 2px dashed #ccc;
+      padding-bottom: 12px;
+      margin-bottom: 20px;
+    }
+    .header h1 {
+      font-size: 20px;
+      margin: 0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #111;
+    }
+    .header p {
+      margin: 3px 0 0 0;
+      color: #666;
+      font-size: 10px;
+      font-weight: bold;
+    }
+    .meta-table {
+      width: 100%;
+      margin-bottom: 20px;
+      border-collapse: collapse;
+    }
+    .meta-table td {
+      padding: 6px 10px;
+      background: #f9f9f9;
+      border: 1px solid #e0e0e0;
+      width: 50%;
+    }
+    .meta-table td strong {
+      color: #111;
+    }
+    .section-title {
+      font-size: 12px;
+      font-weight: bold;
+      color: #111;
+      border-bottom: 1px solid #111;
+      padding-bottom: 4px;
+      margin-top: 25px;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+    .kpi-grid {
+      display: table;
+      width: 100%;
+      margin-bottom: 20px;
+    }
+    .kpi-card {
+      display: table-cell;
+      width: 25%;
+      padding: 10px;
+      background: #fafafa;
+      border: 1px solid #e0e0e0;
+      text-align: center;
+    }
+    .kpi-card:not(:last-child) {
+      border-right: none;
+    }
+    .kpi-title {
+      font-size: 8px;
+      font-weight: bold;
+      color: #888;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .kpi-val {
+      font-size: 16px;
+      font-weight: bold;
+      color: #000;
+      font-family: monospace;
+    }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 15px;
+    }
+    .data-table th {
+      background: #f5f5f5;
+      font-weight: bold;
+      text-transform: uppercase;
+      font-size: 9px;
+      color: #555;
+      border: 1px solid #e0e0e0;
+      padding: 6px 8px;
+    }
+    .data-table td {
+      border: 1px solid #e0e0e0;
+      padding: 6px 8px;
+      vertical-align: middle;
+    }
+    .text-right {
+      text-align: right;
+    }
+    .text-center {
+      text-align: center;
+    }
+    .font-bold {
+      font-weight: bold;
+    }
+    .font-mono {
+      font-family: monospace;
+    }
+    .alert-danger {
+      color: #c53030;
+      background: #fff5f5;
+      border: 1px solid #fed7d7;
+      padding: 2px 4px;
+      border-radius: 3px;
+      font-size: 9px;
+      font-weight: bold;
+    }
+    .alert-success {
+      color: #2f855a;
+      background: #f0fff4;
+      border: 1px solid #c6f6d5;
+      padding: 2px 4px;
+      border-radius: 3px;
+      font-size: 9px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <h1>RG SIMPLE POS</h1>
+    <p>Reporte Financiero y Operativo Centralizado &bull; El Salvador 🇸🇻</p>
+  </div>
+
+  <!-- Meta Info -->
+  <table class="meta-table">
+    <tr>
+      <td><strong>Sucursal:</strong> <%= branchName %></td>
+      <td><strong>Generado por:</strong> <%= user.fullName %> (@<%= user.username %>)</td>
+    </tr>
+    <tr>
+      <td><strong>Periodo del Reporte:</strong> <%= new Date(startDate + 'T00:00:00').toLocaleDateString('es-SV') %> al <%= new Date(endDate + 'T00:00:00').toLocaleDateString('es-SV') %></td>
+      <td><strong>Fecha de Emisión:</strong> <%= new Date().toLocaleString('es-SV') %></td>
+    </tr>
+  </table>
+
+  <!-- KPIs -->
+  <div class="section-title">Resumen Financiero del Periodo</div>
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <span class="kpi-title">Ingresos por Ventas</span>
+      <span class="kpi-val">$<%= totalSales.toFixed(2) %></span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-title">Costo de Ventas (COGS)</span>
+      <span class="kpi-val">$<%= totalCogs.toFixed(2) %></span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-title">Gastos Generales</span>
+      <span class="kpi-val">$<%= totalExpenses.toFixed(2) %></span>
+    </div>
+    <div class="kpi-card" style="background-color: #f0fff4; border-color: #c6f6d5;">
+      <span class="kpi-title" style="color: #276749;">Utilidad Neta Estimada</span>
+      <span class="kpi-val" style="color: #22543d;">$<%= grossProfit.toFixed(2) %></span>
+    </div>
+  </div>
+
+  <table class="meta-table" style="margin-top: 10px;">
+    <tr>
+      <td style="width: 33.33%;"><strong>Ventas Contado:</strong> $<%= cashSales.toFixed(2) %></td>
+      <td style="width: 33.33%;"><strong>Ventas Crédito:</strong> $<%= creditSales.toFixed(2) %></td>
+      <td style="width: 33.33%;"><strong>Total de Compras:</strong> $<%= totalPurchases.toFixed(2) %></td>
+    </tr>
+  </table>
+
+  <!-- Volume KPIs -->
+  <table class="data-table" style="margin-top: 15px;">
+    <thead>
+      <tr>
+        <th class="text-center">Volumen de Tickets Emitidos</th>
+        <th class="text-center">Volumen de Compras Realizadas</th>
+        <th class="text-center">Volumen de Gastos Registrados</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="text-center font-mono font-bold" style="font-size: 14px;"><%= salesCount %></td>
+        <td class="text-center font-mono font-bold" style="font-size: 14px;"><%= purchasesCount %></td>
+        <td class="text-center font-mono font-bold" style="font-size: 14px;"><%= expensesCount %></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Top Sellers & Daily Trend -->
+  <div style="width: 100%; display: table; margin-top: 25px;">
+    <div style="display: table-row;">
+      
+      <!-- Top Sellers -->
+      <div style="display: table-cell; width: 50%; padding-right: 15px; vertical-align: top;">
+        <div class="section-title" style="margin-top: 0;">Productos Más Vendidos</div>
+        <% if (topSellers.length === 0) { %>
+          <p style="color: #888; font-style: italic;">No hay registros de ventas en este periodo.</p>
+        <% } else { %>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th class="text-center">Cant.</th>
+                <th class="text-right">Total Ingresos</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% topSellers.forEach(ts => { %>
+                <tr>
+                  <td class="font-bold"><%= ts.name %></td>
+                  <td class="text-center font-mono"><%= ts.totalQty %></td>
+                  <td class="text-right font-mono">$<%= parseFloat(ts.totalRevenue).toFixed(2) %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        <% } %>
+      </div>
+
+      <!-- Daily Trend -->
+      <div style="display: table-cell; width: 50%; padding-left: 15px; vertical-align: top;">
+        <div class="section-title" style="margin-top: 0;">Tendencia de Ingresos Diarios</div>
+        <% if (dailyTrend.length === 0) { %>
+          <p style="color: #888; font-style: italic;">No hay registros diarios en este periodo.</p>
+        <% } else { %>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th class="text-right">Total Facturado por Día</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% dailyTrend.forEach(dt => { %>
+                <tr>
+                  <td class="font-mono"><%= new Date(dt.dateStr).toLocaleDateString('es-SV') %></td>
+                  <td class="text-right font-mono font-bold">$<%= parseFloat(dt.total).toFixed(2) %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        <% } %>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Accounts Receivable (CxC) -->
+  <div class="section-title">Estado de Cuentas por Cobrar (CxC)</div>
+  <table class="meta-table" style="margin-bottom: 12px;">
+    <tr>
+      <td style="width: 33.33%;"><strong>Crédito Vigente:</strong> $<%= totalVigente.toFixed(2) %></td>
+      <td style="width: 33.33%;"><strong>Crédito Vencido:</strong> $<%= totalOverdue.toFixed(2) %></td>
+      <td style="width: 33.33%;"><strong>Total de Cartera Activa:</strong> $<%= totalCreditBalance.toFixed(2) %></td>
+    </tr>
+  </table>
+
+  <% if (clientsWithDebtAlerts.length === 0) { %>
+    <p style="color: #888; font-style: italic;">No hay clientes con saldos deudores pendientes en esta sucursal.</p>
+  <% } else { %>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>Teléfono</th>
+          <th>Sucursal</th>
+          <th class="text-center">Plazo Límite</th>
+          <th class="text-right">Límite Crédito</th>
+          <th class="text-center">Antigüedad Mora</th>
+          <th class="text-right">Saldo Pendiente</th>
+          <th class="text-center">Estado Alerta</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% clientsWithDebtAlerts.forEach(c => { %>
+          <tr>
+            <td class="font-bold"><%= c.name %></td>
+            <td class="font-mono"><%= c.phone || 'N/A' %></td>
+            <td><%= c.branchName %></td>
+            <td class="text-center"><%= c.creditDays %> días</td>
+            <td class="text-right font-mono">$<%= parseFloat(c.creditLimit).toFixed(2) %></td>
+            <td class="text-center font-mono">
+              <%= c.oldestSaleDate ? new Date(c.oldestSaleDate).toLocaleDateString('es-SV') : 'N/A' %>
+            </td>
+            <td class="text-right font-mono font-bold">$<%= parseFloat(c.currentBalance).toFixed(2) %></td>
+            <td class="text-center">
+              <% if (c.isOverdue) { %>
+                <span class="alert-danger">Mora: <%= c.overdueDays %> días</span>
+              <% } else { %>
+                <span class="alert-success">Al Corriente</span>
+              <% } %>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+
+  <div style="margin-top: 40px; text-align: center; font-size: 9px; color: #888;">
+    Este reporte es un documento oficial de control financiero interno de RG Simple POS. &bull; Impreso por medio del sistema.
+  </div>
+
+</body>
+</html>

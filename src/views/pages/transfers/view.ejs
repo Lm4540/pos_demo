@@ -1,0 +1,141 @@
+<%- include('../../partials/head', { title: 'Comprobante de Traslado' }) %>
+
+<div class="min-h-screen bg-neutral-950 flex flex-col">
+  <!-- Nav Bar -->
+  <nav class="bg-neutral-900 border-b border-neutral-800 px-6 py-4 flex items-center justify-between shadow-md print:hidden">
+    <div class="flex items-center gap-3">
+      <a href="/transfers" class="text-neutral-400 hover:text-white transition-colors">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+      </a>
+      <div>
+        <span class="text-xl font-bold text-white tracking-wide">Comprobante de Traslado</span>
+        <span class="text-xs block text-neutral-400 font-medium">Documento de Envío de Mercadería</span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-500 px-5 py-2.5 rounded-xl text-xs font-bold text-white transition-all shadow-md shadow-blue-500/10 flex items-center gap-1.5 cursor-pointer">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+        </svg>
+        <span>Imprimir Comprobante</span>
+      </button>
+    </div>
+  </nav>
+
+  <main class="flex-grow p-6 max-w-4xl w-full mx-auto space-y-6">
+    <!-- Printable Voucher Container -->
+    <div id="printable-voucher" class="bg-white text-black p-8 rounded-2xl shadow-xl border border-neutral-200">
+      
+      <!-- Logo & Title -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b-2 border-dashed border-neutral-300 pb-6 mb-6">
+        <div>
+          <h1 class="text-2xl font-black uppercase tracking-tight text-neutral-900">RG Simple POS</h1>
+          <p class="text-xs text-neutral-500 font-semibold uppercase mt-0.5">Control de Inventarios Centralizado</p>
+        </div>
+        <div class="text-left sm:text-right mt-4 sm:mt-0 space-y-1">
+          <span class="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-bold uppercase rounded-full border border-blue-200">
+            Traslado Autorizado
+          </span>
+          <p class="text-sm font-mono font-bold text-neutral-700 mt-1 block">Doc: <%= transfer.transferNumber %></p>
+        </div>
+      </div>
+
+      <!-- Metadata Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8 text-sm">
+        <div class="bg-neutral-50 p-4 border border-neutral-200 rounded-xl space-y-1.5">
+          <span class="text-xs text-neutral-400 font-bold uppercase block">Ruta de Envío</span>
+          <p class="text-neutral-700"><strong>Origen:</strong> <%= transfer.fromBranch ? transfer.fromBranch.name : 'N/A' %></p>
+          <p class="text-neutral-700"><strong>Destino:</strong> <%= transfer.toBranch ? transfer.toBranch.name : 'N/A' %></p>
+        </div>
+        
+        <div class="bg-neutral-50 p-4 border border-neutral-200 rounded-xl space-y-1.5">
+          <span class="text-xs text-neutral-400 font-bold uppercase block">Datos de Control</span>
+          <p class="text-neutral-700"><strong>Fecha:</strong> <%= new Date(transfer.createdAt).toLocaleString('es-SV') %></p>
+          <p class="text-neutral-700"><strong>Autorizado por:</strong> <%= transfer.user ? transfer.user.fullName : 'Usuario' %></p>
+        </div>
+      </div>
+
+      <!-- Items Table -->
+      <div class="mb-8">
+        <table class="min-w-full divide-y divide-neutral-200 text-left text-sm text-neutral-700 border border-neutral-200 rounded-xl overflow-hidden">
+          <thead class="bg-neutral-50 font-bold uppercase text-xs text-neutral-500">
+            <tr>
+              <th class="py-3 px-4">Artículos Trasladados</th>
+              <th class="py-3 px-4">Código de Lote</th>
+              <th class="py-3 px-4 text-right">Costo Unit.</th>
+              <th class="py-3 px-4 text-center">Cantidad</th>
+              <th class="py-3 px-4 text-right">Costo Total</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-neutral-200">
+            <% let grandTotal = 0; %>
+            <% transfer.details.forEach(d => { %>
+              <% const subtotal = parseFloat(d.unitCost) * d.quantity; %>
+              <% grandTotal += subtotal; %>
+              <tr class="hover:bg-neutral-50/50">
+                <td class="py-3.5 px-4 font-bold text-neutral-900"><%= d.product ? d.product.name : 'Producto ID ' + d.productId %></td>
+                <td class="py-3.5 px-4 font-mono text-xs text-neutral-600"><%= d.batchCode %></td>
+                <td class="py-3.5 px-4 font-mono text-right">$<%= parseFloat(d.unitCost).toFixed(2) %></td>
+                <td class="py-3.5 px-4 font-mono font-bold text-center"><%= d.quantity %></td>
+                <td class="py-3.5 px-4 font-mono text-right font-semibold text-neutral-900">$<%= subtotal.toFixed(2) %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Totals & Signatures -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 border-t border-neutral-200 pt-6">
+        <!-- Totals -->
+        <div>
+          <span class="text-xs text-neutral-400 font-bold uppercase block">Costo Total de la Carga</span>
+          <span class="text-2xl font-black text-neutral-900 font-mono">$<%= grandTotal.toFixed(2) %> USD</span>
+        </div>
+
+        <!-- Signatures (Visible on printing) -->
+        <div class="grid grid-cols-2 gap-8 text-center text-xs text-neutral-500 font-semibold pt-4">
+          <div class="w-36 space-y-8">
+            <div class="border-b border-neutral-400 h-10"></div>
+            <span>Firma Despacho</span>
+          </div>
+          <div class="w-36 space-y-8">
+            <div class="border-b border-neutral-400 h-10"></div>
+            <span>Firma Recepción</span>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+  </main>
+</div>
+
+<style>
+  /* Printing formats for transfer ticket document */
+  @media print {
+    body {
+      background-color: white !important;
+      color: black !important;
+    }
+    body * {
+      visibility: hidden;
+    }
+    #printable-voucher, #printable-voucher * {
+      visibility: visible;
+    }
+    #printable-voucher {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      box-shadow: none !important;
+      border: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+  }
+</style>
+
+<%- include('../../partials/foot') %>

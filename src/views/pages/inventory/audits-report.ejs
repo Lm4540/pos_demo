@@ -1,0 +1,161 @@
+<%- include('../../partials/head', { title: 'Reporte de Auditoría de Inventario' }) %>
+
+<div class="min-h-screen bg-neutral-950 flex flex-col">
+  <!-- Nav Bar -->
+  <nav class="bg-neutral-900 border-b border-neutral-800 px-6 py-4 flex items-center justify-between shadow-md">
+    <div class="flex items-center gap-3">
+      <a href="/inventory/audits" class="text-neutral-400 hover:text-white transition-colors">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+      </a>
+      <div>
+        <span class="text-xl font-bold text-white tracking-wide">Reporte de Auditoría</span>
+        <span class="text-xs block text-neutral-400 font-medium">Comprobante de arqueo físico e inventariado</span>
+      </div>
+    </div>
+    
+    <div>
+      <button onclick="window.print()" class="bg-neutral-800 hover:bg-neutral-750 text-white font-bold px-4 py-2.5 rounded-xl text-xs border border-neutral-700 cursor-pointer transition-all shadow-sm">
+        Imprimir Reporte
+      </button>
+    </div>
+  </nav>
+
+  <main class="flex-grow p-6 max-w-7xl w-full mx-auto space-y-6">
+    <!-- Summary Header Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <!-- Session Details Card -->
+      <div class="bg-neutral-900 border border-neutral-800 p-6 rounded-2xl md:col-span-2 space-y-3">
+        <h3 class="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Detalles de la Sesión</h3>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <span class="text-[10px] text-neutral-500 block">Número de Auditoría</span>
+            <span class="text-xs font-mono font-bold text-white">#AUD-<%= String(audit.id).padStart(4, '0') %></span>
+          </div>
+          <div>
+            <span class="text-[10px] text-neutral-500 block">Fecha de Cierre</span>
+            <span class="text-xs font-bold text-white"><%= new Date(audit.updatedAt).toLocaleString('es-SV') %></span>
+          </div>
+          <div>
+            <span class="text-[10px] text-neutral-500 block">Sucursal</span>
+            <span class="text-xs font-bold text-blue-400"><%= audit.branch ? audit.branch.name : '' %></span>
+          </div>
+          <div>
+            <span class="text-[10px] text-neutral-500 block">Sector Auditado</span>
+            <span class="text-xs font-bold text-emerald-400"><%= audit.sector %></span>
+          </div>
+          <div class="col-span-2">
+            <span class="text-[10px] text-neutral-500 block">Auditor</span>
+            <span class="text-xs font-bold text-white"><%= audit.user ? audit.user.fullName : '' %> (<%= audit.user ? audit.user.roleId : '' %>)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Inventory Statistics Card -->
+      <div class="bg-neutral-900 border border-neutral-800 p-6 rounded-2xl space-y-2 flex flex-col justify-center">
+        <h3 class="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Resumen de Conteo</h3>
+        <div class="space-y-1">
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-neutral-400">Total Auditados:</span>
+            <span class="font-bold text-white"><%= totalItems %></span>
+          </div>
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-neutral-400">Con Desviación:</span>
+            <span class="font-bold text-amber-400"><%= discrepancyItems %></span>
+          </div>
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-neutral-400">Sin Variación:</span>
+            <span class="font-bold text-neutral-500"><%= totalItems - discrepancyItems %></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Financial valuation card -->
+      <div class="bg-neutral-900 border border-neutral-800 p-6 rounded-2xl space-y-2 flex flex-col justify-center">
+        <h3 class="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Valoración Financiera</h3>
+        <div class="space-y-1">
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-neutral-400">Sobrantes (+):</span>
+            <span class="font-mono font-bold text-emerald-400">+$<%= financialGain.toFixed(2) %></span>
+          </div>
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-neutral-400">Mermas / Faltantes (-):</span>
+            <span class="font-mono font-bold text-red-400">-$<%= financialLoss.toFixed(2) %></span>
+          </div>
+          <div class="flex justify-between items-center text-xs pt-1.5 border-t border-neutral-800">
+            <span class="text-neutral-300 font-bold">Balance Neto:</span>
+            <% const net = financialGain - financialLoss; %>
+            <span class="font-mono font-bold <%= net >= 0 ? 'text-emerald-400' : 'text-red-400' %>">
+              <%= net >= 0 ? '+' : '' %>$<%= net.toFixed(2) %>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Details Table -->
+    <div class="bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden shadow-sm">
+      <div class="px-6 py-4 border-b border-neutral-800">
+        <h3 class="text-sm font-bold text-white uppercase tracking-wider">Detalle de Ajustes Realizados</h3>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b border-neutral-800 bg-neutral-950/50">
+              <th class="px-6 py-3.5 text-[10px] font-bold text-neutral-500 uppercase">Producto</th>
+              <th class="px-6 py-3.5 text-[10px] font-bold text-neutral-500 uppercase text-center w-28">Teórico (Calculado)</th>
+              <th class="px-6 py-3.5 text-[10px] font-bold text-neutral-500 uppercase text-center w-28">Físico (Contado)</th>
+              <th class="px-6 py-3.5 text-[10px] font-bold text-neutral-500 uppercase text-center w-24">Diferencia</th>
+              <th class="px-6 py-3.5 text-[10px] font-bold text-neutral-500 uppercase text-right w-24">Costo Unit.</th>
+              <th class="px-6 py-3.5 text-[10px] font-bold text-neutral-500 uppercase text-right w-28">Pérdida/Ganancia</th>
+              <th class="px-6 py-3.5 text-[10px] font-bold text-neutral-500 uppercase w-48">Justificación (Merma)</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-neutral-800/60">
+            <% details.forEach(d => { %>
+              <tr class="hover:bg-neutral-950/30 transition-colors">
+                <td class="px-6 py-4">
+                  <span class="text-xs font-bold text-white block"><%= d.product ? d.product.name : 'Artículo' %></span>
+                  <span class="text-[10px] text-neutral-500 font-mono">Cód: <%= d.product ? (d.product.barCode || 'N/A') : 'N/A' %></span>
+                </td>
+                <td class="px-6 py-4 text-center text-xs text-neutral-400">
+                  <%= parseFloat(d.expectedQuantity).toFixed(0) %>
+                </td>
+                <td class="px-6 py-4 text-center text-xs font-bold text-white">
+                  <%= parseFloat(d.countedQuantity).toFixed(0) %>
+                </td>
+                <td class="px-6 py-4 text-center text-xs font-mono font-bold <%= d.discrepancy > 0 ? 'text-emerald-400' : (d.discrepancy < 0 ? 'text-red-400' : 'text-neutral-500') %>">
+                  <%= d.discrepancy > 0 ? '+' : '' %><%= parseFloat(d.discrepancy).toFixed(0) %>
+                </td>
+                <td class="px-6 py-4 text-right text-xs font-mono text-neutral-400">
+                  $<%= parseFloat(d.averageCost).toFixed(2) %>
+                </td>
+                <td class="px-6 py-4 text-right text-xs font-mono font-bold <%= d.totalCostValue > 0 ? 'text-emerald-400' : (d.totalCostValue < 0 ? 'text-red-400' : 'text-neutral-500') %>">
+                  <%= d.totalCostValue > 0 ? '+' : '' %>$<%= parseFloat(d.totalCostValue).toFixed(2) %>
+                </td>
+                <td class="px-6 py-4 text-xs font-semibold">
+                  <% if (d.justification) { %>
+                    <% if (d.justification.startsWith('Merma:')) { %>
+                      <span class="bg-red-950/40 text-red-450 border border-red-900 px-2 py-0.5 rounded text-[10px]">
+                        <%= d.justification %>
+                      </span>
+                    <% } else { %>
+                      <span class="bg-amber-950/40 text-amber-450 border border-amber-800 px-2 py-0.5 rounded text-[10px]">
+                        <%= d.justification %>
+                      </span>
+                    <% } %>
+                  <% } else { %>
+                    <span class="text-neutral-600">—</span>
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<%- include('../../partials/foot') %>

@@ -1,0 +1,93 @@
+<%- include('../../partials/head', { title: 'Iniciar Sesión' }) %>
+
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-neutral-950 via-neutral-900 to-blue-950 px-4 py-12 sm:px-6 lg:px-8">
+  <div class="max-w-md w-full space-y-8 bg-neutral-900/60 backdrop-blur-xl border border-neutral-800 p-8 rounded-2xl shadow-2xl">
+    <div>
+      <div class="flex justify-center">
+        <!-- POS Icon Logo -->
+        <div class="h-16 w-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+          <svg class="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          </svg>
+        </div>
+      </div>
+      <h2 class="mt-6 text-center text-3xl font-extrabold text-white tracking-tight">RG Simple POS</h2>
+      <p class="mt-2 text-center text-sm text-neutral-400">Punto de Venta e Inventario</p>
+    </div>
+
+    <% if (error) { %>
+      <div class="bg-red-950/40 border border-red-800/80 text-red-200 px-4 py-3 rounded-lg text-sm text-center">
+        <%= error %>
+      </div>
+    <% } %>
+
+    <form class="mt-8 space-y-6" action="/auth/login" method="POST">
+      <div class="rounded-md shadow-sm space-y-4">
+        <div>
+          <label for="username" class="block text-sm font-medium text-neutral-300 mb-1">Nombre de usuario</label>
+          <input id="username" name="username" type="text" required class="appearance-none relative block w-full px-3 py-3 border border-neutral-800 placeholder-neutral-500 text-white bg-neutral-950/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm transition-all" placeholder="admin">
+        </div>
+        <div>
+          <label for="password" class="block text-sm font-medium text-neutral-300 mb-1">Contraseña</label>
+          <input id="password" name="password" type="password" required class="appearance-none relative block w-full px-3 py-3 border border-neutral-800 placeholder-neutral-500 text-white bg-neutral-950/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm transition-all" placeholder="••••••••">
+        </div>
+      </div>
+
+      <div>
+        <button type="submit" class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-blue-600 hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-neutral-900 focus:ring-blue-500 transition-all cursor-pointer shadow-lg shadow-blue-500/20 font-semibold">
+          Iniciar Sesión
+        </button>
+      </div>
+    </form>
+
+    <div class="relative flex py-2 items-center">
+      <div class="flex-grow border-t border-neutral-800"></div>
+      <span class="flex-shrink mx-4 text-neutral-500 text-xs uppercase tracking-wider">O accede rápido con</span>
+      <div class="flex-grow border-t border-neutral-800"></div>
+    </div>
+
+    <div>
+      <button id="btn-biometric" class="group w-full flex items-center justify-center gap-3 py-3 px-4 border border-neutral-800 text-sm font-medium rounded-xl text-neutral-300 bg-neutral-950 hover:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-neutral-900 focus:ring-blue-500 transition-all cursor-pointer">
+        <svg class="h-6 w-6 text-blue-500 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 009 11.571V11a4 4 0 118 0v.571c0 1.253.25 2.45.71 3.536m-8.62-4.897a6.7 6.7 0 00-.71-2.585M15 7h.01M8.039 8.679a3 3 0 00-1.573 2.585m0 0a8.194 8.194 0 00-.707 2.385m0 0a15.565 15.565 0 00.707 5.855m0 0a3.374 3.374 0 001.573 2.584m0 0c.26.136.54.21.826.237m0 0a14.496 14.496 0 006.184 0m0 0a3.37 3.37 0 001.573-2.584m0 0c.011-.19.015-.382.012-.573M7.043 20.071c-.718-.001-1.42-.142-2.073-.418m0 0a3.013 3.013 0 01-1.627-2.22m0 0A19.467 19.467 0 013 11.75V11a9 9 0 0118 0v.75c0 1.954-.29 3.84-.836 5.617m0 0a3.013 3.013 0 01-1.627 2.22m0 0a10.87 10.87 0 01-3.626 1.077m0 0a15.849 15.849 0 01-3.077 0" />
+        </svg>
+        <span>Acceso Biométrico / Passkey</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('btn-biometric').addEventListener('click', async () => {
+    try {
+      // 1. Obtener opciones del servidor
+      const resp = await fetch('/auth/login-options');
+      if (!resp.ok) {
+        throw new Error('No se pudieron obtener las opciones de inicio biométrico.');
+      }
+      const options = await resp.json();
+
+      // 2. Ejecutar la autenticación en el cliente
+      const asserResp = await SimpleWebAuthnBrowser.startAuthentication({ optionsJSON: options });
+
+      // 3. Enviar respuesta al servidor para verificar
+      const verificationResp = await fetch('/auth/login-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(asserResp)
+      });
+
+      const verificationResult = await verificationResp.json();
+      if (verificationResult.success) {
+        window.location.href = '/dashboard';
+      } else {
+        showToast('Autenticación fallida: ' + verificationResult.message, 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Error de acceso biométrico: ' + (err.message || 'Asegúrate de tener una passkey registrada.'), 'error');
+    }
+  });
+</script>
+
+<%- include('../../partials/foot') %>

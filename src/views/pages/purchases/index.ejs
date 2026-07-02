@@ -1,0 +1,102 @@
+<%- include('../../partials/head', { title: 'Historial de Compras' }) %>
+
+<div class="min-h-screen bg-neutral-950 flex flex-col">
+  <!-- Nav Bar -->
+  <nav class="bg-neutral-900 border-b border-neutral-800 px-6 py-4 flex items-center justify-between shadow-md">
+    <div class="flex items-center gap-3">
+      <a href="/dashboard" class="text-neutral-400 hover:text-white transition-colors">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+      </a>
+      <div>
+        <span class="text-xl font-bold text-white tracking-wide">Compras e Inventario</span>
+        <span class="text-xs block text-neutral-400 font-medium">Historial de facturas y abastecimiento</span>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-3">
+      <a href="/purchases/payments" class="bg-neutral-800 hover:bg-neutral-750 border border-neutral-750 text-neutral-200 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2">
+        <svg class="h-4 w-4 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>Cuentas por Pagar (CxP)</span>
+      </a>
+      <a href="/purchases/new" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-md shadow-blue-500/10 flex items-center gap-2">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+        <span>Ingresar Factura</span>
+      </a>
+    </div>
+  </nav>
+
+  <main class="flex-grow p-6 max-w-7xl w-full mx-auto space-y-6">
+    <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm">
+      <h2 class="text-lg font-bold text-white mb-4">Registro de Facturas</h2>
+      
+      <% if (purchases.length === 0) { %>
+        <p class="text-sm text-neutral-500 py-8 text-center">No se han registrado compras de mercadería.</p>
+      <% } else { %>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-neutral-800 text-left text-sm text-neutral-300">
+            <thead>
+              <tr class="text-neutral-500 font-semibold uppercase tracking-wider text-xs">
+                <th class="py-3 px-4">Fecha</th>
+                <th class="py-3 px-4">Factura No.</th>
+                <th class="py-3 px-4">Proveedor</th>
+                <th class="py-3 px-4">Sucursal</th>
+                <th class="py-3 px-4">Monto Total</th>
+                <th class="py-3 px-4">Condición</th>
+                <th class="py-3 px-4">Estado Pago</th>
+                <th class="py-3 px-4">Saldo Pendiente</th>
+                <th class="py-3 px-4">Vencimiento</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-neutral-800">
+              <% purchases.forEach(p => { %>
+                <tr class="hover:bg-neutral-950/40 transition-colors">
+                  <td class="py-4 px-4 font-mono text-xs text-neutral-400"><%= new Date(p.createdAt).toLocaleString('es-SV') %></td>
+                  <td class="py-4 px-4 font-bold text-white"><%= p.invoiceNumber %></td>
+                  <td class="py-4 px-4 text-neutral-300"><%= p.supplier ? p.supplier.name : 'N/A' %></td>
+                  <td class="py-4 px-4 text-neutral-400"><%= p.branch ? p.branch.name : 'N/A' %></td>
+                  <td class="py-4 px-4 font-bold text-emerald-400">$<%= parseFloat(p.totalAmount).toFixed(2) %></td>
+                  <td class="py-4 px-4">
+                    <% if (p.paymentMethod === 'credit') { %>
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-950 text-amber-400 border border-amber-900/60">
+                        Crédito (CxP)
+                      </span>
+                    <% } else { %>
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-neutral-800 text-neutral-400 border border-neutral-700/60">
+                        Contado
+                      </span>
+                    <% } %>
+                  </td>
+                  <td class="py-4 px-4">
+                    <% if (p.paymentStatus === 'paid') { %>
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-950 text-emerald-400 border border-emerald-900/60">
+                        Pagado
+                      </span>
+                    <% } else { %>
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-red-950 text-red-400 border border-red-900/60 animate-pulse">
+                        Pendiente
+                      </span>
+                    <% } %>
+                  </td>
+                  <td class="py-4 px-4 font-mono font-semibold text-neutral-300">
+                    $<%= (parseFloat(p.totalAmount) - parseFloat(p.amountPaid || 0)).toFixed(2) %>
+                  </td>
+                  <td class="py-4 px-4 text-xs font-mono text-neutral-400">
+                    <%= p.dueDate ? new Date(p.dueDate + 'T00:00:00').toLocaleDateString('es-SV') : '-' %>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </main>
+</div>
+
+<%- include('../../partials/foot') %>

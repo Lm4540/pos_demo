@@ -1,0 +1,385 @@
+<%- include('../partials/head', { title: 'Panel Principal' }) %>
+
+<div class="flex-grow flex flex-col min-h-screen bg-neutral-950">
+  <!-- Nav Bar -->
+  <nav class="bg-neutral-900 border-b border-neutral-800 px-6 py-4 flex items-center justify-between shadow-md">
+    <div class="flex items-center gap-3">
+      <div class="h-10 w-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+        <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        </svg>
+      </div>
+      <div>
+        <span class="text-xl font-bold text-white tracking-wide">RG Simple POS</span>
+        <span class="text-xs block text-neutral-400 font-medium">Sucursal: <strong class="text-blue-400"><%= user.branch ? user.branch.name : 'Ninguna' %></strong></span>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-4">
+      <div class="text-right hidden sm:block">
+        <span class="text-sm font-semibold text-white block"><%= user.fullName %></span>
+        <span class="text-xs text-neutral-500 capitalize"><%= user.roleId %></span>
+      </div>
+      <a href="/auth/logout" class="bg-neutral-800 hover:bg-red-950 hover:text-red-200 border border-neutral-700 hover:border-red-900 px-4 py-2 rounded-xl text-sm font-medium text-neutral-300 transition-all shadow-sm">
+        Cerrar Sesión
+      </a>
+    </div>
+  </nav>
+
+  <!-- Main Content Dashboard Grid -->
+  <main class="flex-grow p-6 max-w-7xl w-full mx-auto space-y-8">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <h1 class="text-3xl font-extrabold text-white tracking-tight">Bienvenido, <%= user.fullName %></h1>
+        <p class="text-neutral-400 text-sm mt-1">El Salvador POS - Gestión y Administración</p>
+      </div>
+      
+      <!-- Biometrics link status -->
+      <div>
+        <% if (!hasBiometrics) { %>
+          <button id="btn-enroll-biometric" class="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-5 py-3 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-blue-500/20 cursor-pointer">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 009 11.571V11a4 4 0 118 0v.571c0 1.253.25 2.45.71 3.536m-8.62-4.897a6.7 6.7 0 00-.71-2.585M15 7h.01" />
+            </svg>
+            <span>Vincular Huella / Biometría</span>
+          </button>
+        <% } else { %>
+          <div class="flex items-center gap-2 bg-emerald-950/40 border border-emerald-800 text-emerald-450 px-5 py-3 rounded-xl text-sm font-bold shadow-md">
+            <svg class="h-5 w-5 text-emerald-450" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+            <span>Huella Vinculada</span>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Alertas de Stock y Vencimiento -->
+    <% if (criticalStockProducts.length > 0 || expiringBatches.length > 0) { %>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Stock Crítico -->
+        <% if (criticalStockProducts.length > 0) { %>
+          <div class="bg-red-950/20 border border-red-900/60 p-5 rounded-2xl space-y-3">
+            <h4 class="text-sm font-bold text-red-400 flex items-center gap-2">
+              <svg class="h-5 w-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span>ALERTA DE STOCK CRÍTICO (Agotándose)</span>
+            </h4>
+            <div class="max-h-60 overflow-y-auto space-y-2">
+              <% criticalStockProducts.forEach(bp => { %>
+                <div class="flex items-center justify-between p-2.5 bg-neutral-950/50 border border-red-900/30 rounded-xl">
+                  <div>
+                    <span class="text-xs font-bold text-white block"><%= bp.product ? bp.product.name : 'Artículo' %></span>
+                    <span class="text-[10px] text-neutral-500">Cód: <%= bp.product ? bp.product.barCode : 'N/A' %></span>
+                  </div>
+                  <div class="text-right">
+                    <span class="text-xs font-mono font-bold text-red-400 block"><%= bp.totalStock %> uds</span>
+                    <span class="text-[9px] text-neutral-500 block">Mínimo: <%= bp.minStock %></span>
+                  </div>
+                </div>
+              <% }) %>
+            </div>
+          </div>
+        <% } %>
+
+        <!-- Próximos a Vencer -->
+        <% if (expiringBatches.length > 0) { %>
+          <div class="bg-amber-950/20 border border-amber-900/60 p-5 rounded-2xl space-y-3">
+            <h4 class="text-sm font-bold text-amber-400 flex items-center gap-2">
+              <svg class="h-5 w-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>ALERTA DE EXPIRACIÓN PRÓXIMA (Menos de 30 días)</span>
+            </h4>
+            <div class="max-h-60 overflow-y-auto space-y-2">
+              <% expiringBatches.forEach(b => { %>
+                <% const diffTime = new Date(b.expirationDate) - new Date(); %>
+                <% const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); %>
+                <div class="flex items-center justify-between p-2.5 bg-neutral-950/50 border border-amber-900/30 rounded-xl">
+                  <div>
+                    <span class="text-xs font-bold text-white block"><%= b.product ? b.product.name : 'Artículo' %></span>
+                    <span class="text-[10px] text-neutral-500">Lote: <strong class="text-neutral-400 font-mono"><%= b.batchCode %></strong></span>
+                  </div>
+                  <div class="text-right">
+                    <span class="text-xs font-semibold text-amber-400 block">Vence en <%= diffDays %> días</span>
+                    <span class="text-[9px] text-neutral-500 block">Fecha: <%= new Date(b.expirationDate).toLocaleDateString('es-SV') %></span>
+                  </div>
+                </div>
+              <% }) %>
+            </div>
+          </div>
+        <% } %>
+
+      </div>
+    <% } %>
+
+    <!-- Operations Modules -->
+    <div class="space-y-4">
+      <h2 class="text-lg font-bold text-neutral-400 tracking-wider uppercase">Operaciones de Caja y Ventas</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        
+        <!-- Punto de Venta (POS) -->
+        <a href="/sales/pos" class="group bg-neutral-900 border border-neutral-800 hover:border-emerald-500 p-6 rounded-2xl transition-all shadow-sm hover:shadow-lg hover:shadow-emerald-500/5 hover:-translate-y-1 block">
+          <div class="h-12 w-12 bg-emerald-950 border border-emerald-800 rounded-xl flex items-center justify-center group-hover:bg-emerald-600 transition-colors">
+            <svg class="h-6 w-6 text-emerald-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-white mt-4">Punto de Venta (POS)</h3>
+          <p class="text-neutral-400 text-sm mt-1">Registra y factura ventas al contado o al crédito con descarga de stock.</p>
+        </a>
+
+        <!-- Control de Caja -->
+        <div class="group bg-neutral-900 border border-neutral-800 hover:border-teal-500 p-6 rounded-2xl transition-all shadow-sm hover:shadow-lg hover:shadow-teal-500/5 hover:-translate-y-1 block">
+          <a href="/cashier/details">
+            <div class="h-12 w-12 bg-teal-950 border border-teal-800 rounded-xl flex items-center justify-center group-hover:bg-teal-600 transition-colors">
+              <svg class="h-6 w-6 text-teal-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-white mt-4">Control de Caja</h3>
+            <p class="text-neutral-400 text-sm mt-1">Apertura y cierre de turnos, depósitos y retiros de efectivo.</p>
+          </a>
+          <% if (user.roleId === 'admin' || user.roleId === 'supervisor') { %>
+            <div class="border-t border-neutral-800/80 pt-3 mt-3">
+              <a href="/cashier/history" class="text-xs font-bold text-teal-400 hover:text-teal-300 hover:underline inline-flex items-center gap-1 cursor-pointer">
+                <span>📊 Historial de Cortes/Arqueos</span>
+                <span>→</span>
+              </a>
+            </div>
+          <% } %>
+        </div>
+
+        <!-- Registro de Compras -->
+        <% if (user.roleId === 'admin' || user.roleId === 'supervisor') { %>
+        <a href="/purchases" class="group bg-neutral-900 border border-neutral-800 hover:border-blue-500 p-6 rounded-2xl transition-all shadow-sm hover:shadow-lg hover:shadow-blue-500/5 hover:-translate-y-1 block">
+          <div class="h-12 w-12 bg-blue-950 border border-blue-800 rounded-xl flex items-center justify-center group-hover:bg-blue-600 transition-colors">
+            <svg class="h-6 w-6 text-blue-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-white mt-4">Compras (Ingreso)</h3>
+          <p class="text-neutral-400 text-sm mt-1">Abastece el inventario registrando facturas de proveedores por lote.</p>
+        </a>
+        <% } %>
+
+        <!-- Módulo de Gastos -->
+        <% if (user.roleId === 'admin' || user.roleId === 'supervisor') { %>
+        <a href="/expenses" class="group bg-neutral-900 border border-neutral-800 hover:border-red-500 p-6 rounded-2xl transition-all shadow-sm hover:shadow-lg hover:shadow-red-500/5 hover:-translate-y-1 block">
+          <div class="h-12 w-12 bg-red-950 border border-red-800 rounded-xl flex items-center justify-center group-hover:bg-red-600 transition-colors">
+            <svg class="h-6 w-6 text-red-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-white mt-4">Control de Gastos</h3>
+          <p class="text-neutral-400 text-sm mt-1">Registra egresos y facturas de servicios deduciéndolos de la caja.</p>
+        </a>
+        <% } %>
+
+        <!-- Reporte Financiero (Supervisor/Admin) -->
+        <% if (user.roleId === 'admin' || user.roleId === 'supervisor') { %>
+        <div class="group bg-neutral-900 border border-neutral-800 hover:border-violet-500 p-6 rounded-2xl transition-all shadow-sm hover:shadow-lg hover:shadow-violet-500/5 hover:-translate-y-1 block">
+          <a href="/reports">
+            <div class="h-12 w-12 bg-violet-950 border border-violet-800 rounded-xl flex items-center justify-center group-hover:bg-violet-600 transition-colors">
+              <svg class="h-6 w-6 text-violet-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm8-12V7a2 2 0 00-2-2H5a2 2 0 00-2 2v4h5" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-white mt-4">Reportes Financieros</h3>
+            <p class="text-neutral-400 text-sm mt-1">Visualiza balances de ventas, compras, costos de inventario y utilidades netas.</p>
+          </a>
+          <div class="border-t border-neutral-800/80 pt-3 mt-3">
+            <a href="/reports/stock" class="text-xs font-bold text-violet-400 hover:text-violet-300 hover:underline inline-flex items-center gap-1 cursor-pointer">
+              <span>📦 Reporte de Stock Completo</span>
+              <span>→</span>
+            </a>
+          </div>
+        </div>
+        <% } %>
+
+        <!-- Traslados entre Sucursales (Supervisor/Admin) -->
+        <% if (user.roleId === 'admin' || user.roleId === 'supervisor') { %>
+        <a href="/transfers" class="group bg-neutral-900 border border-neutral-800 hover:border-blue-500 p-6 rounded-2xl transition-all shadow-sm hover:shadow-lg hover:shadow-blue-500/5 hover:-translate-y-1 block">
+          <div class="h-12 w-12 bg-blue-950 border border-blue-800 rounded-xl flex items-center justify-center group-hover:bg-blue-600 transition-colors">
+            <svg class="h-6 w-6 text-blue-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-white mt-4">Traslados de Inventario</h3>
+          <p class="text-neutral-400 text-sm mt-1">Transfiere lotes de mercancías de forma segura entre sucursales.</p>
+        </a>
+        <% } %>
+
+        <!-- Auditoría Física de Inventario (Supervisor/Admin) -->
+        <% if (user.roleId === 'admin' || user.roleId === 'supervisor') { %>
+        <a href="/inventory/audits" class="group bg-neutral-900 border border-neutral-800 hover:border-emerald-500 p-6 rounded-2xl transition-all shadow-sm hover:shadow-lg hover:shadow-emerald-500/5 hover:-translate-y-1 block">
+          <div class="h-12 w-12 bg-emerald-950 border border-emerald-800 rounded-xl flex items-center justify-center group-hover:bg-emerald-600 transition-colors">
+            <svg class="h-6 w-6 text-emerald-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-white mt-4">Auditoría Física</h3>
+          <p class="text-neutral-400 text-sm mt-1">Realiza inventarios físicos concilia mermas/ajustes.</p>
+        </a>
+        <% } %>
+
+        <!-- Promociones y Ofertas (Supervisor/Admin) -->
+        <% if (user.roleId === 'admin' || user.roleId === 'supervisor') { %>
+        <a href="/promotions" class="group bg-neutral-900 border border-neutral-800 hover:border-pink-500 p-6 rounded-2xl transition-all shadow-sm hover:shadow-lg hover:shadow-pink-500/5 hover:-translate-y-1 block">
+          <div class="h-12 w-12 bg-pink-950 border border-pink-800 rounded-xl flex items-center justify-center group-hover:bg-pink-600 transition-colors">
+            <svg class="h-6 w-6 text-pink-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5a2 2 0 10-2 2h2zm0 8h.01" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-white mt-4">Promociones y Descuentos</h3>
+          <p class="text-neutral-400 text-sm mt-1">Configura descuentos por porcentaje, precios promocionales y ofertas de volumen 3x2.</p>
+        </a>
+        <% } %>
+
+      </div>
+    </div>
+
+    <!-- Configuration Modules -->
+    <div class="space-y-4 pt-6">
+      <h2 class="text-lg font-bold text-neutral-400 tracking-wider uppercase">Catálogos y Configuración</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        
+        <!-- Productos -->
+        <a href="/products" class="group bg-neutral-900 border border-neutral-800 hover:border-cyan-500 p-6 rounded-2xl transition-all shadow-sm hover:shadow-lg hover:shadow-cyan-500/5 hover:-translate-y-1 block">
+          <div class="h-12 w-12 bg-cyan-950 border border-cyan-800 rounded-xl flex items-center justify-center group-hover:bg-cyan-600 transition-colors">
+            <svg class="h-6 w-6 text-cyan-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-white mt-4">Catálogo de Productos</h3>
+          <p class="text-neutral-400 text-sm mt-1">Administra el catálogo de productos, códigos de barras y precios base.</p>
+        </a>
+
+        <!-- Categorías -->
+        <a href="/categories" class="group bg-neutral-900 border border-neutral-800 hover:border-emerald-500 p-6 rounded-2xl transition-all shadow-sm hover:shadow-lg hover:shadow-emerald-500/5 hover:-translate-y-1 block">
+          <div class="h-12 w-12 bg-emerald-950 border border-emerald-800 rounded-xl flex items-center justify-center group-hover:bg-emerald-600 transition-colors">
+            <svg class="h-6 w-6 text-emerald-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-white mt-4">Categorías de Productos</h3>
+          <p class="text-neutral-400 text-sm mt-1">Clasifica el inventario en limpieza, perecederos, granos básicos, etc.</p>
+        </a>
+
+        <!-- Clientes -->
+        <a href="/clients" class="group bg-neutral-900 border border-neutral-800 hover:border-amber-500 p-6 rounded-2xl transition-all shadow-sm hover:shadow-lg hover:shadow-amber-500/5 hover:-translate-y-1 block">
+          <div class="h-12 w-12 bg-amber-950 border border-amber-800 rounded-xl flex items-center justify-center group-hover:bg-amber-600 transition-colors">
+            <svg class="h-6 w-6 text-amber-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-white mt-4">Clientes (CxC)</h3>
+          <p class="text-neutral-400 text-sm mt-1">Gestión del padrón de clientes, límites de crédito de confianza y plazos.</p>
+        </a>
+
+        <!-- Proveedores -->
+        <% if (user.roleId === 'admin' || user.roleId === 'supervisor') { %>
+        <a href="/suppliers" class="group bg-neutral-900 border border-neutral-800 hover:border-emerald-500 p-6 rounded-2xl transition-all shadow-sm hover:shadow-lg hover:shadow-emerald-500/5 hover:-translate-y-1 block">
+          <div class="h-12 w-12 bg-emerald-950 border border-emerald-800 rounded-xl flex items-center justify-center group-hover:bg-emerald-600 transition-colors">
+            <svg class="h-6 w-6 text-emerald-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-white mt-4">Directorio de Proveedores</h3>
+          <p class="text-neutral-400 text-sm mt-1">Administra los distribuidores de mercadería e información de contacto.</p>
+        </a>
+        <% } %>
+
+        <!-- Sucursales (Solo Admin) -->
+        <% if (user.roleId === 'admin') { %>
+        <a href="/branches" class="group bg-neutral-900 border border-neutral-800 hover:border-sky-500 p-6 rounded-2xl transition-all shadow-sm hover:shadow-lg hover:shadow-sky-500/5 hover:-translate-y-1 block">
+          <div class="h-12 w-12 bg-sky-950 border border-sky-800 rounded-xl flex items-center justify-center group-hover:bg-sky-600 transition-colors">
+            <svg class="h-6 w-6 text-sky-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-white mt-4">Sucursales</h3>
+          <p class="text-neutral-400 text-sm mt-1">Registra y administra las ubicaciones físicas del minimarket.</p>
+        </a>
+        <% } %>
+
+        <!-- Usuarios (Solo Admin) -->
+        <% if (user.roleId === 'admin') { %>
+        <a href="/users" class="group bg-neutral-900 border border-neutral-800 hover:border-indigo-500 p-6 rounded-2xl transition-all shadow-sm hover:shadow-lg hover:shadow-indigo-500/5 hover:-translate-y-1 block">
+          <div class="h-12 w-12 bg-indigo-950 border border-indigo-800 rounded-xl flex items-center justify-center group-hover:bg-indigo-600 transition-colors">
+            <svg class="h-6 w-6 text-indigo-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-white mt-4">Usuarios y Roles</h3>
+          <p class="text-neutral-400 text-sm mt-1">Administra cuentas, roles (`supervisor`, `cashier`) y accesos especiales.</p>
+        </a>
+        <% } %>
+
+        <!-- Auditoría (Solo Admin) -->
+        <% if (user.roleId === 'admin') { %>
+        <a href="/users/audit" class="group bg-neutral-900 border border-neutral-800 hover:border-violet-500 p-6 rounded-2xl transition-all shadow-sm hover:shadow-lg hover:shadow-violet-500/5 hover:-translate-y-1 block">
+          <div class="h-12 w-12 bg-violet-950 border border-violet-800 rounded-xl flex items-center justify-center group-hover:bg-violet-600 transition-colors">
+            <svg class="h-6 w-6 text-violet-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-white mt-4">Bitácora de Auditoría</h3>
+          <p class="text-neutral-400 text-sm mt-1">Revisa el historial detallado de acciones, accesos y operaciones críticas.</p>
+        </a>
+        <% } %>
+
+        <!-- Biometric Devices Management (Shown at bottom if already enrolled) -->
+        <% if (hasBiometrics) { %>
+        <div class="md:col-span-2 xl:col-span-3 mt-4 pt-6 border-t border-neutral-800">
+          <div class="bg-neutral-900 border border-neutral-800 p-6 rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-sm">
+            <div>
+              <h4 class="text-sm font-bold text-white uppercase tracking-wider">Métodos de Autenticación Vinculados</h4>
+              <p class="text-xs text-neutral-400 mt-1">Ya tienes dispositivos biométricos registrados para iniciar sesión sin contraseña.</p>
+            </div>
+            <button id="btn-enroll-biometric" class="bg-neutral-850 hover:bg-neutral-800 text-neutral-300 border border-neutral-700 px-4 py-2.5 rounded-xl text-xs font-semibold cursor-pointer whitespace-nowrap transition-all shadow-sm">
+              Registrar Otro Dispositivo
+            </button>
+          </div>
+        </div>
+        <% } %>
+  </main>
+</div>
+
+<script>
+  // Script to register/enroll new biometric credentials
+  document.getElementById('btn-enroll-biometric').addEventListener('click', async () => {
+    try {
+      // 1. Fetch options
+      const resp = await fetch('/auth/register-options');
+      if (!resp.ok) {
+        throw new Error('No autorizado o error al obtener opciones de registro biométrico.');
+      }
+      const options = await resp.json();
+
+      // 2. Client registration via WebAuthn API
+      const attestationResp = await SimpleWebAuthnBrowser.startRegistration({ optionsJSON: options });
+
+      // 3. Post to verify and save
+      const verificationResp = await fetch('/auth/register-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(attestationResp)
+      });
+
+      const verificationResult = await verificationResp.json();
+      if (verificationResult.success) {
+        showToast('¡Biometría vinculada con éxito! Ahora puedes iniciar sesión de forma rápida.', 'success');
+      } else {
+        showToast('Error al vincular biometría: ' + verificationResult.message, 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Error en enrolamiento biométrico: ' + (err.message || 'Verifica la compatibilidad de tu navegador o dispositivo.'), 'error');
+    }
+  });
+</script>
+
+<%- include('../partials/foot') %>

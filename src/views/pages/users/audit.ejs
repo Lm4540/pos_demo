@@ -1,0 +1,185 @@
+<%- include('../../partials/head', { title: 'Bitácora de Auditoría' }) %>
+
+<div class="min-h-screen bg-neutral-950 flex flex-col">
+  <!-- Nav Bar -->
+  <nav class="bg-neutral-900 border-b border-neutral-800 px-6 py-4 flex items-center justify-between shadow-md">
+    <div class="flex items-center gap-3">
+      <a href="/dashboard" class="text-neutral-400 hover:text-white transition-colors">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+      </a>
+      <div>
+        <span class="text-xl font-bold text-white tracking-wide">Bitácora de Auditoría</span>
+        <span class="text-xs block text-neutral-400 font-medium">Trazabilidad de acciones del sistema e historial de seguridad</span>
+      </div>
+    </div>
+  </nav>
+
+  <main class="flex-grow p-6 max-w-7xl w-full mx-auto space-y-6">
+    <!-- Filter Panel -->
+    <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm">
+      <h2 class="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-4">Filtrar Bitácora</h2>
+      <form method="GET" action="/users/audit" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+        
+        <!-- User filter -->
+        <div>
+          <label for="userId" class="block text-[10px] font-semibold text-neutral-400 uppercase tracking-wider mb-1">Usuario</label>
+          <select id="userId" name="userId" class="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-white text-xs focus:border-blue-500 focus:outline-none transition-all">
+            <option value="all" <%= selectedUserId === 'all' ? 'selected' : '' %>>Todos los usuarios</option>
+            <% allUsers.forEach(u => { %>
+              <option value="<%= u.id %>" <%= parseInt(selectedUserId, 10) === u.id ? 'selected' : '' %>><%= u.fullName %> (@<%= u.username %>)</option>
+            <% }) %>
+          </select>
+        </div>
+
+        <!-- Branch filter -->
+        <div>
+          <label for="branchId" class="block text-[10px] font-semibold text-neutral-400 uppercase tracking-wider mb-1">Sucursal</label>
+          <select id="branchId" name="branchId" class="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-white text-xs focus:border-blue-500 focus:outline-none transition-all">
+            <option value="all" <%= selectedBranchId === 'all' ? 'selected' : '' %>>Todas las sucursales</option>
+            <% allBranches.forEach(b => { %>
+              <option value="<%= b.id %>" <%= parseInt(selectedBranchId, 10) === b.id ? 'selected' : '' %>><%= b.name %></option>
+            <% }) %>
+          </select>
+        </div>
+
+        <!-- Action slug filter -->
+        <div>
+          <label for="action" class="block text-[10px] font-semibold text-neutral-400 uppercase tracking-wider mb-1">Tipo de Acción</label>
+          <input type="text" id="action" name="action" value="<%= selectedAction %>" placeholder="Ej: pos.sale_created" class="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-white text-xs focus:border-blue-500 focus:outline-none transition-all">
+        </div>
+
+        <!-- Date range start -->
+        <div>
+          <label for="startDate" class="block text-[10px] font-semibold text-neutral-400 uppercase tracking-wider mb-1">Fecha Inicio</label>
+          <input type="date" id="startDate" name="startDate" value="<%= startDate %>" class="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-white text-xs focus:border-blue-500 focus:outline-none transition-all font-mono font-bold">
+        </div>
+
+        <!-- Date range end -->
+        <div>
+          <label for="endDate" class="block text-[10px] font-semibold text-neutral-400 uppercase tracking-wider mb-1">Fecha Fin</label>
+          <input type="date" id="endDate" name="endDate" value="<%= endDate %>" class="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-white text-xs focus:border-blue-500 focus:outline-none transition-all font-mono font-bold">
+        </div>
+
+        <div class="md:col-span-5 flex justify-end gap-3 mt-2">
+          <% if (selectedUserId !== 'all' || selectedBranchId !== 'all' || selectedAction || startDate || endDate) { %>
+            <a href="/users/audit" class="px-4 py-2 bg-neutral-800 hover:bg-neutral-750 text-neutral-300 font-bold rounded-xl text-xs transition-all border border-neutral-700 cursor-pointer flex items-center justify-center">
+              Limpiar Filtros
+            </a>
+          <% } %>
+          <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-blue-500/10 cursor-pointer">
+            Aplicar Filtros
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Logs Table Container -->
+    <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm space-y-4">
+      <div class="flex justify-between items-center">
+        <h2 class="text-sm font-bold text-white">Acciones Registradas (<%= totalCount %>)</h2>
+        <span class="text-xs text-neutral-500 font-mono">Página <%= currentPage %> de <%= totalPages || 1 %></span>
+      </div>
+
+      <% if (logs.length === 0) { %>
+        <p class="text-xs text-neutral-500 py-12 text-center">No se encontraron registros que coincidan con los filtros seleccionados.</p>
+      <% } else { %>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-neutral-800 text-left text-xs text-neutral-300">
+            <thead>
+              <tr class="text-neutral-500 font-semibold uppercase tracking-wider text-[10px]">
+                <th class="py-3 px-3">Fecha y Hora</th>
+                <th class="py-3 px-3">Usuario</th>
+                <th class="py-3 px-3">Sucursal</th>
+                <th class="py-3 px-3">IP Address</th>
+                <th class="py-3 px-3">Acción</th>
+                <th class="py-3 px-3 text-right">Detalles</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-neutral-850">
+              <% logs.forEach((log, idx) => { %>
+                <tr class="hover:bg-neutral-950/20">
+                  <td class="py-3 px-3 font-mono text-neutral-500"><%= new Date(log.createdAt).toLocaleString('es-SV') %></td>
+                  <td class="py-3 px-3">
+                    <% if (log.user) { %>
+                      <div class="font-semibold text-neutral-200"><%= log.user.fullName %></div>
+                      <div class="text-[10px] text-neutral-500 font-mono">@<%= log.user.username %></div>
+                    <% } else { %>
+                      <span class="text-neutral-600 font-mono">Sistema / N/A</span>
+                    <% } %>
+                  </td>
+                  <td class="py-3 px-3 text-neutral-400 font-medium"><%= log.branch ? log.branch.name : 'Global / Consolidado' %></td>
+                  <td class="py-3 px-3 font-mono text-neutral-500"><%= log.ipAddress || '127.0.0.1' %></td>
+                  <td class="py-3 px-3">
+                    <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase font-mono 
+                      <%= log.action.includes('failed') || log.action.includes('deleted') || log.action.includes('voided') ? 'bg-red-950/60 text-red-400 border border-red-900/60' :
+                          log.action.includes('created') || log.action.includes('success') || log.action.includes('registered') ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-900/60' :
+                          'bg-blue-950/60 text-blue-400 border border-blue-900/60' %>">
+                      <%= log.action %>
+                    </span>
+                  </td>
+                  <td class="py-3 px-3 text-right">
+                    <button 
+                      onclick="toggleDetails(<%= idx %>)" 
+                      class="text-blue-500 hover:text-blue-400 text-xs font-semibold hover:underline cursor-pointer">
+                      Ver Payload
+                    </button>
+                  </td>
+                </tr>
+                <!-- Hidden Detail Row -->
+                <tr id="details-row-<%= idx %>" class="hidden bg-neutral-950/40">
+                  <td colspan="6" class="p-4 border-t border-neutral-850">
+                    <div class="space-y-2">
+                      <span class="text-[10px] font-bold text-neutral-500 uppercase tracking-wider block">Datos del Payload de Auditoría</span>
+                      <pre class="text-[10px] text-neutral-400 font-mono overflow-auto bg-neutral-950 border border-neutral-850 p-3 rounded-xl max-h-48 scrollbar-thin"><%= JSON.stringify(log.details, null, 2) %></pre>
+                    </div>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <% if (totalPages > 1) { %>
+          <div class="flex justify-between items-center pt-4 border-t border-neutral-800">
+            <div>
+              <span class="text-xs text-neutral-500">Mostrando registros <%= ((currentPage - 1) * 50) + 1 %> a <%= Math.min(currentPage * 50, totalCount) %> de <%= totalCount %></span>
+            </div>
+            <div class="flex gap-2">
+              <% if (currentPage > 1) { %>
+                <a href="?userId=<%= selectedUserId %>&branchId=<%= selectedBranchId %>&action=<%= selectedAction %>&startDate=<%= startDate %>&endDate=<%= endDate %>&page=<%= currentPage - 1 %>" class="px-4 py-2 bg-neutral-800 hover:bg-neutral-750 text-neutral-300 font-bold rounded-xl text-xs transition-all border border-neutral-700 cursor-pointer">
+                  Anterior
+                </a>
+              <% } else { %>
+                <span class="px-4 py-2 bg-neutral-900 text-neutral-600 font-bold rounded-xl text-xs border border-neutral-850 select-none">Anterior</span>
+              <% } %>
+
+              <% if (currentPage < totalPages) { %>
+                <a href="?userId=<%= selectedUserId %>&branchId=<%= selectedBranchId %>&action=<%= selectedAction %>&startDate=<%= startDate %>&endDate=<%= endDate %>&page=<%= currentPage + 1 %>" class="px-4 py-2 bg-neutral-800 hover:bg-neutral-750 text-neutral-300 font-bold rounded-xl text-xs transition-all border border-neutral-700 cursor-pointer">
+                  Siguiente
+                </a>
+              <% } else { %>
+                <span class="px-4 py-2 bg-neutral-900 text-neutral-600 font-bold rounded-xl text-xs border border-neutral-850 select-none">Siguiente</span>
+              <% } %>
+            </div>
+          </div>
+        <% } %>
+      <% } %>
+    </div>
+  </main>
+</div>
+
+<script>
+  function toggleDetails(idx) {
+    const el = document.getElementById(`details-row-${idx}`);
+    if (el.classList.contains('hidden')) {
+      el.classList.remove('hidden');
+    } else {
+      el.classList.add('hidden');
+    }
+  }
+</script>
+
+<%- include('../../partials/foot') %>

@@ -1,0 +1,203 @@
+<%- include('../../partials/head', { title: 'Historial de Ventas' }) %>
+
+<div class="min-h-screen bg-neutral-950 flex flex-col">
+  <!-- Nav Bar -->
+  <nav class="bg-neutral-900 border-b border-neutral-800 px-6 py-4 flex items-center justify-between shadow-md">
+    <div class="flex items-center gap-3">
+      <a href="/sales/pos" class="text-neutral-400 hover:text-white transition-colors">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+      </a>
+      <div>
+        <span class="text-xl font-bold text-white tracking-wide">Historial de Ventas</span>
+        <span class="text-xs block text-neutral-400 font-medium">Historial y reimpresión de comprobantes</span>
+      </div>
+    </div>
+  </nav>
+
+  <main class="flex-grow p-6 max-w-7xl w-full mx-auto space-y-6">
+    <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm">
+      <h2 class="text-lg font-bold text-white mb-4">Tickets Emitidos</h2>
+      
+      <% if (sales.length === 0) { %>
+        <p class="text-sm text-neutral-500 py-8 text-center">No se han emitido tickets en esta sucursal.</p>
+      <% } else { %>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-neutral-800 text-left text-sm text-neutral-300">
+            <thead>
+              <tr class="text-neutral-500 font-semibold uppercase tracking-wider text-xs">
+                <th class="py-3 px-4">Fecha</th>
+                <th class="py-3 px-4">Ticket</th>
+                <th class="py-3 px-4">Cliente</th>
+                <th class="py-3 px-4">Método Pago</th>
+                <th class="py-3 px-4">Total</th>
+                <th class="py-3 px-4 text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-neutral-800">
+              <% sales.forEach(s => { %>
+                <tr class="hover:bg-neutral-950/40 transition-colors">
+                  <td class="py-4 px-4 font-mono text-xs text-neutral-400"><%= new Date(s.createdAt).toLocaleString('es-SV') %></td>
+                  <td class="py-4 px-4 font-bold text-white"><%= s.ticketNumber %></td>
+                  <td class="py-4 px-4 text-neutral-300"><%= s.client ? s.client.name : 'Consumidor Final' %></td>
+                  <td class="py-4 px-4">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase <%= s.paymentMethod === 'cash' ? 'bg-emerald-950 text-emerald-400 border border-emerald-900/60' : 'bg-amber-950 text-amber-400 border border-amber-900/60' %>">
+                      <%= s.paymentMethod === 'cash' ? 'Efectivo' : 'Crédito' %>
+                    </span>
+                  </td>
+                  <td class="py-4 px-4 font-bold text-white">$<%= parseFloat(s.totalAmount).toFixed(2) %></td>
+                  <td class="py-4 px-4 text-right space-x-3">
+                    <button 
+                      onclick="reprintTicket(<%= JSON.stringify(s) %>)"
+                      class="text-blue-500 hover:text-blue-400 text-xs font-semibold hover:underline cursor-pointer">
+                      Reimprimir
+                    </button>
+                    
+                    <!-- Void sale (allowed for supervisors/admins or trusted cashier with override) -->
+                    <button 
+                      onclick="voidTicket(<%= s.id %>)"
+                      class="text-red-500 hover:text-red-400 text-xs font-semibold hover:underline cursor-pointer">
+                      Anular
+                    </button>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </main>
+</div>
+
+<!-- Reprint Ticket Thermal Modal -->
+<div id="ticket-modal" class="fixed inset-0 bg-neutral-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+  <div class="bg-neutral-900 border border-neutral-800 w-full max-w-sm rounded-2xl shadow-2xl p-6 relative">
+    <button onclick="closeTicketModal()" class="absolute top-4 right-4 text-neutral-500 hover:text-white cursor-pointer">
+      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+    
+    <h3 class="text-lg font-bold text-white text-center mb-4">Reimpresión de Ticket</h3>
+    
+    <div id="printable-ticket" class="bg-white text-black p-4 font-mono text-xs border border-neutral-200 rounded-lg max-h-96 overflow-y-auto">
+      <!-- Dynamic ticket content injected here -->
+    </div>
+    
+    <div class="flex gap-3 mt-5">
+      <button onclick="closeTicketModal()" class="w-1/2 py-2.5 text-xs font-semibold text-neutral-400 bg-neutral-850 hover:bg-neutral-800 border border-neutral-800 rounded-xl transition-all cursor-pointer text-center">
+        Cerrar
+      </button>
+      <button onclick="printTicket()" class="w-1/2 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 rounded-xl transition-all cursor-pointer text-center flex items-center justify-center gap-1 shadow-md shadow-blue-500/10">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+        </svg>
+        <span>Imprimir</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* CSS Print styling for receipts */
+  @media print {
+    body * {
+      visibility: hidden;
+    }
+    #printable-ticket, #printable-ticket * {
+      visibility: visible;
+    }
+    #printable-ticket {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 80mm;
+      margin: 0;
+      padding: 0;
+      border: none;
+      font-size: 10pt;
+    }
+  }
+</style>
+
+<script>
+  function reprintTicket(sale) {
+    const container = document.getElementById('printable-ticket');
+    const date = new Date(sale.createdAt).toLocaleString('es-SV');
+    const clientName = sale.client ? sale.client.name : 'Consumidor Final';
+
+    container.innerHTML = `
+      <div style="text-align: center; margin-bottom: 10px;">
+        <h4 style="margin: 0; text-transform: uppercase;">RG Simple POS</h4>
+        <p style="margin: 2px 0; font-size: 9px;">Casa Central - El Salvador</p>
+        <p style="margin: 2px 0; font-size: 9px;">Telf: 2222-2222</p>
+        <p style="margin: 2px 0; font-size: 9px;">IVA Incluido - Consumidor Final</p>
+        <p style="margin: 2px 0; font-size: 9px; font-weight: bold; color: red;">** DUPLICADO REIMPRESO **</p>
+      </div>
+      <div style="border-top: 1px dashed #000; border-bottom: 1px dashed #000; padding: 5px 0; margin-bottom: 10px;">
+        <p style="margin: 2px 0;"><strong>Ticket:</strong> ${sale.ticketNumber}</p>
+        <p style="margin: 2px 0;"><strong>Fecha Emisión:</strong> ${date}</p>
+        <p style="margin: 2px 0;"><strong>Cliente:</strong> ${clientName}</p>
+      </div>
+      <table style="width: 100%; font-size: 10px; border-collapse: collapse; margin-bottom: 10px;">
+        <thead>
+          <tr style="border-bottom: 1px solid #000;">
+            <th style="text-align: left;">Art.</th>
+            <th style="text-align: center;">Cant.</th>
+            <th style="text-align: right;">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${sale.details.map(d => `
+            <tr>
+              <td style="padding: 3px 0;">${d.product ? d.product.name : 'Artículo'}</td>
+              <td style="text-align: center;">${d.quantity}</td>
+              <td style="text-align: right;">$${(parseFloat(d.unitPrice) * d.quantity).toFixed(2)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      <div style="border-top: 1px dashed #000; padding-top: 5px; text-align: right; font-weight: bold; font-size: 11px;">
+        TOTAL: $${parseFloat(sale.totalAmount).toFixed(2)}
+      </div>
+      <div style="margin-top: 15px; text-align: center; font-size: 9px;">
+        ¡Gracias por su compra!
+      </div>
+    `;
+
+    document.getElementById('ticket-modal').classList.remove('hidden');
+  }
+
+  function closeTicketModal() {
+    document.getElementById('ticket-modal').classList.add('hidden');
+  }
+
+  function printTicket() {
+    window.print();
+  }
+
+  async function voidTicket(id) {
+    showConfirm('¿Estás seguro de que deseas anular esta venta? Esta acción revertirá el stock de los productos correspondientes y el saldo del cliente.', async () => {
+      try {
+        const resp = await fetch(`/sales/${id}`, { method: 'DELETE' });
+        const resData = await resp.json();
+        
+        if (resData.success) {
+          showToast('Venta anulada con éxito.', 'success');
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
+        } else {
+          showToast('Error: ' + resData.message, 'error');
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Ocurrió un error al anular la venta.', 'error');
+      }
+    });
+  }
+</script>
+
+<%- include('../../partials/foot') %>

@@ -1,0 +1,222 @@
+<%- include('../../partials/head', { title: 'Categorías de Productos' }) %>
+
+<div class="min-h-screen bg-neutral-950 flex flex-col">
+  <!-- Nav Bar -->
+  <nav class="bg-neutral-900 border-b border-neutral-800 px-6 py-4 flex items-center justify-between shadow-md">
+    <div class="flex items-center gap-3">
+      <a href="/dashboard" class="text-neutral-400 hover:text-white transition-colors">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+      </a>
+      <div>
+        <span class="text-xl font-bold text-white tracking-wide">Categorías</span>
+        <span class="text-xs block text-neutral-400 font-medium">Clasificación y Organización de Productos</span>
+      </div>
+    </div>
+  </nav>
+
+  <main class="flex-grow p-6 max-w-7xl w-full mx-auto space-y-6">
+    <!-- List Area -->
+    <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <h2 class="text-lg font-bold text-white">Categorías Registradas</h2>
+        <div class="flex items-center gap-3">
+          <!-- Search input -->
+          <input 
+            type="text" 
+            id="category-search" 
+            onkeyup="filterCategories()" 
+            class="px-4 py-2 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-64" 
+            placeholder="Buscar por nombre o descripción...">
+          
+          <% if (user.roleId === 'admin') { %>
+            <button onclick="openCreateModal()" class="bg-blue-600 hover:bg-blue-500 px-4 py-2.5 rounded-xl text-xs font-bold text-white transition-all shadow-md shadow-blue-500/10 flex items-center gap-1.5 cursor-pointer">
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              <span>Nueva Categoría</span>
+            </button>
+          <% } %>
+        </div>
+      </div>
+      
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6" id="categories-list-grid">
+        <% categories.forEach(c => { %>
+          <div class="category-item bg-neutral-950 border border-neutral-800 rounded-2xl p-5 flex flex-col justify-between hover:border-neutral-700 transition-colors" data-name="<%= c.name.toLowerCase() %>" data-desc="<%= (c.description || '').toLowerCase() %>">
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="font-bold text-white leading-tight text-lg"><%= c.name %></h3>
+                <span class="h-8 w-8 rounded-lg bg-neutral-900 border border-neutral-800 flex items-center justify-center text-blue-400">
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </span>
+              </div>
+              <p class="text-xs text-neutral-400 min-h-[36px] line-clamp-2"><%= c.description || 'Sin descripción' %></p>
+            </div>
+            
+            <div class="flex justify-end gap-3 text-xs font-semibold mt-4 pt-3 border-t border-neutral-900">
+              <% if (user.roleId === 'admin') { %>
+                <button 
+                  onclick="openEditModal(<%= JSON.stringify(c) %>)"
+                  class="text-blue-500 hover:text-blue-400 hover:underline cursor-pointer">
+                  Editar
+                </button>
+                <button 
+                  onclick="deleteCategory(<%= c.id %>)"
+                  class="text-red-500 hover:text-red-400 hover:underline cursor-pointer">
+                  Eliminar
+                </button>
+              <% } %>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Create Modal Overlay -->
+<div id="create-modal" class="fixed inset-0 bg-neutral-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+  <div class="bg-neutral-900 border border-neutral-800 w-full max-w-md p-6 rounded-2xl shadow-2xl relative">
+    <div class="flex justify-between items-center pb-3 border-b border-neutral-800 mb-4">
+      <h2 class="text-xl font-bold text-white">Crear Nueva Categoría</h2>
+      <button onclick="closeCreateModal()" class="text-neutral-500 hover:text-white cursor-pointer transition-colors">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    
+    <% if (error) { %>
+      <div class="bg-red-950/40 border border-red-800 text-red-200 px-4 py-2 rounded-lg text-xs mb-4">
+        <%= error %>
+      </div>
+    <% } %>
+
+    <form id="create-category-form" action="/categories" method="POST" class="space-y-4" onsubmit="this.querySelector('button[type=submit]').disabled=true; this.querySelector('button[type=submit]').innerText='Guardando...';">
+      <div>
+        <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Nombre de la Categoría *</label>
+        <input type="text" name="name" required class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm" placeholder="Ej. Granos básicos">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Descripción</label>
+        <textarea name="description" rows="3" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm" placeholder="Opcional..."></textarea>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-3 border-t border-neutral-800">
+        <button type="button" onclick="closeCreateModal()" class="px-4 py-2.5 text-sm font-semibold text-neutral-400 bg-neutral-800 hover:bg-neutral-750 rounded-xl transition-all cursor-pointer">
+          Cancelar
+        </button>
+        <button type="submit" class="px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-xl transition-all cursor-pointer shadow-md shadow-blue-500/10">
+          Guardar Categoría
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Modal Overlay -->
+<div id="edit-modal" class="fixed inset-0 bg-neutral-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+  <div class="bg-neutral-900 border border-neutral-800 w-full max-w-md p-6 rounded-2xl shadow-2xl relative">
+    <div class="flex justify-between items-center pb-3 border-b border-neutral-800 mb-4">
+      <h2 class="text-xl font-bold text-white">Editar Categoría</h2>
+      <button onclick="closeEditModal()" class="text-neutral-500 hover:text-white cursor-pointer transition-colors">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    
+    <form id="edit-form" method="POST" class="space-y-4" onsubmit="this.querySelector('button[type=submit]').disabled=true; this.querySelector('button[type=submit]').innerText='Guardando...';">
+      <div>
+        <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Nombre de la Categoría *</label>
+        <input type="text" id="edit-name" name="name" required class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Descripción</label>
+        <textarea id="edit-description" name="description" rows="3" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm"></textarea>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-3 border-t border-neutral-800">
+        <button type="button" onclick="closeEditModal()" class="px-4 py-2.5 text-sm font-semibold text-neutral-400 bg-neutral-800 hover:bg-neutral-750 rounded-xl transition-all cursor-pointer">
+          Cancelar
+        </button>
+        <button type="submit" class="px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-xl transition-all cursor-pointer shadow-md shadow-blue-500/10">
+          Guardar Cambios
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function filterCategories() {
+    const query = document.getElementById('category-search').value.toLowerCase();
+    const items = document.querySelectorAll('.category-item');
+    items.forEach(item => {
+      const name = item.dataset.name;
+      const desc = item.dataset.desc;
+      if (name.includes(query) || desc.includes(query)) {
+        item.classList.remove('hidden');
+      } else {
+        item.classList.add('hidden');
+      }
+    });
+  }
+
+  function openCreateModal() {
+    document.getElementById('create-modal').classList.remove('hidden');
+  }
+
+  function closeCreateModal() {
+    document.getElementById('create-modal').classList.add('hidden');
+  }
+
+  function openEditModal(category) {
+    document.getElementById('edit-form').action = `/categories/${category.id}/edit`;
+    document.getElementById('edit-name').value = category.name;
+    document.getElementById('edit-description').value = category.description || '';
+    document.getElementById('edit-modal').classList.remove('hidden');
+  }
+
+  function closeEditModal() {
+    document.getElementById('edit-modal').classList.add('hidden');
+  }
+
+  async function deleteCategory(id) {
+    showConfirm('¿Estás seguro de que deseas eliminar esta categoría?', async () => {
+      try {
+        const resp = await fetch(`/categories/${id}`, { method: 'DELETE' });
+        const resData = await resp.json();
+        if (resData.success) {
+          window.location.reload();
+        } else {
+          showToast('Error: ' + resData.message, 'error');
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Ocurrió un error al eliminar la categoría.', 'error');
+      }
+    });
+  }
+
+  // Auto-open create modal if error exists
+  <% if (error) { %>
+    window.onload = function() {
+      openCreateModal();
+    }
+  <% } %>
+
+  // Success indicator toast
+  window.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('success')) {
+      showToast('Operación realizada con éxito.', 'success');
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  });
+</script>
+
+<%- include('../../partials/foot') %>

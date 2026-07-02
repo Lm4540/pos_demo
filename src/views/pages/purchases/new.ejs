@@ -1,0 +1,295 @@
+<%- include('../../partials/head', { title: 'Ingresar Compra' }) %>
+
+<div class="min-h-screen bg-neutral-950 flex flex-col">
+  <!-- Nav Bar -->
+  <nav class="bg-neutral-900 border-b border-neutral-800 px-6 py-4 flex items-center justify-between shadow-md">
+    <div class="flex items-center gap-3">
+      <a href="/purchases" class="text-neutral-400 hover:text-white transition-colors">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+      </a>
+      <div>
+        <span class="text-xl font-bold text-white tracking-wide">Ingresar Factura de Compra</span>
+        <span class="text-xs block text-neutral-400 font-medium">Abastecimiento de stock por lotes y caducidades</span>
+      </div>
+    </div>
+  </nav>
+
+  <main class="flex-grow p-6 max-w-7xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+    <!-- Invoice Header & Add Items Form (5/12) -->
+    <div class="lg:col-span-5 space-y-6">
+      <!-- Invoice Header -->
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm">
+        <h2 class="text-base font-bold text-white mb-4">Datos de Factura</h2>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Número de Factura *</label>
+            <input type="text" id="invoiceNumber" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" placeholder="FAC-00123">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Proveedor *</label>
+            <select id="supplierId" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+              <option value="">Seleccione un proveedor...</option>
+              <% suppliers.forEach(s => { %>
+                <option value="<%= s.id %>"><%= s.name %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Condición de Pago</label>
+              <select id="paymentMethod" onchange="toggleDueDate()" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                <option value="cash">Contado (Pagado)</option>
+                <option value="credit">Crédito (CxP)</option>
+              </select>
+            </div>
+            <div id="due-date-container" class="hidden">
+              <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Fecha Vencimiento *</label>
+              <input type="date" id="dueDate" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add Item Panel -->
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm">
+        <h2 class="text-base font-bold text-white mb-4">Agregar Producto</h2>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Seleccionar Producto *</label>
+            <select id="productId" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+              <option value="">Seleccione un producto...</option>
+              <% products.forEach(p => { %>
+                <option value="<%= p.id %>" data-barcode="<%= p.barCode || '' %>"><%= p.name %> <%= p.barCode ? '(' + p.barCode + ')' : '' %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Código de Lote *</label>
+              <input type="text" id="batchCode" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" placeholder="LOTE-001">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Fecha Vencimiento</label>
+              <input type="date" id="expirationDate" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Cantidad *</label>
+              <input type="number" id="quantity" min="1" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" placeholder="10">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Costo Unit. *</label>
+              <input type="number" step="0.01" min="0.00" id="unitCost" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" placeholder="0.50">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">PVP Sugerido *</label>
+              <input type="number" step="0.01" min="0.00" id="salePrice" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" placeholder="1.00">
+            </div>
+          </div>
+          <button type="button" onclick="addItem()" class="w-full py-2.5 bg-neutral-850 hover:bg-neutral-800 border border-neutral-750 text-neutral-200 font-semibold rounded-xl text-sm transition-all cursor-pointer">
+            Añadir a la lista
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Items List Table (7/12) -->
+    <div class="lg:col-span-7 space-y-6">
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm flex flex-col h-full justify-between">
+        <div>
+          <h2 class="text-lg font-bold text-white mb-4">Detalle de Artículos a Ingresar</h2>
+          
+          <div class="overflow-x-auto min-h-60">
+            <table class="min-w-full divide-y divide-neutral-800 text-left text-sm text-neutral-300">
+              <thead>
+                <tr class="text-neutral-500 font-semibold uppercase tracking-wider text-xs">
+                  <th class="py-2.5 px-3">Producto</th>
+                  <th class="py-2.5 px-3">Lote/Vence</th>
+                  <th class="py-2.5 px-3 text-center">Cant.</th>
+                  <th class="py-2.5 px-3 text-right">Costo U.</th>
+                  <th class="py-2.5 px-3 text-right">PVP</th>
+                  <th class="py-2.5 px-3 text-right">Total</th>
+                  <th class="py-2.5 px-3 text-right">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="items-list-body" class="divide-y divide-neutral-800">
+                <tr>
+                  <td colspan="7" class="py-12 text-center text-neutral-500 text-xs">La lista de artículos está vacía.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="border-t border-neutral-800 pt-6 mt-6 flex items-center justify-between">
+          <div class="text-left">
+            <span class="text-xs text-neutral-500 block uppercase tracking-wider font-semibold">Total de la Factura:</span>
+            <span id="invoice-total" class="text-2xl font-black text-emerald-400">$0.00</span>
+          </div>
+          <button type="button" onclick="submitPurchase()" id="btn-save-purchase" class="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-sm transition-all shadow-md shadow-blue-500/10 cursor-pointer">
+            Procesar Factura y Stock
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  let items = [];
+
+  function addItem() {
+    const prodSelect = document.getElementById('productId');
+    const productId = prodSelect.value;
+    const productName = prodSelect.options[prodSelect.selectedIndex].text;
+    const batchCode = document.getElementById('batchCode').value.trim();
+    const expirationDate = document.getElementById('expirationDate').value;
+    const qtyInput = document.getElementById('quantity');
+    const quantity = parseInt(qtyInput.value, 10);
+    const costInput = document.getElementById('unitCost');
+    const unitCost = parseFloat(costInput.value);
+    const priceInput = document.getElementById('salePrice');
+    const salePrice = parseFloat(priceInput.value);
+
+    if (!productId || batchCode === '' || isNaN(quantity) || quantity <= 0 || isNaN(unitCost) || unitCost < 0 || isNaN(salePrice) || salePrice < 0) {
+      showToast('Por favor complete todos los campos requeridos con valores válidos.', 'warning');
+      return;
+    }
+
+    items.push({
+      productId: parseInt(productId, 10),
+      productName,
+      batchCode,
+      expirationDate,
+      quantity,
+      unitCost,
+      salePrice
+    });
+
+    // Reset item inputs but keep default/helpers if any
+    prodSelect.value = '';
+    document.getElementById('batchCode').value = '';
+    document.getElementById('expirationDate').value = '';
+    qtyInput.value = '';
+    costInput.value = '';
+    priceInput.value = '';
+
+    renderItems();
+  }
+
+  function removeItem(index) {
+    items.splice(index, 1);
+    renderItems();
+  }
+
+  function renderItems() {
+    const body = document.getElementById('items-list-body');
+    const totalSpan = document.getElementById('invoice-total');
+    
+    if (items.length === 0) {
+      body.innerHTML = `
+        <tr>
+          <td colspan="7" class="py-12 text-center text-neutral-500 text-xs">La lista de artículos está vacía.</td>
+        </tr>
+      `;
+      totalSpan.innerText = '$0.00';
+      return;
+    }
+
+    body.innerHTML = items.map((item, idx) => `
+      <tr class="hover:bg-neutral-950/40">
+        <td class="py-3 px-3">
+          <span class="text-xs font-bold text-white block">${item.productName}</span>
+        </td>
+        <td class="py-3 px-3 font-mono text-xs">
+          <span class="text-neutral-300 block">${item.batchCode}</span>
+          <span class="text-[10px] text-neutral-500">${item.expirationDate || 'Sin caducidad'}</span>
+        </td>
+        <td class="py-3 px-3 text-center text-xs font-semibold text-neutral-300">${item.quantity}</td>
+        <td class="py-3 px-3 text-right font-mono text-xs text-neutral-400">$${item.unitCost.toFixed(2)}</td>
+        <td class="py-3 px-3 text-right font-mono text-xs text-blue-400">$${item.salePrice.toFixed(2)}</td>
+        <td class="py-3 px-3 text-right font-mono text-xs font-bold text-white">$${(item.unitCost * item.quantity).toFixed(2)}</td>
+        <td class="py-3 px-3 text-right">
+          <button onclick="removeItem(${idx})" class="text-red-500 hover:text-red-400 text-xs font-semibold hover:underline cursor-pointer">
+            Remover
+          </button>
+        </td>
+      </tr>
+    `).join('');
+
+    const total = items.reduce((sum, item) => sum + (item.unitCost * item.quantity), 0);
+    totalSpan.innerText = `$${total.toFixed(2)}`;
+  }
+
+  function toggleDueDate() {
+    const method = document.getElementById('paymentMethod').value;
+    const container = document.getElementById('due-date-container');
+    if (method === 'credit') {
+      container.classList.remove('hidden');
+    } else {
+      container.classList.add('hidden');
+    }
+  }
+
+  async function submitPurchase() {
+    const invoiceNumber = document.getElementById('invoiceNumber').value.trim();
+    const supplierId = document.getElementById('supplierId').value;
+    const paymentMethod = document.getElementById('paymentMethod').value;
+    const dueDate = document.getElementById('dueDate').value;
+
+    if (invoiceNumber === '' || !supplierId) {
+      showToast('Por favor ingrese el número de factura y seleccione el proveedor.', 'warning');
+      return;
+    }
+
+    if (paymentMethod === 'credit' && !dueDate) {
+      showToast('Debe ingresar la fecha de vencimiento para la compra al crédito.', 'warning');
+      return;
+    }
+
+    if (items.length === 0) {
+      showToast('Debe agregar al menos un artículo a la factura.', 'warning');
+      return;
+    }
+
+    const saveBtn = document.getElementById('btn-save-purchase');
+    saveBtn.disabled = true;
+    saveBtn.innerText = 'Guardando...';
+
+    try {
+      const resp = await fetch('/purchases', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          invoiceNumber, 
+          supplierId, 
+          items,
+          paymentMethod,
+          dueDate: paymentMethod === 'credit' ? dueDate : null
+        })
+      });
+
+      const resData = await resp.json();
+      if (resData.success) {
+        showToast('Compra registrada e inventario actualizado correctamente.', 'success');
+        setTimeout(() => {
+          window.location.href = '/purchases';
+        }, 1500);
+      } else {
+        showToast('Error: ' + resData.message, 'error');
+        saveBtn.disabled = false;
+        saveBtn.innerText = 'Procesar Factura y Stock';
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Ocurrió un error al guardar la factura de compra.', 'error');
+      saveBtn.disabled = false;
+      saveBtn.innerText = 'Procesar Factura y Stock';
+    }
+  }
+</script>
+
+<%- include('../../partials/foot') %>

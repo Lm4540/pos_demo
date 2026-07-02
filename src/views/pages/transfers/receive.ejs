@@ -1,0 +1,181 @@
+<%- include('../../partials/head', { title: 'Verificar y Recibir Traslado' }) %>
+
+<div class="min-h-screen bg-neutral-950 flex flex-col">
+  <!-- Nav Bar -->
+  <nav class="bg-neutral-900 border-b border-neutral-800 px-6 py-4 flex items-center justify-between shadow-md">
+    <div class="flex items-center gap-3">
+      <a href="/transfers" class="text-neutral-400 hover:text-white transition-colors">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+      </a>
+      <div>
+        <span class="text-xl font-bold text-white tracking-wide">Recibir Traslado</span>
+        <span class="text-xs block text-neutral-400 font-medium">Verificación de mercadería entrante</span>
+      </div>
+    </div>
+    <div class="text-xs text-neutral-500">
+      Documento: <strong class="text-amber-400 font-mono"><%= transfer.transferNumber %></strong>
+    </div>
+  </nav>
+
+  <main class="flex-grow p-6 max-w-4xl w-full mx-auto space-y-6">
+    <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm space-y-6">
+      
+      <!-- Metadata Row -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-neutral-950 border border-neutral-850 rounded-xl text-sm">
+        <div>
+          <span class="block text-xs text-neutral-500 font-semibold uppercase tracking-wider">Origen</span>
+          <span class="font-bold text-white"><%= transfer.fromBranch ? transfer.fromBranch.name : 'N/A' %></span>
+        </div>
+        <div>
+          <span class="block text-xs text-neutral-500 font-semibold uppercase tracking-wider">Destino</span>
+          <span class="font-bold text-white"><%= transfer.toBranch ? transfer.toBranch.name : 'N/A' %></span>
+        </div>
+        <div>
+          <span class="block text-xs text-neutral-500 font-semibold uppercase tracking-wider">Enviado Por</span>
+          <span class="font-bold text-neutral-300"><%= transfer.user ? transfer.user.fullName : 'Usuario' %></span>
+        </div>
+        <div>
+          <span class="block text-xs text-neutral-500 font-semibold uppercase tracking-wider">Fecha Envió</span>
+          <span class="font-bold text-neutral-300"><%= new Date(transfer.createdAt).toLocaleDateString('es-SV') %></span>
+        </div>
+      </div>
+
+      <!-- Verification Instructions -->
+      <div class="bg-indigo-950/20 border border-indigo-900/60 p-4 rounded-xl">
+        <h4 class="text-sm font-bold text-indigo-300 flex items-center gap-1.5">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>Instrucciones de Verificación</span>
+        </h4>
+        <p class="text-xs text-indigo-200 mt-1">
+          Por favor, realiza un conteo físico de los artículos. Si algún artículo llegó incompleto o dañado, ajusta la cantidad recibida en el casillero correspondiente. Solo la cantidad declarada como recibida se ingresará al stock de tu sucursal.
+        </p>
+      </div>
+
+      <!-- Items Table Form -->
+      <form id="receive-transfer-form" class="space-y-6">
+        <div class="overflow-x-auto border border-neutral-850 rounded-xl">
+          <table class="min-w-full divide-y divide-neutral-850 text-left text-sm text-neutral-300">
+            <thead class="bg-neutral-950/40 text-neutral-500 font-semibold uppercase tracking-wider text-xs">
+              <tr>
+                <th class="py-3 px-4">Artículo</th>
+                <th class="py-3 px-4">Lote</th>
+                <th class="py-3 px-4 text-center">Cant. Enviada</th>
+                <th class="py-3 px-4 text-center w-40">Cant. Recibida *</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-neutral-850">
+              <% transfer.details.forEach(d => { %>
+                <tr class="hover:bg-neutral-950/20" data-detail-id="<%= d.id %>" data-sent-qty="<%= d.quantity %>">
+                  <td class="py-4 px-4 font-bold text-white">
+                    <%= d.product ? d.product.name : 'Artículo' %>
+                  </td>
+                  <td class="py-4 px-4 font-mono text-xs text-neutral-400">
+                    <%= d.batchCode %>
+                  </td>
+                  <td class="py-4 px-4 text-center font-mono font-semibold text-neutral-300">
+                    <%= d.quantity %>
+                  </td>
+                  <td class="py-4 px-4 text-center">
+                    <input 
+                      type="number" 
+                      name="received_<%= d.id %>" 
+                      value="<%= d.quantity %>" 
+                      min="0" 
+                      max="<%= d.quantity %>" 
+                      required 
+                      class="w-24 text-center px-2 py-1.5 border border-neutral-800 bg-neutral-950 text-white font-mono font-bold rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all text-sm">
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Submit Button Row -->
+        <div class="flex justify-end gap-3 pt-2">
+          <a href="/transfers" class="px-5 py-3 text-sm font-semibold text-neutral-400 bg-neutral-800 hover:bg-neutral-750 rounded-xl transition-all cursor-pointer">
+            Cancelar
+          </a>
+          <button type="submit" id="btn-submit-receive" class="px-6 py-3 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl transition-all cursor-pointer shadow-md shadow-emerald-500/10">
+            Confirmar Recepción e Ingresar Stock
+          </button>
+        </div>
+      </form>
+    </div>
+  </main>
+</div>
+
+<script>
+  document.getElementById('receive-transfer-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const rows = document.querySelectorAll('tbody tr');
+    const items = [];
+    let hasDiscrepancy = false;
+
+    for (const row of rows) {
+      const detailId = parseInt(row.dataset.detailId, 10);
+      const sentQty = parseInt(row.dataset.sentQty, 10);
+      const input = row.querySelector('input');
+      const receivedQty = parseInt(input.value, 10);
+
+      if (isNaN(receivedQty) || receivedQty < 0) {
+        showToast('Por favor ingrese cantidades recibidas válidas.', 'error');
+        return;
+      }
+
+      if (receivedQty > sentQty) {
+        showToast('La cantidad recibida no puede superar a la cantidad enviada.', 'error');
+        return;
+      }
+
+      if (receivedQty < sentQty) {
+        hasDiscrepancy = true;
+      }
+
+      items.push({ detailId, receivedQuantity: receivedQty });
+    }
+
+    let confirmMsg = '¿Estás seguro de que deseas confirmar la recepción de este traslado?';
+    if (hasDiscrepancy) {
+      confirmMsg += ' Se han detectado discrepancias (llegó menos mercancía de la enviada). Las diferencias serán descartadas.';
+    }
+
+    showConfirm(confirmMsg, async () => {
+      const btn = document.getElementById('btn-submit-receive');
+      btn.disabled = true;
+      btn.innerText = 'Procesando ingreso...';
+
+      try {
+        const resp = await fetch('/transfers/<%= transfer.id %>/receive', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items })
+        });
+
+        const resData = await resp.json();
+        if (resp.ok && resData.success) {
+          showToast(resData.message, 'success');
+          setTimeout(() => {
+            window.location.href = '/transfers';
+          }, 800);
+        } else {
+          showToast(resData.message || 'Error al procesar la recepción.', 'error');
+          btn.disabled = false;
+          btn.innerText = 'Confirmar Recepción e Ingresar Stock';
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Error de red al procesar la recepción del traslado.', 'error');
+        btn.disabled = false;
+        btn.innerText = 'Confirmar Recepción e Ingresar Stock';
+      }
+    });
+  });
+</script>
+
+<%- include('../../partials/foot') %>

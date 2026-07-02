@@ -1,0 +1,403 @@
+<%- include('../../partials/head', { title: 'Hoja de Conteo de Inventario' }) %>
+
+<div class="min-h-screen bg-neutral-950 flex flex-col">
+  <!-- Nav Bar -->
+  <nav class="bg-neutral-900 border-b border-neutral-800 px-6 py-4 flex items-center justify-between shadow-md">
+    <div class="flex items-center gap-3">
+      <a href="/inventory/audits" class="text-neutral-400 hover:text-white transition-colors">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+      </a>
+      <div>
+        <span class="text-xl font-bold text-white tracking-wide">Hoja de Conteo</span>
+        <span class="text-xs block text-neutral-400 font-medium">Sucursal: <strong class="text-blue-400"><%= audit.branch ? audit.branch.name : '' %></strong> | Sector: <strong class="text-emerald-400"><%= audit.sector %></strong></span>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-2">
+      <button onclick="saveDraft()" class="bg-neutral-800 hover:bg-neutral-750 text-white font-bold px-4 py-2.5 rounded-xl text-xs border border-neutral-700 cursor-pointer transition-all shadow-sm">
+        Guardar Borrador
+      </button>
+      <button onclick="finalizeAudit()" id="btn-finalize" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold px-4 py-2.5 rounded-xl text-xs cursor-pointer transition-all shadow-md">
+        Finalizar Auditoría
+      </button>
+    </div>
+  </nav>
+
+  <main class="flex-grow p-6 max-w-7xl w-full mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Search / Scanner Left Panel -->
+    <div class="space-y-6 lg:col-span-1">
+      <div class="bg-neutral-900 border border-neutral-800 p-6 rounded-2xl space-y-4">
+        <h3 class="text-sm font-bold text-white uppercase tracking-wider">Lector de Barra / Buscador</h3>
+        <p class="text-xs text-neutral-400">Escanea códigos de barras directamente o escribe el nombre del producto para agregarlo al conteo físico.</p>
+        
+        <div class="flex flex-col">
+          <label class="text-[10px] font-bold text-neutral-500 uppercase mb-1">Código de barras (Escáner)</label>
+          <input type="text" id="barcode-scanner-input" placeholder="Listo para escanear..." class="bg-neutral-950 border border-neutral-800 text-white text-xs rounded-xl px-3 py-2.5 w-full focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono">
+        </div>
+
+        <div class="relative flex flex-col">
+          <label class="text-[10px] font-bold text-neutral-500 uppercase mb-1">Buscar Producto por Nombre</label>
+          <input type="text" id="product-search-input" placeholder="Escriba nombre..." class="bg-neutral-950 border border-neutral-800 text-white text-xs rounded-xl px-3 py-2.5 w-full focus:outline-none focus:ring-1 focus:ring-blue-500">
+          <!-- Autocomplete results dropdown -->
+          <div id="autocomplete-results" class="absolute top-16 left-0 right-0 bg-neutral-900 border border-neutral-850 rounded-xl hidden shadow-2xl max-h-60 overflow-y-auto z-40 divide-y divide-neutral-800/80"></div>
+        </div>
+
+        <div class="border-t border-neutral-800/85 pt-4">
+          <button type="button" onclick="loadAllProductsTemplate()" class="w-full py-2.5 text-xs font-semibold text-neutral-300 bg-neutral-955 hover:bg-neutral-800 border border-neutral-800 rounded-xl transition-all cursor-pointer text-center flex items-center justify-center gap-1.5 shadow-sm">
+            <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18" />
+            </svg>
+            <span>Cargar Todo el Stock Local</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Counting Table Right Panel -->
+    <div class="lg:col-span-2">
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden shadow-sm flex flex-col h-[70vh]">
+        <div class="px-6 py-4 border-b border-neutral-800 flex items-center justify-between">
+          <h3 class="text-sm font-bold text-white uppercase tracking-wider">Productos en Conteo</h3>
+          <span id="items-count-badge" class="bg-neutral-850 border border-neutral-800 text-neutral-450 font-bold px-2.5 py-0.5 rounded-full text-[10px]">0 ítems</span>
+        </div>
+
+        <div class="flex-grow overflow-y-auto">
+          <table class="w-full text-left border-collapse">
+            <thead class="sticky top-0 bg-neutral-950/90 backdrop-blur-sm z-10">
+              <tr class="border-b border-neutral-800">
+                <th class="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase">Producto</th>
+                <th class="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase text-center w-24">Teórico</th>
+                <th class="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase text-center w-28">Físico</th>
+                <th class="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase text-center w-24">Diferencia</th>
+                <th class="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase w-48">Justificación (Merma)</th>
+              </tr>
+            </thead>
+            <tbody id="counting-rows-container" class="divide-y divide-neutral-800/60">
+              <!-- Dynamically populated rows -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  const auditId = <%= audit.id %>;
+  const branchId = <%= audit.branchId %>;
+  let auditedItems = [];
+
+  // Load existing session details
+  <% if (audit.details && audit.details.length > 0) { %>
+    auditedItems = [
+      <% audit.details.forEach(d => { %>
+        {
+          productId: <%= d.productId %>,
+          name: "<%= d.product ? d.product.name : 'Artículo' %>",
+          barCode: "<%= d.product ? (d.product.barCode || '') : '' %>",
+          expectedQuantity: <%= d.expectedQuantity %>,
+          countedQuantity: <%= d.countedQuantity %>,
+          justification: "<%= d.justification || '' %>"
+        },
+      <% }) %>
+    ];
+  <% } %>
+
+  // Initial render
+  renderRows();
+
+  // Automatic Focus on load for scanning guns
+  window.addEventListener('DOMContentLoaded', () => {
+    const scannerInput = document.getElementById('barcode-scanner-input');
+    if (scannerInput) scannerInput.focus();
+  });
+
+  // Scanner scanner inputs keypress trigger
+  document.getElementById('barcode-scanner-input').addEventListener('keypress', async (e) => {
+    if (e.key === 'Enter') {
+      const code = e.target.value.trim();
+      if (code === '') return;
+      e.target.value = '';
+      
+      // Look up locally first
+      let localItem = auditedItems.find(item => item.barCode === code);
+      if (localItem) {
+        localItem.countedQuantity += 1;
+        showToast(`Incrementado: ${localItem.name} (+1)`, 'success');
+        renderRows();
+      } else {
+        // Query database
+        try {
+          const resp = await fetch(`/inventory/audits/api/products?branchId=${branchId}&q=${encodeURIComponent(code)}`);
+          const results = await resp.json();
+          if (results && results.length > 0) {
+            const match = results[0];
+            auditedItems.push({
+              productId: match.productId,
+              name: match.name,
+              barCode: match.barCode,
+              expectedQuantity: match.expectedQuantity,
+              countedQuantity: 1,
+              justification: ''
+            });
+            showToast(`Agregado: ${match.name} (1)`, 'success');
+            renderRows();
+          } else {
+            showToast(`Código "${code}" no encontrado o sin existencias.`, 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showToast('Error al buscar el código de barras.', 'error');
+        }
+      }
+    }
+  });
+
+  // Autocomplete search delay
+  let debounceTimeout;
+  document.getElementById('product-search-input').addEventListener('input', (e) => {
+    clearTimeout(debounceTimeout);
+    const q = e.target.value.trim();
+    if (q === '') {
+      document.getElementById('autocomplete-results').classList.add('hidden');
+      return;
+    }
+
+    debounceTimeout = setTimeout(async () => {
+      try {
+        const resp = await fetch(`/inventory/audits/api/products?branchId=${branchId}&q=${encodeURIComponent(q)}`);
+        const results = await resp.json();
+        renderAutocomplete(results);
+      } catch (err) {
+        console.error(err);
+      }
+    }, 250);
+  });
+
+  function renderAutocomplete(results) {
+    const container = document.getElementById('autocomplete-results');
+    if (results.length === 0) {
+      container.innerHTML = `<div class="p-3 text-xs text-neutral-500 text-center">No se encontraron productos</div>`;
+    } else {
+      container.innerHTML = results.map(r => `
+        <div onclick="addAutocompleteItem(${JSON.stringify(r).replace(/"/g, '&quot;')})" class="p-3 text-xs text-neutral-300 hover:bg-neutral-800 cursor-pointer transition-colors flex justify-between items-center">
+          <div>
+            <span class="font-bold text-white block">${r.name}</span>
+            <span class="text-[10px] text-neutral-500">Cód: ${r.barCode || 'N/A'}</span>
+          </div>
+          <span class="text-[10px] font-bold bg-neutral-850 px-2 py-0.5 rounded text-neutral-400">Stock: ${r.expectedQuantity}</span>
+        </div>
+      `).join('');
+    }
+    container.classList.remove('hidden');
+  }
+
+  function addAutocompleteItem(r) {
+    document.getElementById('autocomplete-results').classList.add('hidden');
+    document.getElementById('product-search-input').value = '';
+
+    let existing = auditedItems.find(item => item.productId === r.productId);
+    if (existing) {
+      existing.countedQuantity += 1;
+      showToast(`Incrementado: ${existing.name} (+1)`, 'success');
+    } else {
+      auditedItems.push({
+        productId: r.productId,
+        name: r.name,
+        barCode: r.barCode,
+        expectedQuantity: r.expectedQuantity,
+        countedQuantity: 1,
+        justification: ''
+      });
+      showToast(`Agregado: ${r.name} (1)`, 'success');
+    }
+    renderRows();
+  }
+
+  // Load template helper
+  async function loadAllProductsTemplate() {
+    if (!confirm('¿Desea cargar todos los productos en stock para este sector? Esto sobrescribirá el conteo actual.')) return;
+    try {
+      const resp = await fetch('/inventory/audits/api/load-template', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ auditId })
+      });
+      const data = await resp.json();
+      if (resp.ok) {
+        auditedItems = data.map(i => ({
+          productId: i.productId,
+          name: i.name,
+          barCode: i.barCode,
+          expectedQuantity: i.expectedQuantity,
+          countedQuantity: 0,
+          justification: ''
+        }));
+        showToast('Plantilla de inventario cargada con éxito.', 'success');
+        renderRows();
+      } else {
+        showToast('Error: ' + data.message, 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Error al importar la plantilla de stock.', 'error');
+    }
+  }
+
+  // Row Renderer
+  function renderRows() {
+    const container = document.getElementById('counting-rows-container');
+    document.getElementById('items-count-badge').innerText = `${auditedItems.length} ítems`;
+
+    if (auditedItems.length === 0) {
+      container.innerHTML = `
+        <tr>
+          <td colspan="5" class="px-6 py-12 text-center text-xs text-neutral-500">
+            Escanee códigos o busque productos para comenzar el conteo físico.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    container.innerHTML = auditedItems.map((item, idx) => {
+      const expected = parseFloat(item.expectedQuantity);
+      const counted = parseFloat(item.countedQuantity);
+      const discrepancy = counted - expected;
+
+      // Decide discrepancy color
+      let discClass = "text-center text-xs font-mono font-bold ";
+      if (discrepancy > 0) discClass += "text-emerald-400";
+      else if (discrepancy < 0) discClass += "text-red-400";
+      else discClass += "text-neutral-500";
+
+      // Show justification only if discrepancy exists
+      const hasDisc = Math.abs(discrepancy) > 0.001;
+
+      return `
+        <tr class="hover:bg-neutral-950/30 transition-colors">
+          <td class="px-4 py-3">
+            <span class="text-xs font-bold text-white block truncate max-w-sm">${item.name}</span>
+            <span class="text-[10px] text-neutral-500 font-mono">Cód: ${item.barCode || 'N/A'}</span>
+          </td>
+          <td class="px-4 py-3 text-center text-xs font-semibold text-neutral-400">
+            ${expected.toFixed(0)}
+          </td>
+          <td class="px-4 py-3 text-center">
+            <input type="number" min="0" value="${counted}" onchange="updateQty(${idx}, this.value)" class="w-20 text-center bg-neutral-950 border border-neutral-800 text-white text-xs font-bold py-1 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500">
+          </td>
+          <td class="${discClass}">
+            ${discrepancy > 0 ? '+' : ''}${discrepancy.toFixed(0)}
+          </td>
+          <td class="px-4 py-3">
+            <select onchange="updateJustification(${idx}, this.value)" ${hasDisc ? '' : 'disabled'} class="w-full bg-neutral-950 border border-neutral-800 text-white text-[11px] rounded-lg px-2 py-1 focus:outline-none disabled:opacity-30">
+              <option value="" ${item.justification === '' ? 'selected' : ''}>-- Sin justificar --</option>
+              <option value="Merma: Producto Vencido" ${item.justification === 'Merma: Producto Vencido' ? 'selected' : ''}>Merma: Vencido</option>
+              <option value="Merma: Producto Dañado" ${item.justification === 'Merma: Producto Dañado' ? 'selected' : ''}>Merma: Dañado</option>
+              <option value="Merma: Pérdida / Robo" ${item.justification === 'Merma: Pérdida / Robo' ? 'selected' : ''}>Merma: Robo/Extravío</option>
+              <option value="Diferencia de Conteo" ${item.justification === 'Diferencia de Conteo' ? 'selected' : ''}>Diferencia de Conteo</option>
+              <option value="Sobrante" ${item.justification === 'Sobrante' ? 'selected' : ''}>Sobrante</option>
+            </select>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function updateQty(idx, val) {
+    let qty = parseFloat(val);
+    if (isNaN(qty) || qty < 0) qty = 0;
+    auditedItems[idx].countedQuantity = qty;
+    
+    // Auto-clear justification if no discrepancy now
+    const discrepancy = qty - auditedItems[idx].expectedQuantity;
+    if (Math.abs(discrepancy) < 0.001) {
+      auditedItems[idx].justification = '';
+    }
+
+    renderRows();
+  }
+
+  function updateJustification(idx, val) {
+    auditedItems[idx].justification = val;
+  }
+
+  // Save Draft (AJAX POST)
+  async function saveDraft() {
+    try {
+      const resp = await fetch('/inventory/audits/api/save-draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ auditId, items: auditedItems })
+      });
+      const data = await resp.json();
+      if (data.success) {
+        showToast(data.message, 'success');
+      } else {
+        showToast('Error: ' + data.message, 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Error de conexión al guardar borrador.', 'error');
+    }
+  }
+
+  // Finalize Audit (AJAX POST)
+  async function finalizeAudit() {
+    // Check if any discrepancy is without justification
+    const missingJust = auditedItems.some(i => {
+      const disc = i.countedQuantity - i.expectedQuantity;
+      return Math.abs(disc) > 0.001 && !i.justification;
+    });
+
+    if (missingJust) {
+      if (!confirm('Tiene desviaciones detectadas sin justificar. ¿Desea continuar de todos modos?')) {
+        return;
+      }
+    } else {
+      if (!confirm('¿Está seguro de finalizar la auditoría física? Esto modificará permanentemente el stock teórico de la sucursal al stock físico contado.')) {
+        return;
+      }
+    }
+
+    const btn = document.getElementById('btn-finalize');
+    btn.disabled = true;
+    btn.innerText = 'Guardando...';
+
+    try {
+      const resp = await fetch('/inventory/audits/api/finalize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ auditId, items: auditedItems })
+      });
+      const data = await resp.json();
+      if (data.success) {
+        showToast(data.message, 'success');
+        setTimeout(() => {
+          window.location.href = `/inventory/audits/${auditId}/report`;
+        }, 1000);
+      } else {
+        showToast('Error: ' + data.message, 'error');
+        btn.disabled = false;
+        btn.innerText = 'Finalizar Auditoría';
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Error de red al finalizar auditoría.', 'error');
+      btn.disabled = false;
+      btn.innerText = 'Finalizar Auditoría';
+    }
+  }
+
+  // Click outside autocomplete to close it
+  document.addEventListener('click', (e) => {
+    const results = document.getElementById('autocomplete-results');
+    if (!results.contains(e.target) && e.target.id !== 'product-search-input') {
+      results.classList.add('hidden');
+    }
+  });
+</script>
+
+<%- include('../../partials/foot') %>

@@ -1,0 +1,36 @@
+{
+  "supervisor": [
+    "auth.session",
+    "auth.webauthn",
+    "users.block_unblock",
+    "inventory.view",
+    "inventory.adjust",
+    "cashier.open_turn",
+    "cashier.movement",
+    "cashier.close_own_turn",
+    "cashier.force_close_turn",
+    "pos.sell_cash",
+    "pos.sell_credit",
+    "pos.discount",
+    "pos.void_sale",
+    "cxc.create_client",
+    "cxc.add_payment",
+    "purchases.create",
+    "purchases.create_batches",
+    "expenses.create",
+    "reports.local_dashboard",
+    "reports.ticket_history"
+  ],
+  "cashier": [
+    "auth.session",
+    "auth.webauthn",
+    "inventory.view",
+    "cashier.open_turn",
+    "cashier.movement",
+    "cashier.close_own_turn",
+    "pos.sell_cash",
+    "cxc.create_client",
+    "cxc.add_payment",
+    "reports.ticket_history"
+  ]
+}
