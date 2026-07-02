@@ -19,7 +19,7 @@ class Category extends Model {
     }, {
       sequelize,
       modelName: 'Category',
-      tableName: 'Categories',
+      tableName: 'categories',
       timestamps: true,
       paranoid: true
     });

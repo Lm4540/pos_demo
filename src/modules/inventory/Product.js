@@ -36,7 +36,7 @@ class Product extends Model {
     }, {
       sequelize,
       modelName: 'Product',
-      tableName: 'Products',
+      tableName: 'products',
       timestamps: true,
       paranoid: true
     });

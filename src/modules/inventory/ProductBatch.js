@@ -40,7 +40,7 @@ class ProductBatch extends Model {
     }, {
       sequelize,
       modelName: 'ProductBatch',
-      tableName: 'ProductBatches',
+      tableName: 'productbatches',
       timestamps: true
     });
     return this;

@@ -102,9 +102,9 @@ const getReportData = async ({ startDate, endDate, branchId }, user) => {
   // 6.1. Productos más vendidos (Top Sellers)
   const topSellers = await sequelize.query(
     `SELECT p.name, p.barCode, SUM(sd.quantity) as totalQty, SUM(sd.quantity * sd.unitPrice) as totalRevenue
-     FROM SaleDetails sd
-     JOIN Sales s ON sd.saleId = s.id
-     JOIN Products p ON sd.productId = p.id
+     FROM saledetails sd
+     JOIN sales s ON sd.saleId = s.id
+     JOIN products p ON sd.productId = p.id
      WHERE s.createdAt BETWEEN :startDate AND :endDate
        ${filterBranchId ? 'AND s.branchId = :filterBranchId' : ''}
      GROUP BY sd.productId, p.name, p.barCode
@@ -119,7 +119,7 @@ const getReportData = async ({ startDate, endDate, branchId }, user) => {
   // 6.2. Tendencia de Ventas Diarias
   const dailyTrend = await sequelize.query(
     `SELECT DATE(s.createdAt) as dateStr, SUM(s.totalAmount) as total
-     FROM Sales s
+     FROM sales s
      WHERE s.createdAt BETWEEN :startDate AND :endDate
        ${filterBranchId ? 'AND s.branchId = :filterBranchId' : ''}
      GROUP BY DATE(s.createdAt)
@@ -133,7 +133,7 @@ const getReportData = async ({ startDate, endDate, branchId }, user) => {
   // 6.3. CxC - Cuentas por Cobrar
   const [cxcSummary] = await sequelize.query(
     `SELECT SUM(currentBalance) as totalCreditBalance
-     FROM Clients
+     FROM clients
      WHERE (:filterBranchId IS NULL OR branchId = :filterBranchId)`,
     {
       replacements: { filterBranchId: filterBranchId || null },
@@ -145,8 +145,8 @@ const getReportData = async ({ startDate, endDate, branchId }, user) => {
   const clientsDebt = await sequelize.query(
     `SELECT c.id, c.name, c.phone, c.creditLimit, c.currentBalance, c.creditDays, b.name as branchName,
        (SELECT MIN(s.createdAt) FROM Sales s WHERE s.clientId = c.id AND s.paymentMethod = 'credit') as oldestSaleDate
-     FROM Clients c
-     JOIN Branches b ON c.branchId = b.id
+     FROM clients c
+     JOIN branches b ON c.branchId = b.id
      WHERE c.currentBalance > 0
        ${filterBranchId ? 'AND c.branchId = :filterBranchId' : ''}
      ORDER BY c.currentBalance DESC`,

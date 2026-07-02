@@ -56,7 +56,7 @@ class Promotion extends Model {
     }, {
       sequelize,
       modelName: 'Promotion',
-      tableName: 'Promotions',
+      tableName: 'promotions',
       timestamps: true,
       paranoid: true
     });

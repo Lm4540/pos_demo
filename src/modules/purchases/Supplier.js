@@ -25,7 +25,7 @@ class Supplier extends Model {
     }, {
       sequelize,
       modelName: 'Supplier',
-      tableName: 'Suppliers',
+      tableName: 'suppliers',
       timestamps: true,
       paranoid: true
     });

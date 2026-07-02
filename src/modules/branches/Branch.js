@@ -25,7 +25,7 @@ class Branch extends Model {
     }, {
       sequelize,
       modelName: 'Branch',
-      tableName: 'Branches',
+      tableName: 'branches',
       timestamps: true,
       paranoid: true // Handles deletedAt soft deletes
     });

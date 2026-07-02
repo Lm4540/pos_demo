@@ -47,7 +47,7 @@ class Purchase extends Model {
     }, {
       sequelize,
       modelName: 'Purchase',
-      tableName: 'Purchases',
+      tableName: 'purchases',
       timestamps: true
     });
     return this;

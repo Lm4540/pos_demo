@@ -12,3 +12,5 @@ yarn-error.log*
 agent_docs
 .sequelizerc
 .env-example
+migrations/*
+backups/*

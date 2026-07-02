@@ -27,7 +27,7 @@ class CreditPayment extends Model {
     }, {
       sequelize,
       modelName: 'CreditPayment',
-      tableName: 'CreditPayments',
+      tableName: 'creditpayments',
       timestamps: true
     });
     return this;

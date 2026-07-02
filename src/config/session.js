@@ -13,7 +13,7 @@ const options = {
   expiration: 86400000, // 24 hours
   createDatabaseTable: false, // Table is created via migrations (Sessions)
   schema: {
-    tableName: 'Sessions',
+    tableName: 'sessions',
     columnNames: {
       session_id: 'session_id',
       expires: 'expires',

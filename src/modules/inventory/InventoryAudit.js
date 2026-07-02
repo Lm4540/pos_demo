@@ -28,7 +28,7 @@ class InventoryAudit extends Model {
     }, {
       sequelize,
       modelName: 'InventoryAudit',
-      tableName: 'InventoryAudits',
+      tableName: 'inventoryaudits',
       timestamps: true
     });
     return this;

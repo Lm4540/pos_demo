@@ -49,7 +49,7 @@ class Kardex extends Model {
     }, {
       sequelize,
       modelName: 'Kardex',
-      tableName: 'KardexLogs',
+      tableName: 'kardexlogs',
       timestamps: true
     });
     return this;

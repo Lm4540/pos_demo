@@ -45,7 +45,7 @@ class Client extends Model {
     }, {
       sequelize,
       modelName: 'Client',
-      tableName: 'Clients',
+      tableName: 'clients',
       timestamps: true,
       paranoid: true
     });

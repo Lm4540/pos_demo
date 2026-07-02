@@ -36,7 +36,7 @@ class Expense extends Model {
     }, {
       sequelize,
       modelName: 'Expense',
-      tableName: 'Expenses',
+      tableName: 'expenses',
       timestamps: true
     });
     return this;

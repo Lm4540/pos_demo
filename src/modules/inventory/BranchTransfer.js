@@ -43,7 +43,7 @@ class BranchTransfer extends Model {
     }, {
       sequelize,
       modelName: 'BranchTransfer',
-      tableName: 'BranchTransfers',
+      tableName: 'branchtransfers',
       timestamps: true
     });
     return this;

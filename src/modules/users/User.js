@@ -57,7 +57,7 @@ class User extends Model {
     }, {
       sequelize,
       modelName: 'User',
-      tableName: 'Users',
+      tableName: 'users',
       timestamps: true,
       paranoid: true,
       hooks: {

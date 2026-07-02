@@ -28,7 +28,7 @@ class WebAuthnCredential extends Model {
     }, {
       sequelize,
       modelName: 'WebAuthnCredential',
-      tableName: 'WebAuthnCredentials',
+      tableName: 'webauthncredentials',
       timestamps: true
     });
     return this;

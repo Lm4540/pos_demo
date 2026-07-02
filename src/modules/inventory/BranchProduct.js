@@ -37,8 +37,8 @@ class BranchProduct extends Model {
       }
     }, {
       sequelize,
-      modelName: 'BranchProduct',
-      tableName: 'BranchProducts',
+      modelName: 'branchproduct',
+      tableName: 'branchproducts',
       timestamps: true
     });
     return this;

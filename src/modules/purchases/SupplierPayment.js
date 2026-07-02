@@ -28,7 +28,7 @@ class SupplierPayment extends Model {
     }, {
       sequelize,
       modelName: 'SupplierPayment',
-      tableName: 'SupplierPayments',
+      tableName: 'supplierpayments',
       timestamps: true
     });
     return this;

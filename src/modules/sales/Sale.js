@@ -60,7 +60,7 @@ class Sale extends Model {
     }, {
       sequelize,
       modelName: 'Sale',
-      tableName: 'Sales',
+      tableName: 'sales',
       timestamps: true
     });
     return this;

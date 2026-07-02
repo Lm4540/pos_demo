@@ -27,7 +27,7 @@ class CashierMovement extends Model {
     }, {
       sequelize,
       modelName: 'CashierMovement',
-      tableName: 'CashierMovements',
+      tableName: 'cashiermovements',
       timestamps: true
     });
     return this;
