@@ -144,7 +144,7 @@ const getReportData = async ({ startDate, endDate, branchId }, user) => {
 
   const clientsDebt = await sequelize.query(
     `SELECT c.id, c.name, c.phone, c.creditLimit, c.currentBalance, c.creditDays, b.name as branchName,
-       (SELECT MIN(s.createdAt) FROM Sales s WHERE s.clientId = c.id AND s.paymentMethod = 'credit') as oldestSaleDate
+       (SELECT MIN(s.createdAt) FROM sales s WHERE s.clientId = c.id AND s.paymentMethod = 'credit') as oldestSaleDate
      FROM clients c
      JOIN branches b ON c.branchId = b.id
      WHERE c.currentBalance > 0

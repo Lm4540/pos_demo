@@ -42,7 +42,7 @@ class AuditLog extends Model {
     }, {
       sequelize,
       modelName: 'AuditLog',
-      tableName: 'suditlogs',
+      tableName: 'auditlogs',
       timestamps: true
     });
     return this;

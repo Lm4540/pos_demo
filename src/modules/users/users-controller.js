@@ -164,7 +164,7 @@ const updateUser = async (req, res, next) => {
 
       // If status changed to blocked or inactive, immediately expel them by deleting all active database sessions
       if ((status === 'blocked' || status === 'inactive') && previousStatus !== status) {
-        await sequelize.query('DELETE FROM Sessions WHERE userId = ?', {
+        await sequelize.query('DELETE FROM sessions WHERE userId = ?', {
           replacements: [userToEdit.id],
           transaction
         });
@@ -197,7 +197,7 @@ const deleteUser = async (req, res, next) => {
 
     // Expel user sessions on deletion
     const { sequelize } = require('../../core/models');
-    await sequelize.query('DELETE FROM Sessions WHERE userId = ?', {
+    await sequelize.query('DELETE FROM sessions WHERE userId = ?', {
       replacements: [id]
     });
 
