@@ -29,11 +29,11 @@
       </div>
       <div class="bg-neutral-900 border border-neutral-800 p-5 rounded-2xl flex flex-col justify-between shadow-sm">
         <span class="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Valoración a Costo</span>
-        <span class="text-2xl font-black text-blue-400 mt-2">$<%= totalGlobalCostValuation.toFixed(2) %> USD</span>
+        <span class="text-2xl font-black text-blue-400 mt-2"><%= formatMoney(totalGlobalCostValuation) %> USD</span>
       </div>
       <div class="bg-neutral-900 border border-neutral-800 p-5 rounded-2xl flex flex-col justify-between shadow-sm">
         <span class="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Valoración Estimada Venta</span>
-        <span class="text-2xl font-black text-emerald-400 mt-2">$<%= totalGlobalSaleValuation.toFixed(2) %> USD</span>
+        <span class="text-2xl font-black text-emerald-400 mt-2"><%= formatMoney(totalGlobalSaleValuation) %> USD</span>
       </div>
     </div>
 
@@ -48,13 +48,20 @@
     </div>
 
     <!-- Search Input for both tabs -->
-    <div class="flex items-center justify-between gap-4 bg-neutral-900 p-4 border border-neutral-800 rounded-2xl shadow-sm">
-      <input 
-        type="text" 
-        id="stock-search" 
-        onkeyup="filterStockTables()" 
-        class="w-full max-w-sm px-4 py-2 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" 
-        placeholder="Buscar por nombre o código de barras...">
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-neutral-900 p-4 border border-neutral-800 rounded-2xl shadow-sm">
+      <div class="flex flex-wrap items-center gap-4 w-full max-w-xl">
+        <input 
+          type="text" 
+          id="stock-search" 
+          onkeyup="filterStockTables()" 
+          class="w-full sm:max-w-sm px-4 py-2 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" 
+          placeholder="Buscar por nombre o código de barras...">
+        
+        <label class="flex items-center gap-2 text-xs font-semibold text-neutral-400 whitespace-nowrap cursor-pointer select-none">
+          <input type="checkbox" id="filter-no-stock" onchange="filterStockTables()" class="h-4 w-4 rounded border-neutral-800 bg-neutral-950 text-blue-600 focus:ring-blue-500 cursor-pointer">
+          <span>Ocultar sin stock</span>
+        </label>
+      </div>
       
       <div id="branch-filter-container" class="hidden flex items-center gap-2">
         <label class="text-xs text-neutral-400 font-semibold whitespace-nowrap">Filtrar Sucursal:</label>
@@ -98,7 +105,7 @@
                   }
                 });
               %>
-              <tr class="hover:bg-neutral-950/40 transition-colors global-row" data-search-name="<%= s.name.toLowerCase() %>" data-search-barcode="<%= (s.barCode || '').toLowerCase() %>">
+              <tr class="hover:bg-neutral-950/40 transition-colors global-row" data-stock="<%= s.totalStock %>" data-search-name="<%= s.name.toLowerCase() %>" data-search-barcode="<%= (s.barCode || '').toLowerCase() %>">
                 <td class="py-4 px-4 flex items-center gap-3">
                   <div class="h-10 w-10 rounded-lg bg-neutral-800 border border-neutral-750 overflow-hidden flex items-center justify-center flex-shrink-0">
                     <% if (s.imagePath) { %>
@@ -113,9 +120,9 @@
                 </td>
                 <td class="py-4 px-4 font-mono text-xs text-neutral-400"><%= s.barCode || '-' %></td>
                 <td class="py-4 px-4 text-center font-mono font-bold"><%= s.totalStock %></td>
-                <td class="py-4 px-4 text-right font-mono">$<%= s.averageCost.toFixed(2) %></td>
-                <td class="py-4 px-4 text-right font-mono text-blue-400">$<%= s.totalCostValue.toFixed(2) %></td>
-                <td class="py-4 px-4 text-right font-mono text-emerald-400">$<%= s.totalSaleValue.toFixed(2) %></td>
+                <td class="py-4 px-4 text-right font-mono"><%= formatMoney(s.averageCost) %></td>
+                <td class="py-4 px-4 text-right font-mono text-blue-400"><%= formatMoney(s.totalCostValue) %></td>
+                <td class="py-4 px-4 text-right font-mono text-emerald-400"><%= formatMoney(s.totalSaleValue) %></td>
                 <td class="py-4 px-4 text-center">
                   <% if (hasCriticalStock) { %>
                     <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-red-950 text-red-400 border border-red-900/60 animate-pulse">
@@ -162,6 +169,7 @@
                 <tr 
                   class="hover:bg-neutral-950/40 transition-colors branch-row" 
                   data-branch-id="<%= bp.branchId %>"
+                  data-stock="<%= qty %>"
                   data-search-name="<%= s.name.toLowerCase() %>" 
                   data-search-barcode="<%= (s.barCode || '').toLowerCase() %>">
                   <td class="py-4 px-4 font-bold text-white"><%= s.name %></td>
@@ -170,13 +178,13 @@
                     <%= qty %>
                   </td>
                   <td class="py-4 px-4 text-center font-mono text-neutral-500"><%= bp.minStock %></td>
-                  <td class="py-4 px-4 text-right font-mono text-neutral-400">$<%= parseFloat(bp.averageCost).toFixed(2) %></td>
-                  <td class="py-4 px-4 text-right font-mono text-emerald-400">$<%= parseFloat(bp.salePrice).toFixed(2) %></td>
-                  <td class="py-4 px-4 text-right font-mono text-blue-400">$<%= (qty * parseFloat(bp.averageCost)).toFixed(2) %></td>
+                  <td class="py-4 px-4 text-right font-mono text-neutral-400"><%= formatMoney(bp.averageCost) %></td>
+                  <td class="py-4 px-4 text-right font-mono text-emerald-400"><%= formatMoney(bp.salePrice) %></td>
+                  <td class="py-4 px-4 text-right font-mono text-blue-400"><%= formatMoney(qty * bp.averageCost) %></td>
                   <td class="py-4 px-4 text-center">
                     <% if (isCrit) { %>
                       <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-red-950 text-red-400 border border-red-900/60">
-                        Bajo Stock
+                        Bajo
                       </span>
                     <% } else { %>
                       <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-emerald-950 text-emerald-400 border border-emerald-900/60">
@@ -226,13 +234,19 @@
 
   function filterStockTables() {
     const query = document.getElementById('stock-search').value.toLowerCase();
+    const hideZeroStock = document.getElementById('filter-no-stock').checked;
     
     if (activeTab === 'global') {
       const rows = document.querySelectorAll('.global-row');
       rows.forEach(r => {
         const name = r.dataset.searchName;
         const barcode = r.dataset.searchBarcode;
-        if (name.includes(query) || barcode.includes(query)) {
+        const stock = parseInt(r.dataset.stock || '0', 10);
+        
+        const matchesSearch = name.includes(query) || barcode.includes(query);
+        const matchesStock = !hideZeroStock || stock > 0;
+        
+        if (matchesSearch && matchesStock) {
           r.classList.remove('hidden');
         } else {
           r.classList.add('hidden');
@@ -246,17 +260,20 @@
   function filterBranchStock() {
     const query = document.getElementById('stock-search').value.toLowerCase();
     const branchFilter = document.getElementById('branch-filter-select').value;
+    const hideZeroStock = document.getElementById('filter-no-stock').checked;
     const rows = document.querySelectorAll('.branch-row');
 
     rows.forEach(r => {
       const name = r.dataset.searchName;
       const barcode = r.dataset.searchBarcode;
       const branchId = r.dataset.branchId;
+      const stock = parseInt(r.dataset.stock || '0', 10);
 
       const matchesSearch = name.includes(query) || barcode.includes(query);
       const matchesBranch = (branchFilter === 'all' || branchId === branchFilter);
+      const matchesStock = !hideZeroStock || stock > 0;
 
-      if (matchesSearch && matchesBranch) {
+      if (matchesSearch && matchesBranch && matchesStock) {
         r.classList.remove('hidden');
       } else {
         r.classList.add('hidden');

@@ -1,0 +1,166 @@
+<%- include('../../partials/head', { title: title }) %>
+
+<div class="min-h-screen bg-neutral-950 flex flex-col">
+  <!-- Nav Bar -->
+  <nav class="bg-neutral-900 border-b border-neutral-800 px-6 py-4 flex items-center justify-between shadow-md">
+    <div class="flex items-center gap-3">
+      <a href="/sales/history" class="text-neutral-400 hover:text-white transition-colors">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+      </a>
+      <div>
+        <span class="text-xl font-bold text-white tracking-wide">Detalle de Venta</span>
+        <span class="text-xs block text-neutral-400 font-medium">Ticket: <strong class="text-blue-400">#<%= sale.ticketNumber || sale.id %></strong></span>
+      </div>
+    </div>
+    <% if (sale.status === 'voided') { %>
+      <span class="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase bg-red-950 text-red-400 border border-red-900/60 tracking-widest">Anulada</span>
+    <% } else { %>
+      <span class="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase bg-emerald-950 text-emerald-400 border border-emerald-900/60 tracking-widest">Completada</span>
+    <% } %>
+  </nav>
+
+  <main class="flex-grow p-6 max-w-5xl w-full mx-auto space-y-6">
+
+    <!-- Sale Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <!-- General Info -->
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 shadow-sm space-y-3">
+        <h3 class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Información General</h3>
+        <div class="space-y-2 text-xs">
+          <div class="flex justify-between">
+            <span class="text-neutral-500">Fecha:</span>
+            <span class="text-white font-mono font-semibold"><%= new Date(sale.createdAt).toLocaleString('es-SV') %></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-neutral-500">Sucursal:</span>
+            <span class="text-white font-semibold"><%= sale.branch ? sale.branch.name : 'N/A' %></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-neutral-500">Cajero:</span>
+            <span class="text-white font-semibold"><%= sale.user ? sale.user.fullName : 'N/A' %></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Client Info -->
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 shadow-sm space-y-3">
+        <h3 class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Cliente</h3>
+        <div class="space-y-2 text-xs">
+          <div class="flex justify-between">
+            <span class="text-neutral-500">Nombre:</span>
+            <span class="text-white font-semibold"><%= sale.client ? sale.client.name : 'Consumidor Final' %></span>
+          </div>
+          <% if (sale.client && sale.client.dui) { %>
+            <div class="flex justify-between">
+              <span class="text-neutral-500">DUI:</span>
+              <span class="text-white font-mono"><%= sale.client.dui %></span>
+            </div>
+          <% } %>
+          <% if (sale.client && sale.client.phone) { %>
+            <div class="flex justify-between">
+              <span class="text-neutral-500">Teléfono:</span>
+              <span class="text-white font-mono"><%= sale.client.phone %></span>
+            </div>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Payment Info -->
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 shadow-sm space-y-3">
+        <h3 class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Pago</h3>
+        <div class="space-y-2 text-xs">
+          <div class="flex justify-between">
+            <span class="text-neutral-500">Método:</span>
+            <span class="font-bold uppercase
+              <%= sale.paymentMethod === 'cash' ? 'text-emerald-400' : sale.paymentMethod === 'card' ? 'text-blue-400' : sale.paymentMethod === 'credit' ? 'text-amber-400' : 'text-violet-400' %>">
+              <%= sale.paymentMethod === 'cash' ? 'Efectivo' : sale.paymentMethod === 'card' ? 'Tarjeta' : sale.paymentMethod === 'credit' ? 'Crédito' : sale.paymentMethod === 'split' ? 'Mixto' : sale.paymentMethod %>
+            </span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-neutral-500">Total:</span>
+            <span class="text-emerald-400 font-black text-sm"><%= formatMoney(parseFloat(sale.totalAmount)) %></span>
+          </div>
+          <% if (sale.cashReceived) { %>
+            <div class="flex justify-between">
+              <span class="text-neutral-500">Recibido:</span>
+              <span class="text-white font-mono"><%= formatMoney(parseFloat(sale.cashReceived)) %></span>
+            </div>
+          <% } %>
+          <% if (sale.changeGiven) { %>
+            <div class="flex justify-between">
+              <span class="text-neutral-500">Cambio:</span>
+              <span class="text-amber-400 font-mono"><%= formatMoney(parseFloat(sale.changeGiven)) %></span>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sale Items Table -->
+    <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm">
+      <h2 class="text-base font-bold text-white mb-4">Artículos de la Venta</h2>
+
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-neutral-800 text-left text-sm text-neutral-300">
+          <thead>
+            <tr class="text-neutral-500 font-semibold uppercase tracking-wider text-[10px]">
+              <th class="py-2.5 px-3">#</th>
+              <th class="py-2.5 px-3">Producto / Servicio</th>
+              <th class="py-2.5 px-3">Tipo</th>
+              <th class="py-2.5 px-3 text-center">Cantidad</th>
+              <th class="py-2.5 px-3 text-right">Precio Unitario</th>
+              <th class="py-2.5 px-3 text-right">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-neutral-800">
+            <% sale.details.forEach((d, idx) => { %>
+              <% const unitPrice = parseFloat(d.unitPrice); %>
+              <% const subtotal = unitPrice * parseInt(d.quantity, 10); %>
+              <% const isService = d.product && d.product.type === 'service'; %>
+              <tr class="hover:bg-neutral-950/20 text-xs">
+                <td class="py-3 px-3 font-mono text-neutral-600"><%= idx + 1 %></td>
+                <td class="py-3 px-3 font-semibold text-white">
+                  <%= d.product ? d.product.name : 'Artículo eliminado' %>
+                  <% if (d.customDescription) { %>
+                    <span class="block text-[9px] text-neutral-500 italic mt-0.5"><%= d.customDescription %></span>
+                  <% } %>
+                </td>
+                <td class="py-3 px-3">
+                  <% if (isService) { %>
+                    <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-violet-950 text-violet-400 border border-violet-900/60">Servicio</span>
+                  <% } else { %>
+                    <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-blue-950 text-blue-400 border border-blue-900/60">Producto</span>
+                  <% } %>
+                </td>
+                <td class="py-3 px-3 text-center font-mono font-bold text-white"><%= d.quantity %></td>
+                <td class="py-3 px-3 text-right font-mono"><%= formatMoney(unitPrice) %></td>
+                <td class="py-3 px-3 text-right font-mono text-emerald-400 font-bold"><%= formatMoney(subtotal) %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+          <tfoot>
+            <tr class="border-t-2 border-neutral-700">
+              <td colspan="5" class="py-3 px-3 text-right text-xs font-bold text-neutral-400 uppercase tracking-wider">Total de la Venta:</td>
+              <td class="py-3 px-3 text-right font-mono text-emerald-400 font-black text-sm"><%= formatMoney(parseFloat(sale.totalAmount)) %></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex justify-end gap-3">
+      <a href="/sales/history" class="px-5 py-2.5 bg-neutral-800 hover:bg-neutral-750 text-neutral-300 font-bold rounded-xl text-xs transition-all border border-neutral-700 cursor-pointer flex items-center justify-center gap-1.5">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        Volver al Historial
+      </a>
+    </div>
+
+  </main>
+</div>
+
+<%- include('../../partials/foot') %>

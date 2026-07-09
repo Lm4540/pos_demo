@@ -22,13 +22,13 @@
     "reports.ticket_history"
   ],
   "cashier": [
-    "auth.session",
     "auth.webauthn",
     "inventory.view",
     "cashier.open_turn",
     "cashier.movement",
     "cashier.close_own_turn",
     "pos.sell_cash",
+    "pos.sell_credit",
     "cxc.create_client",
     "cxc.add_payment",
     "reports.ticket_history"

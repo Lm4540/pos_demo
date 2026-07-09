@@ -4,6 +4,7 @@ const Branch = require('../../modules/branches/Branch');
 const User = require('../../modules/users/User');
 const WebAuthnCredential = require('../../modules/users/WebAuthnCredential');
 const AuditLog = require('../../modules/users/AuditLog');
+const ErrorLog = require('../../modules/users/ErrorLog');
 const Product = require('../../modules/inventory/Product');
 const BranchProduct = require('../../modules/inventory/BranchProduct');
 const ProductBatch = require('../../modules/inventory/ProductBatch');
@@ -31,6 +32,7 @@ const models = {
   User,
   WebAuthnCredential,
   AuditLog,
+  ErrorLog,
   Product,
   BranchProduct,
   ProductBatch,

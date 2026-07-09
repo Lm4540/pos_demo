@@ -18,7 +18,8 @@ class SaleDetail extends Model {
       },
       batchId: {
         type: DataTypes.INTEGER,
-        allowNull: false
+        allowNull: true,
+        defaultValue: null
       },
       quantity: {
         type: DataTypes.INTEGER,
@@ -36,6 +37,11 @@ class SaleDetail extends Model {
       unitCostAtSale: {
         type: DataTypes.DECIMAL(12, 2),
         allowNull: false
+      },
+      customDescription: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+        defaultValue: null
       }
     }, {
       sequelize,

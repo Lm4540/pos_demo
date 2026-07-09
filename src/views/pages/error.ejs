@@ -1,24 +1,95 @@
 <%- include('../partials/head', { title: title || 'Error' }) %>
 
-<div class="min-h-[80vh] flex items-center justify-center px-4">
-  <div class="max-w-md w-full bg-neutral-900 border border-neutral-800 p-8 rounded-2xl shadow-xl text-center space-y-6">
-    <div class="flex justify-center">
-      <div class="h-16 w-16 bg-red-950/60 border border-red-800 rounded-2xl flex items-center justify-center">
-        <svg class="h-10 w-10 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-        </svg>
+<div class="flex-grow p-6 max-w-5xl w-full mx-auto flex flex-col justify-center my-8">
+  <div class="bg-neutral-900 border border-neutral-800 rounded-3xl p-6 md:p-8 shadow-2xl space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-neutral-800">
+      <div class="flex items-center gap-4">
+        <div class="h-12 w-12 bg-red-950/60 border border-red-900 rounded-2xl flex items-center justify-center flex-shrink-0 text-red-500">
+          <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-xl font-bold text-white"><%= title || 'Error Interno del Servidor' %></h2>
+          <p class="text-xs text-neutral-400 mt-1">Lo sentimos, no se pudo procesar la solicitud debido a una excepción interna.</p>
+        </div>
       </div>
-    </div>
-    
-    <div>
-      <h2 class="text-2xl font-bold text-white"><%= title || 'Ha ocurrido un problema' %></h2>
-      <p class="text-neutral-400 text-sm mt-3"><%= message || 'Lo sentimos, no se pudo procesar la solicitud.' %></p>
+      
+      <% if (typeof errorLogId !== 'undefined' && errorLogId) { %>
+        <div class="bg-neutral-950/80 border border-neutral-850 px-3 py-1.5 rounded-xl font-mono text-[10px] text-neutral-400 flex items-center gap-1.5">
+          <span class="h-2 w-2 rounded-full bg-red-500 animate-ping"></span>
+          <span>Log ID: <strong class="text-red-400"><%= errorLogId %></strong></span>
+        </div>
+      <% } %>
     </div>
 
-    <div>
-      <a href="/" class="inline-block py-2.5 px-6 border border-transparent text-sm font-semibold rounded-xl text-white bg-blue-600 hover:bg-blue-500 transition-all cursor-pointer shadow-md shadow-blue-500/10">
-        Regresar al Inicio
+    <!-- Error Message Description -->
+    <div class="bg-red-950/20 border border-red-950 text-red-300 p-4 rounded-2xl text-sm font-medium">
+      <strong>Mensaje:</strong> <%= message || 'Se ha producido un error inesperado en el servidor.' %>
+    </div>
+
+    <!-- Structured Code Viewer -->
+    <div class="space-y-4">
+      <span class="text-xs font-bold text-neutral-400 uppercase tracking-wider block">Detalles del Error (Código)</span>
+
+      <div class="bg-neutral-950 border border-neutral-850 rounded-2xl overflow-hidden font-mono text-xs text-neutral-300 flex flex-col shadow-inner">
+        <!-- Tab Header bar -->
+        <div class="bg-neutral-900 border-b border-neutral-850 px-4 py-2.5 flex items-center justify-between text-neutral-500 text-[10px] uppercase font-bold select-none">
+          <div class="flex items-center gap-2">
+            <span class="h-2.5 w-2.5 rounded-full bg-red-500/80"></span>
+            <span class="h-2.5 w-2.5 rounded-full bg-amber-500/80"></span>
+            <span class="h-2.5 w-2.5 rounded-full bg-emerald-500/80"></span>
+            <span class="ml-2 font-mono tracking-wide text-neutral-400">error_details.json</span>
+          </div>
+          <div>JSON FORMAT</div>
+        </div>
+
+        <!-- Scrollable Code Area -->
+        <div class="p-4 overflow-x-auto space-y-4 no-scrollbar leading-relaxed">
+          <!-- Route and Method -->
+          <div>
+            <span class="text-purple-400">"request"</span>: {
+            <div class="pl-4">
+              <span class="text-blue-400">"route"</span>: <span class="text-emerald-400">"<%= typeof route !== 'undefined' ? route : '' %>"</span>,<br>
+              <span class="text-blue-400">"method"</span>: <span class="text-emerald-400">"<%= typeof method !== 'undefined' ? method : '' %>"</span>
+            </div>
+            }
+          </div>
+
+          <!-- Payload -->
+          <% if (typeof payload !== 'undefined' && payload) { %>
+            <div>
+              <span class="text-purple-400">"payload"</span>: {
+              <div class="pl-4">
+                <pre class="text-neutral-300 overflow-x-auto whitespace-pre-wrap"><%= JSON.stringify(payload, null, 2) %></pre>
+              </div>
+              }
+            </div>
+          <% } %>
+
+          <!-- Stack Trace -->
+          <% if (typeof error !== 'undefined' && error && error.stack) { %>
+            <div class="border-t border-neutral-900 pt-3">
+              <span class="text-purple-400">"stackTrace"</span>: [
+              <div class="pl-4 max-h-60 overflow-y-auto text-neutral-500 font-mono text-[11px] whitespace-pre overflow-x-auto leading-loose selection:bg-neutral-800">
+<%= error.stack %>
+              </div>
+              ]
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center justify-between pt-4 border-t border-neutral-800">
+      <a href="/dashboard" class="py-2.5 px-6 border border-transparent text-sm font-semibold rounded-xl text-white bg-blue-600 hover:bg-blue-500 transition-all cursor-pointer shadow-md shadow-blue-500/10 text-center">
+        Regresar al Dashboard
       </a>
+      <button onclick="window.history.back()" class="py-2.5 px-6 border border-neutral-800 hover:bg-neutral-800 text-sm font-semibold rounded-xl text-neutral-300 transition-all cursor-pointer text-center">
+        Volver Atrás
+      </button>
     </div>
   </div>
 </div>

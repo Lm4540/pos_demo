@@ -30,7 +30,32 @@ app.use(session(sessionConfig));
 // Middleware de autenticación global (Simulado temporalmente)
 app.use((req, res, next) => {
   res.locals.user = req.session?.user || null;
+  res.locals.formatMoney = (val) => {
+    const num = parseFloat(val);
+    if (isNaN(num)) return '$0.00';
+    return '$' + num.toLocaleString('es-SV', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
   next();
+});
+
+// Ruta pública para recibir y registrar logs del cliente (JS del navegador)
+app.post('/log-error', async (req, res) => {
+  try {
+    const { ErrorLog } = require('./core/models');
+    await ErrorLog.create({
+      userId: req.session?.userId || null,
+      branchId: req.session?.user?.branchId || null,
+      route: req.body.route || 'unknown',
+      method: req.body.method || 'CLIENT',
+      errorMessage: req.body.message || 'Client-side error',
+      errorStack: req.body.stack || '',
+      payload: req.body.payload || {}
+    });
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('Failed to log client-side error:', err);
+    return res.status(500).json({ success: false });
+  }
 });
 
 // Importar rutas
@@ -120,6 +145,87 @@ app.get('/dashboard', authMiddleware, async (req, res, next) => {
   }
 });
 
+// --- RUTA DE MI PERFIL ---
+app.get('/profile', authMiddleware, async (req, res, next) => {
+  try {
+    const { User, WebAuthnCredential, Branch } = require('./core/models');
+    const user = await User.findByPk(req.user.id, {
+      include: [{ model: Branch, as: 'branch' }]
+    });
+    const credentials = await WebAuthnCredential.findAll({
+      where: { userId: req.user.id },
+      order: [['createdAt', 'DESC']]
+    });
+
+    res.render('pages/profile', {
+      title: 'Mi Perfil',
+      user,
+      credentials
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post('/profile/change-password', authMiddleware, async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword || newPassword.length < 6) {
+      return res.status(400).json({ success: false, message: 'Datos de contraseña inválidos (mínimo 6 caracteres).' });
+    }
+
+    const { User } = require('./core/models');
+    const user = await User.findByPk(req.user.id);
+    const isValid = await user.validatePassword(currentPassword);
+    if (!isValid) {
+      return res.status(400).json({ success: false, message: 'La contraseña actual es incorrecta.' });
+    }
+
+    user.passwordHash = newPassword;
+    await user.save();
+
+    const { logAction } = require('./core/services/auditService');
+    await logAction({
+      userId: user.id,
+      branchId: user.branchId,
+      action: 'users.password_changed',
+      ipAddress: req.ip
+    });
+
+    res.json({ success: true, message: 'Contraseña actualizada correctamente.' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.delete('/profile/credential/:id', authMiddleware, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { WebAuthnCredential } = require('./core/models');
+    const credential = await WebAuthnCredential.findOne({
+      where: { id, userId: req.user.id }
+    });
+
+    if (!credential) {
+      return res.status(404).json({ success: false, message: 'Dispositivo biométrico no encontrado.' });
+    }
+
+    await credential.destroy();
+
+    const { logAction } = require('./core/services/auditService');
+    await logAction({
+      userId: req.user.id,
+      branchId: req.user.branchId,
+      action: 'auth.webauthn_revoked',
+      ipAddress: req.ip
+    });
+
+    res.json({ success: true, message: 'Dispositivo biométrico revocado correctamente.' });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Rutas básicas (Placeholder)
 app.get('/', (req, res) => {
   if (req.session && req.session.userId) {
@@ -129,13 +235,53 @@ app.get('/', (req, res) => {
 });
 
 // Manejador global de errores
-app.use((err, req, res, next) => {
+app.use(async (err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({
-    success: false,
-    message: 'Ha ocurrido un error interno en el servidor.',
-    error: process.env.NODE_ENV === 'development' ? err.message : {}
-  });
+  
+  let errorLogId = null;
+  try {
+    const { ErrorLog } = require('./core/models');
+    const logEntry = await ErrorLog.create({
+      userId: req.session?.userId || null,
+      branchId: req.session?.user?.branchId || null,
+      route: req.originalUrl,
+      method: req.method,
+      errorMessage: err.message || 'Unknown Server Error',
+      errorStack: err.stack || '',
+      payload: {
+        body: req.body,
+        query: req.query,
+        params: req.params,
+        headers: req.headers
+      }
+    });
+    errorLogId = logEntry.id;
+  } catch (logErr) {
+    console.error('Failed to save server error log to database:', logErr);
+  }
+
+  const isHtml = req.accepts('html') && !req.xhr;
+  if (isHtml) {
+    res.status(500).render('pages/error', {
+      title: 'Error Interno del Servidor',
+      message: err.message,
+      errorLogId: errorLogId,
+      error: err,
+      route: req.originalUrl,
+      method: req.method,
+      payload: {
+        body: req.body,
+        query: req.query
+      }
+    });
+  } else {
+    res.status(500).json({
+      success: false,
+      message: 'Ha ocurrido un error interno en el servidor.',
+      error: err.message,
+      errorLogId: errorLogId
+    });
+  }
 });
 
 // Conectar base de datos y arrancar el servidor

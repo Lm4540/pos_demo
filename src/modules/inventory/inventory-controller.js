@@ -397,6 +397,182 @@ async function renderAuditReport(req, res, next) {
   }
 }
 
+const renderInitialLoad = async (req, res, next) => {
+  try {
+    const { Category, Product, BranchProduct } = require('../../core/models');
+    
+    const categories = await Category.findAll({ order: [['name', 'ASC']] });
+    const products = await Product.findAll({
+      order: [['name', 'ASC']],
+      include: [{
+        model: BranchProduct,
+        as: 'branchProducts',
+        where: { branchId: req.user.branchId },
+        required: false
+      }]
+    });
+
+    return res.render('pages/inventory/initial-load', {
+      title: 'Levantamiento Inicial de Inventario',
+      user: req.user,
+      categories,
+      products
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const quickCreateProduct = async (req, res, next) => {
+  const { name, barCode, categoryId, type } = req.body;
+  let imagePath = null;
+  const fs = require('fs');
+
+  if (req.file) {
+    imagePath = '/uploads/' + req.file.filename;
+  }
+
+  const { Branch, BranchProduct } = require('../../core/models');
+  const transaction = await sequelize.transaction();
+
+  try {
+    if (!name || name.trim() === '') {
+      throw new Error('El nombre del producto es obligatorio.');
+    }
+
+    if (barCode && barCode.trim() !== '') {
+      const existing = await Product.findOne({ where: { barCode: barCode.trim() }, transaction });
+      if (existing) {
+        throw new Error('El código de barras ya está registrado.');
+      }
+    }
+
+    const product = await Product.create({
+      name: name.trim(),
+      barCode: barCode && barCode.trim() !== '' ? barCode.trim() : null,
+      type: type || 'physical',
+      categoryId: categoryId ? parseInt(categoryId, 10) : null,
+      imagePath
+    }, { transaction });
+
+    const allBranches = await Branch.findAll({ transaction });
+    for (const b of allBranches) {
+      await BranchProduct.create({
+        productId: product.id,
+        branchId: b.id,
+        totalStock: 0,
+        averageCost: 0.00,
+        salePrice: 0.00,
+        minStock: 0
+      }, { transaction });
+    }
+
+    await transaction.commit();
+
+    return res.json({ success: true, product });
+  } catch (error) {
+    await transaction.rollback();
+    if (req.file) {
+      try { fs.unlinkSync(req.file.path); } catch(e) {}
+    }
+    return res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+const submitInitialLoad = async (req, res, next) => {
+  const { items } = req.body;
+  const branchId = req.user.branchId;
+
+  if (!items || !Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ success: false, message: 'Debe ingresar al menos un artículo.' });
+  }
+
+  const { ProductBatch, BranchProduct } = require('../../core/models');
+  const transaction = await sequelize.transaction();
+
+  try {
+    for (const item of items) {
+      const productId = parseInt(item.productId, 10);
+      const qty = parseInt(item.quantity, 10);
+      const cost = parseFloat(item.unitCost) || 0.00;
+      const price = parseFloat(item.salePrice) || 0.00;
+      const batchCode = item.batchCode ? item.batchCode.trim() : 'LOTE-INICIAL';
+      const expDate = item.expirationDate || null;
+
+      if (isNaN(qty) || qty <= 0) {
+        throw new Error(`Cantidad inválida para el producto ID ${productId}`);
+      }
+
+      await ProductBatch.create({
+        productId,
+        branchId,
+        batchCode,
+        expirationDate: expDate,
+        initialQuantity: qty,
+        currentQuantity: qty,
+        unitCost: cost
+      }, { transaction });
+
+      let bp = await BranchProduct.findOne({
+        where: { productId, branchId },
+        transaction
+      });
+
+      if (!bp) {
+        bp = await BranchProduct.create({
+          productId,
+          branchId,
+          totalStock: 0,
+          averageCost: 0.00,
+          salePrice: price,
+          minStock: 0
+        }, { transaction });
+      }
+
+      const prevStock = bp.totalStock;
+      const prevCost = parseFloat(bp.averageCost || 0);
+      const newStock = prevStock + qty;
+
+      let newAvgCost = cost;
+      if (newStock > 0) {
+        newAvgCost = ((prevStock * prevCost) + (qty * cost)) / newStock;
+      }
+
+      await bp.update({
+        totalStock: newStock,
+        averageCost: newAvgCost,
+        salePrice: price > 0 ? price : bp.salePrice
+      }, { transaction });
+
+      await logKardex({
+        productId,
+        branchId,
+        userId: req.user.id,
+        quantity: qty,
+        isInput: true,
+        type: 'adjustment_in',
+        description: 'Levantamiento inicial de inventario',
+        transaction
+      });
+    }
+
+    await transaction.commit();
+
+    await AuditLog.create({
+      userId: req.user.id,
+      branchId,
+      action: 'inventory.initial_load_completed',
+      details: { itemsCount: items.length },
+      ipAddress: req.ip
+    });
+
+    return res.json({ success: true, message: 'Inventario inicial cargado correctamente.' });
+  } catch (error) {
+    await transaction.rollback();
+    return res.status(400).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   renderAuditsIndex,
   handleCreateAudit,
@@ -405,5 +581,8 @@ module.exports = {
   loadAllBranchProducts,
   handleSaveDraft,
   handleFinalizeAudit,
-  renderAuditReport
+  renderAuditReport,
+  renderInitialLoad,
+  quickCreateProduct,
+  submitInitialLoad
 };

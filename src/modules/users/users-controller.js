@@ -49,18 +49,68 @@ const listUsers = async (req, res, next) => {
   }
 };
 
+const renderUserIndexWithError = async (res, errorMsg) => {
+  const { User, Branch } = require('../../core/models');
+  const users = await User.findAll({
+    include: [{ model: Branch, as: 'branch' }],
+    order: [['id', 'ASC']]
+  });
+  const branches = await Branch.findAll({ order: [['name', 'ASC']] });
+
+  const checkPermission = require('../../core/middlewares/checkPermission');
+  const rolePermissions = checkPermission.getRolePermissions();
+
+  const permissionLabels = {
+    'auth.session': 'Ver/Gestionar Sesiones',
+    'auth.webauthn': 'Configurar WebAuthn (Biometría)',
+    'users.block_unblock': 'Bloquear / Desbloquear Usuarios',
+    'inventory.view': 'Ver Stock y Lotes',
+    'inventory.adjust': 'Ajuste de Inventario (Mermas)',
+    'cashier.open_turn': 'Abrir Turno de Caja',
+    'cashier.movement': 'Registrar Depósitos / Retiros de Caja',
+    'cashier.close_own_turn': 'Cerrar Turno de Caja Propio',
+    'cashier.force_close_turn': 'Forzar Cierre de Turno Ajeno',
+    'pos.sell_cash': 'Vender al Contado',
+    'pos.sell_credit': 'Vender al Crédito',
+    'pos.discount': 'Aplicar Descuento al Total',
+    'pos.void_sale': 'Anular Ticket / Venta',
+    'cxc.create_client': 'Registrar Clientes',
+    'cxc.add_payment': 'Registrar Abonos a Créditos',
+    'purchases.create': 'Registrar Compras (Abastecimiento)',
+    'purchases.create_batches': 'Generar Lotes y Vencimientos',
+    'expenses.create': 'Registrar Gastos Operativos',
+    'reports.local_dashboard': 'Ver Dashboard (Reporte Local)',
+    'reports.ticket_history': 'Historial de Tickets'
+  };
+
+  return res.render('pages/users/index', {
+    title: 'Usuarios',
+    users,
+    branches,
+    rolePermissions,
+    permissionLabels,
+    error: errorMsg
+  });
+};
+
 const createUser = async (req, res, next) => {
   const { branchId, roleId, username, password, fullName, status, permissions } = req.body;
   try {
     if (!username || !password || !fullName || !roleId) {
-      const users = await User.findAll({ include: [{ model: Branch, as: 'branch' }] });
-      const branches = await Branch.findAll();
-      return res.render('pages/users/index', {
-        title: 'Usuarios',
-        users,
-        branches,
-        error: 'Todos los campos marcados con * son obligatorios.'
-      });
+      return await renderUserIndexWithError(res, 'Todos los campos marcados con * son obligatorios.');
+    }
+
+    const { sequelize } = require('../../core/models');
+    
+    // Validar de forma insensible a mayúsculas/minúsculas
+    const existingUser = await User.findOne({
+      where: sequelize.where(
+        sequelize.fn('lower', sequelize.col('username')),
+        username.trim().toLowerCase()
+      )
+    });
+    if (existingUser) {
+      return await renderUserIndexWithError(res, 'El nombre de usuario ya se encuentra registrado.');
     }
 
     // Process specialPermissions 3-way radio buttons
@@ -79,7 +129,7 @@ const createUser = async (req, res, next) => {
     const newUser = await User.create({
       branchId: branchId === '' ? null : parseInt(branchId, 10),
       roleId,
-      username,
+      username: username.trim(),
       passwordHash: password, // Will be hashed by hook
       fullName,
       status: status || 'active',
@@ -90,21 +140,14 @@ const createUser = async (req, res, next) => {
       userId: req.user.id,
       branchId: newUser.branchId,
       action: 'users.created',
-      details: { username, roleId, fullName },
+      details: { username: newUser.username, roleId, fullName },
       ipAddress: req.ip
     });
 
     return res.redirect('/users?success=1');
   } catch (error) {
     if (error.name === 'SequelizeUniqueConstraintError') {
-      const users = await User.findAll({ include: [{ model: Branch, as: 'branch' }] });
-      const branches = await Branch.findAll();
-      return res.render('pages/users/index', {
-        title: 'Usuarios',
-        users,
-        branches,
-        error: 'El nombre de usuario ya se encuentra registrado.'
-      });
+      return await renderUserIndexWithError(res, 'El nombre de usuario ya se encuentra registrado.');
     }
     return next(error);
   }
@@ -121,6 +164,25 @@ const updateUser = async (req, res, next) => {
     }
 
     const previousStatus = userToEdit.status;
+    const { sequelize } = require('../../core/models');
+
+    // Validar nombre de usuario duplicado (insensible a mayúsculas/minúsculas) exceptuando al usuario mismo
+    if (username && username.trim() !== '') {
+      const existingUser = await User.findOne({
+        where: {
+          [Op.and]: [
+            sequelize.where(
+              sequelize.fn('lower', sequelize.col('username')),
+              username.trim().toLowerCase()
+            ),
+            { id: { [Op.ne]: userToEdit.id } }
+          ]
+        }
+      });
+      if (existingUser) {
+        return await renderUserIndexWithError(res, 'El nombre de usuario ya está registrado por otro usuario.');
+      }
+    }
 
     // Process specialPermissions 3-way radio buttons
     const specialPermissions = {};
@@ -138,7 +200,7 @@ const updateUser = async (req, res, next) => {
     const updatePayload = {
       branchId: branchId === '' ? null : parseInt(branchId, 10),
       roleId,
-      username,
+      username: username ? username.trim() : userToEdit.username,
       fullName,
       status,
       specialPermissions
@@ -148,19 +210,10 @@ const updateUser = async (req, res, next) => {
       updatePayload.passwordHash = password; // Hashed by hook
     }
 
-    const { sequelize } = require('../../core/models');
     const transaction = await sequelize.transaction();
 
     try {
       await userToEdit.update(updatePayload, { transaction });
-
-      await logAction({
-        userId: req.user.id,
-        branchId: userToEdit.branchId,
-        action: 'users.updated',
-        details: { username, roleId, fullName, status },
-        ipAddress: req.ip
-      });
 
       // If status changed to blocked or inactive, immediately expel them by deleting all active database sessions
       if ((status === 'blocked' || status === 'inactive') && previousStatus !== status) {
@@ -171,12 +224,25 @@ const updateUser = async (req, res, next) => {
       }
 
       await transaction.commit();
+
+      // Log action AFTER committing the transaction to release table locks first!
+      await logAction({
+        userId: req.user.id,
+        branchId: userToEdit.branchId,
+        action: 'users.updated',
+        details: { username: updatePayload.username, roleId, fullName, status },
+        ipAddress: req.ip
+      });
+
       return res.redirect('/users?success=1');
     } catch (error) {
       await transaction.rollback();
       throw error;
     }
   } catch (error) {
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      return await renderUserIndexWithError(res, 'El nombre de usuario ya está registrado por otro usuario.');
+    }
     return next(error);
   }
 };

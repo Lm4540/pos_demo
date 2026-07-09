@@ -99,17 +99,26 @@ const getReportData = async ({ startDate, endDate, branchId }, user) => {
   const grossProfit = totalSales - totalCogs - totalExpenses;
 
   // 6. Consultas SQL puras (Regla de Rendimiento de Reportería)
-  // 6.1. Productos más vendidos (Top Sellers)
+  // 6.1. Productos más vendidos (Top Sellers) con Rentabilidad Real
   const topSellers = await sequelize.query(
-    `SELECT p.name, p.barCode, SUM(sd.quantity) as totalQty, SUM(sd.quantity * sd.unitPrice) as totalRevenue
+    `SELECT p.name, p.barCode, 
+            SUM(sd.quantity) as totalQty, 
+            SUM(sd.quantity * sd.unitPrice) as totalRevenue,
+            SUM(sd.quantity * sd.unitCostAtSale) as totalCost,
+            SUM(sd.quantity * sd.unitPrice) - SUM(sd.quantity * sd.unitCostAtSale) as totalProfit,
+            CASE 
+              WHEN SUM(sd.quantity * sd.unitPrice) > 0 
+              THEN ((SUM(sd.quantity * sd.unitPrice) - SUM(sd.quantity * sd.unitCostAtSale)) / SUM(sd.quantity * sd.unitPrice)) * 100 
+              ELSE 0 
+            END as margin
      FROM saledetails sd
      JOIN sales s ON sd.saleId = s.id
      JOIN products p ON sd.productId = p.id
      WHERE s.createdAt BETWEEN :startDate AND :endDate
        ${filterBranchId ? 'AND s.branchId = :filterBranchId' : ''}
      GROUP BY sd.productId, p.name, p.barCode
-     ORDER BY totalQty DESC
-     LIMIT 5`,
+     ORDER BY totalProfit DESC
+     LIMIT 10`,
     {
       replacements: { startDate: `${startDate}T00:00:00`, endDate: `${endDate}T23:59:59`, filterBranchId },
       type: sequelize.QueryTypes.SELECT
@@ -442,6 +451,16 @@ const renderStockReport = async (req, res, next) => {
       };
     });
 
+    // Sort consolidated stock first by items with stock (totalStock > 0), then by name
+    consolidatedStock.sort((a, b) => {
+      const hasStockA = a.totalStock > 0 ? 1 : 0;
+      const hasStockB = b.totalStock > 0 ? 1 : 0;
+      if (hasStockB !== hasStockA) {
+        return hasStockB - hasStockA;
+      }
+      return a.name.localeCompare(b.name);
+    });
+
     return res.render('pages/reports/stock', {
       title: 'Reporte Completo de Inventario',
       user: req.user,
@@ -458,9 +477,108 @@ const renderStockReport = async (req, res, next) => {
   }
 };
 
+const renderPurchasesReport = async (req, res, next) => {
+  try {
+    const { Purchase, Supplier, Branch, PurchaseDetail, SupplierPayment } = require('../../core/models');
+    const { Op } = require('sequelize');
+    
+    // Default to current month
+    const today = new Date();
+    const defaultMonth = today.toISOString().slice(0, 7); // "YYYY-MM"
+    const month = req.query.month || defaultMonth;
+    
+    const startOfMonth = new Date(`${month}-01T00:00:00`);
+    const endOfMonth = new Date(startOfMonth.getFullYear(), startOfMonth.getMonth() + 1, 0, 23, 59, 59);
+
+    // Filtering by branch
+    let filterBranchId = null;
+    let branchName = 'Todas las Sucursales';
+    let branches = [];
+
+    if (req.user.roleId === 'admin') {
+      branches = await Branch.findAll({ order: [['name', 'ASC']] });
+      if (req.query.branchId && req.query.branchId !== 'all') {
+        filterBranchId = parseInt(req.query.branchId, 10);
+        const br = await Branch.findByPk(filterBranchId);
+        if (br) branchName = br.name;
+      }
+    } else {
+      filterBranchId = req.user.branchId;
+      const br = await Branch.findByPk(filterBranchId);
+      if (br) branchName = br.name;
+    }
+
+    const whereClause = {
+      createdAt: {
+        [Op.between]: [startOfMonth, endOfMonth]
+      }
+    };
+
+    if (filterBranchId) {
+      whereClause.branchId = filterBranchId;
+    }
+
+    const purchases = await Purchase.findAll({
+      where: whereClause,
+      include: [
+        { model: Supplier, as: 'supplier' },
+        { model: Branch, as: 'branch' },
+        { model: PurchaseDetail, as: 'details' }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
+    let totalAmount = 0;
+    let totalPaid = 0;
+    let totalPending = 0;
+    const supplierSummaryMap = {};
+
+    purchases.forEach(p => {
+      const amount = parseFloat(p.totalAmount || 0);
+      const paid = parseFloat(p.amountPaid || 0);
+      const pending = amount - paid;
+      
+      totalAmount += amount;
+      totalPaid += paid;
+      totalPending += pending;
+
+      if (p.supplier) {
+        if (!supplierSummaryMap[p.supplier.id]) {
+          supplierSummaryMap[p.supplier.id] = {
+            name: p.supplier.name,
+            count: 0,
+            total: 0
+          };
+        }
+        supplierSummaryMap[p.supplier.id].count += 1;
+        supplierSummaryMap[p.supplier.id].total += amount;
+      }
+    });
+
+    const supplierSummary = Object.values(supplierSummaryMap).sort((a, b) => b.total - a.total);
+
+    return res.render('pages/reports/purchases', {
+      title: 'Reporte de Compras del Mes',
+      user: req.user,
+      purchases,
+      totalAmount,
+      totalPaid,
+      totalPending,
+      supplierSummary,
+      month,
+      selectedBranchId: req.query.branchId || 'all',
+      branchName,
+      branches
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   renderDashboard,
   exportStatementPdf,
   exportFinancialReportPdf,
-  renderStockReport
+  renderStockReport,
+  renderPurchasesReport
 };

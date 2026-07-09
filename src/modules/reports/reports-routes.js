@@ -10,6 +10,7 @@ router.use(authMiddleware);
 // Render consolidated/branch reports dashboard
 router.get('/', checkPermission('reports.local_dashboard'), reportsController.renderDashboard);
 router.get('/stock', checkPermission('reports.local_dashboard'), reportsController.renderStockReport);
+router.get('/purchases', checkPermission('reports.local_dashboard'), reportsController.renderPurchasesReport);
 
 // Export consolidated/branch reports dashboard PDF
 router.get('/pdf', checkPermission('reports.local_dashboard'), reportsController.exportFinancialReportPdf);

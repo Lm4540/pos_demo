@@ -22,6 +22,12 @@
         </svg>
         <span>Stock Completo</span>
       </a>
+      <a href="/reports/purchases" class="bg-neutral-800 hover:bg-neutral-750 border border-neutral-750 text-neutral-200 px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5">
+        <svg class="h-4 w-4 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+        </svg>
+        <span>Reporte Compras</span>
+      </a>
       <a href="/reports/pdf?startDate=<%= startDate %>&endDate=<%= endDate %>&branchId=<%= selectedBranchId %>" class="bg-blue-600 hover:bg-blue-500 px-4 py-2.5 rounded-xl text-xs font-bold text-white transition-all shadow-md shadow-blue-500/10 flex items-center gap-1.5 cursor-pointer">
         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -125,6 +131,25 @@
       </div>
     </div>
 
+    <!-- Sección de Gráficos Financieros -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Tendencia de Ingresos -->
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+        <h3 class="text-sm font-bold text-white uppercase tracking-wider mb-4">Tendencia de Ingresos Diarios</h3>
+        <div class="h-80 w-full relative">
+          <canvas id="income-trend-chart"></canvas>
+        </div>
+      </div>
+
+      <!-- Pastel Distribución -->
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+        <h3 class="text-sm font-bold text-white uppercase tracking-wider mb-4">Distribución Financiera (Ingresos, Costos, Gastos)</h3>
+        <div class="h-80 w-full relative flex items-center justify-center">
+          <canvas id="financial-pie-chart"></canvas>
+        </div>
+      </div>
+    </div>
+
     <!-- Detalle / Transacciones Recientes del Periodo -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
       
@@ -212,7 +237,10 @@
                   <th class="py-2">Producto</th>
                   <th class="py-2">Cód. Barras</th>
                   <th class="py-2 text-center">Cant. Vendida</th>
-                  <th class="py-2 text-right">Total Ingresos</th>
+                  <th class="py-2 text-right">Ingresos</th>
+                  <th class="py-2 text-right">Costo Total</th>
+                  <th class="py-2 text-right">Ganancia Real</th>
+                  <th class="py-2 text-right">Margen</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-neutral-800">
@@ -221,7 +249,10 @@
                     <td class="py-3 font-bold text-white"><%= ts.name %></td>
                     <td class="py-3 font-mono text-neutral-500"><%= ts.barCode || 'N/A' %></td>
                     <td class="py-3 text-center font-mono font-bold text-neutral-200"><%= ts.totalQty %></td>
-                    <td class="py-3 text-right font-mono font-semibold text-emerald-400">$<%= parseFloat(ts.totalRevenue).toFixed(2) %></td>
+                    <td class="py-3 text-right font-mono text-neutral-350">$<%= parseFloat(ts.totalRevenue).toFixed(2) %></td>
+                    <td class="py-3 text-right font-mono text-neutral-500">$<%= parseFloat(ts.totalCost || 0).toFixed(2) %></td>
+                    <td class="py-3 text-right font-mono font-bold text-emerald-400">$<%= parseFloat(ts.totalProfit || 0).toFixed(2) %></td>
+                    <td class="py-3 text-right font-mono font-bold text-indigo-400"><%= parseFloat(ts.margin || 0).toFixed(1) %>%</td>
                   </tr>
                 <% }) %>
               </tbody>
@@ -331,5 +362,120 @@
 
   </main>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    // 1. Line Chart: Daily Trend
+    const dailyData = <%- JSON.stringify(dailyTrend) %>;
+    const lineLabels = dailyData.map(d => {
+      const parts = d.dateStr.split('-');
+      return parts.length === 3 ? `${parts[2]}/${parts[1]}` : d.dateStr;
+    });
+    const lineValues = dailyData.map(d => parseFloat(d.total));
+
+    const lineCtx = document.getElementById('income-trend-chart').getContext('2d');
+    new Chart(lineCtx, {
+      type: 'line',
+      data: {
+        labels: lineLabels,
+        datasets: [{
+          label: 'Ingresos por Ventas ($)',
+          data: lineValues,
+          borderColor: '#3b82f6', // Tailwind blue-500
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          fill: true,
+          tension: 0.3,
+          borderWidth: 3,
+          pointBackgroundColor: '#2563eb',
+          pointBorderColor: '#ffffff',
+          pointHoverRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return `Ingresos: $${context.raw.toLocaleString('es-SV', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { color: '#9ca3af' }
+          },
+          y: {
+            grid: { color: '#1f2937' },
+            ticks: {
+              color: '#9ca3af',
+              callback: function(value) {
+                return '$' + value;
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // 2. Pie Chart: Financial Distribution
+    const totalSales = parseFloat("<%= totalSales %>") || 0;
+    const totalCogs = parseFloat("<%= totalCogs %>") || 0;
+    const totalExpenses = parseFloat("<%= totalExpenses %>") || 0;
+    const netProfit = parseFloat("<%= grossProfit %>") || 0;
+
+    const pieCtx = document.getElementById('financial-pie-chart').getContext('2d');
+    new Chart(pieCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Costo de Ventas (COGS)', 'Gastos Operativos', 'Utilidad Net (Ganancia)'],
+        datasets: [{
+          data: [
+            totalCogs,
+            totalExpenses,
+            netProfit > 0 ? netProfit : 0
+          ],
+          backgroundColor: [
+            '#3b82f6', // blue-500 for COGS
+            '#ef4444', // red-500 for expenses
+            '#10b981'  // emerald-500 for profit
+          ],
+          borderWidth: 1,
+          borderColor: '#111827'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              color: '#9ca3af',
+              font: { size: 11 },
+              padding: 15
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const val = context.raw;
+                const total = totalCogs + totalExpenses + (netProfit > 0 ? netProfit : 0);
+                const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+                return ` ${context.label}: $${val.toLocaleString('es-SV', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${pct}%)`;
+              }
+            }
+          }
+        },
+        cutout: '60%'
+      }
+    });
+  });
+</script>
 
 <%- include('../../partials/foot') %>

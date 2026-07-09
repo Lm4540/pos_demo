@@ -1,0 +1,275 @@
+<%- include('../partials/head', { title: 'Mi Perfil' }) %>
+
+<div class="flex-grow flex flex-col min-h-screen bg-neutral-950">
+  <!-- Nav Bar -->
+  <nav class="bg-neutral-900 border-b border-neutral-800 px-6 py-4 flex items-center justify-between shadow-md">
+    <div class="flex items-center gap-3">
+      <div class="h-10 w-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+        <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+      </div>
+      <div>
+        <span class="text-xl font-bold text-white tracking-wide">Mi Perfil</span>
+        <span class="text-xs block text-neutral-400 font-medium">RG Simple POS - Configuración Personal</span>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-4">
+      <a href="/dashboard" class="bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 px-4 py-2 rounded-xl text-sm font-medium text-neutral-300 transition-all shadow-sm flex items-center gap-2">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        <span>Volver al Panel</span>
+      </a>
+      <a href="/auth/logout" class="bg-neutral-800 hover:bg-red-950 hover:text-red-200 border border-neutral-700 hover:border-red-900 px-4 py-2 rounded-xl text-sm font-medium text-neutral-300 transition-all shadow-sm">
+        Cerrar Sesión
+      </a>
+    </div>
+  </nav>
+
+  <!-- Main Content Grid -->
+  <main class="flex-grow p-6 max-w-4xl w-full mx-auto space-y-8">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      
+      <!-- User Info Card -->
+      <div class="md:col-span-1 bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm space-y-6">
+        <div class="flex flex-col items-center text-center space-y-3">
+          <div class="h-20 w-20 bg-neutral-800 border border-neutral-700 rounded-full flex items-center justify-center text-3xl text-neutral-400 font-extrabold shadow-inner">
+            <%= user.fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() %>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-white"><%= user.fullName %></h2>
+            <span class="text-xs text-neutral-500 uppercase tracking-wider block mt-0.5"><%= user.roleId %></span>
+          </div>
+        </div>
+
+        <div class="border-t border-neutral-800 pt-4 space-y-4">
+          <div>
+            <span class="text-[10px] text-neutral-500 font-bold uppercase block">Nombre de Usuario</span>
+            <span class="text-sm text-neutral-300 font-mono mt-0.5 block"><%= user.username %></span>
+          </div>
+          <div>
+            <span class="text-[10px] text-neutral-500 font-bold uppercase block">Sucursal Asignada</span>
+            <span class="text-sm text-blue-400 font-semibold mt-0.5 block"><%= user.branch ? user.branch.name : 'Ninguna' %></span>
+          </div>
+        </div>
+
+        <div class="pt-2">
+          <button onclick="openChangePasswordModal()" class="w-full flex items-center justify-center gap-2 bg-neutral-800 hover:bg-neutral-750 text-white border border-neutral-700 px-4 py-3 rounded-xl text-sm font-semibold transition-all shadow-sm cursor-pointer">
+            <svg class="h-4 w-4 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <span>Cambiar Contraseña</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Biometrics / WebAuthn Card -->
+      <div class="md:col-span-2 bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm space-y-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-lg font-bold text-white">Métodos de Autenticación Biométrica</h3>
+            <p class="text-xs text-neutral-400 mt-1">Registra y administra dispositivos para iniciar sesión rápidamente sin contraseña.</p>
+          </div>
+          <button id="btn-enroll-biometric" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-4 py-2.5 rounded-xl text-xs font-semibold cursor-pointer transition-all shadow-md">
+            Registrar Dispositivo
+          </button>
+        </div>
+
+        <!-- Devices List -->
+        <div class="space-y-4">
+          <h4 class="text-xs font-bold text-neutral-500 uppercase tracking-wider">Dispositivos Vinculados</h4>
+          
+          <% if (credentials.length === 0) { %>
+            <div class="border border-dashed border-neutral-800 p-8 rounded-xl text-center space-y-2">
+              <svg class="h-8 w-8 text-neutral-600 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 009 11.571V11a4 4 0 118 0v.571c0 1.253.25 2.45.71 3.536" />
+              </svg>
+              <p class="text-xs text-neutral-500">No tienes ningún dispositivo biométrico registrado actualmente.</p>
+            </div>
+          <% } else { %>
+            <div class="overflow-hidden border border-neutral-800 rounded-xl bg-neutral-950/40">
+              <table class="min-w-full text-left text-xs text-neutral-300">
+                <thead>
+                  <tr class="bg-neutral-900 border-b border-neutral-800 text-neutral-500 text-[10px] uppercase font-bold tracking-wider">
+                    <th class="py-3 px-4">Dispositivo</th>
+                    <th class="py-3 px-4">Tipo</th>
+                    <th class="py-3 px-4">Registrado</th>
+                    <th class="py-3 px-4 text-right">Acción</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-neutral-800">
+                  <% credentials.forEach(cred => { %>
+                    <tr class="hover:bg-neutral-900/40">
+                      <td class="py-3.5 px-4 font-semibold text-white">
+                        <div class="flex items-center gap-2">
+                          <svg class="h-4 w-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                          </svg>
+                          <span><%= cred.deviceName || 'Dispositivo Desconocido' %></span>
+                        </div>
+                      </td>
+                      <td class="py-3.5 px-4 text-neutral-400 capitalize font-mono"><%= cred.deviceType %></td>
+                      <td class="py-3.5 px-4 text-neutral-500"><%= new Date(cred.createdAt).toLocaleDateString('es-SV', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %></td>
+                      <td class="py-3.5 px-4 text-right">
+                        <button onclick="revokeCredential('<%= cred.id %>')" class="text-xs font-bold text-red-400 hover:text-red-300 hover:underline cursor-pointer bg-transparent border-0">
+                          Revocar
+                        </button>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          <% } %>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Password Change Modal -->
+<div id="password-modal" class="fixed inset-0 bg-neutral-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50 transition-opacity duration-300">
+  <div class="bg-neutral-900 border border-neutral-800 w-full max-w-md p-6 rounded-2xl shadow-2xl relative transform scale-95 opacity-0 transition-all duration-300" id="password-card">
+    <div class="flex items-center justify-between pb-3 border-b border-neutral-800 mb-5">
+      <h3 class="text-lg font-bold text-white">Cambiar Contraseña</h3>
+      <button onclick="closeChangePasswordModal()" class="text-neutral-500 hover:text-white cursor-pointer transition-colors">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <form id="form-change-password" class="space-y-4">
+      <div>
+        <label class="block text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2">Contraseña Actual</label>
+        <input type="password" name="currentPassword" required class="w-full bg-neutral-950 border border-neutral-800 focus:border-blue-500 rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-colors font-mono">
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2">Nueva Contraseña</label>
+        <input type="password" name="newPassword" required minlength="6" class="w-full bg-neutral-950 border border-neutral-800 focus:border-blue-500 rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-colors font-mono">
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2">Confirmar Nueva Contraseña</label>
+        <input type="password" name="confirmPassword" required minlength="6" class="w-full bg-neutral-950 border border-neutral-800 focus:border-blue-500 rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-colors font-mono">
+      </div>
+
+      <div class="flex justify-end gap-3 pt-4 border-t border-neutral-800 mt-6">
+        <button type="button" onclick="closeChangePasswordModal()" class="px-4 py-2.5 text-sm font-semibold text-neutral-400 bg-neutral-800 hover:bg-neutral-750 rounded-xl transition-all cursor-pointer">
+          Cancelar
+        </button>
+        <button type="submit" class="px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-xl transition-all cursor-pointer shadow-md shadow-blue-500/10">
+          Guardar Cambios
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // Open / Close password modal
+  function openChangePasswordModal() {
+    const modal = document.getElementById('password-modal');
+    const card = document.getElementById('password-card');
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+      card.classList.remove('scale-95', 'opacity-0');
+    }, 10);
+  }
+
+  function closeChangePasswordModal() {
+    const modal = document.getElementById('password-modal');
+    const card = document.getElementById('password-card');
+    card.classList.add('scale-95', 'opacity-0');
+    setTimeout(() => {
+      modal.classList.add('hidden');
+      document.getElementById('form-change-password').reset();
+    }, 200);
+  }
+
+  // Handle password change request
+  document.getElementById('form-change-password').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const currentPassword = e.target.currentPassword.value;
+    const newPassword = e.target.newPassword.value;
+    const confirmPassword = e.target.confirmPassword.value;
+
+    if (newPassword !== confirmPassword) {
+      showToast('La nueva contraseña y la confirmación no coinciden.', 'warning');
+      return;
+    }
+
+    try {
+      const resp = await fetch('/profile/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword, newPassword })
+      });
+      const data = await resp.json();
+
+      if (data.success) {
+        showToast('¡Contraseña actualizada con éxito!', 'success');
+        closeChangePasswordModal();
+      } else {
+        showToast(data.message || 'Error al cambiar la contraseña.', 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Ocurrió un error al enviar la petición.', 'error');
+    }
+  });
+
+  // Handle biometric enrollment
+  document.getElementById('btn-enroll-biometric').addEventListener('click', async () => {
+    try {
+      const resp = await fetch('/auth/register-options');
+      if (!resp.ok) {
+        throw new Error('No autorizado o error al obtener opciones de registro.');
+      }
+      const options = await resp.json();
+
+      const attestationResp = await SimpleWebAuthnBrowser.startRegistration({ optionsJSON: options });
+
+      const verificationResp = await fetch('/auth/register-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(attestationResp)
+      });
+
+      const result = await verificationResp.json();
+      if (result.success) {
+        showToast('¡Dispositivo registrado correctamente!', 'success');
+        setTimeout(() => { window.location.reload(); }, 1200);
+      } else {
+        showToast('Error al registrar: ' + result.message, 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Error en enrolamiento: ' + (err.message || 'Verifica la compatibilidad de tu dispositivo.'), 'error');
+    }
+  });
+
+  // Revoke biometric credential
+  function revokeCredential(id) {
+    showConfirm('¿Estás seguro de que deseas eliminar este dispositivo? Ya no podrás iniciar sesión con él.', async () => {
+      try {
+        const resp = await fetch(`/profile/credential/${id}`, { method: 'DELETE' });
+        const data = await resp.json();
+
+        if (data.success) {
+          showToast('Dispositivo revocado correctamente.', 'success');
+          setTimeout(() => { window.location.reload(); }, 1200);
+        } else {
+          showToast(data.message || 'Error al revocar dispositivo.', 'error');
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Error al procesar la revocación.', 'error');
+      }
+    });
+  }
+</script>
+
+<%- include('../partials/foot') %>

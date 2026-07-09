@@ -9,7 +9,7 @@ const { AuditLog } = require('../models');
  * @param {Object} params.details - Details payload (converted to JSON in DB)
  * @param {string|null} params.ipAddress - Client IP address
  */
-const logAction = async ({ userId, branchId, action, details = {}, ipAddress = null }) => {
+const logAction = async ({ userId, branchId, action, details = {}, ipAddress = null }, { transaction } = {}) => {
   try {
     await AuditLog.create({
       userId: userId || null,
@@ -17,7 +17,7 @@ const logAction = async ({ userId, branchId, action, details = {}, ipAddress = n
       action,
       details,
       ipAddress
-    });
+    }, { transaction });
   } catch (error) {
     console.error('Error writing to AuditLog:', error);
   }

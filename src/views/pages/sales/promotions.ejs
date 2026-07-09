@@ -145,14 +145,14 @@
           <input type="text" name="description" class="w-full px-3 py-2 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-xs" placeholder="Opcional...">
         </div>
         
-        <div>
+        <div class="relative">
           <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Aplica a Producto</label>
-          <select name="productId" class="w-full px-3 py-2 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs">
-            <option value="">-- No aplicar por producto --</option>
-            <% products.forEach(prod => { %>
-              <option value="<%= prod.id %>"><%= prod.name %> (<%= prod.barCode || 'Sin código' %>)</option>
-            <% }) %>
-          </select>
+          <div class="flex gap-2">
+            <input type="text" id="create-productSearch" placeholder="Buscar por nombre o código..." class="w-full px-3 py-2 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs">
+            <button type="button" onclick="clearSelectedProduct('create')" class="px-3 py-2 bg-neutral-800 hover:bg-neutral-750 text-neutral-300 rounded-xl text-xs border border-neutral-750">✕</button>
+          </div>
+          <input type="hidden" name="productId" id="create-productId">
+          <div id="create-productDropdown" class="hidden absolute bg-neutral-950 border border-neutral-850 rounded-xl mt-1 max-h-48 overflow-y-auto z-50 text-xs w-full shadow-lg divide-y divide-neutral-800/60"></div>
         </div>
         <div>
           <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Aplica a Categoría</label>
@@ -242,14 +242,14 @@
           <input type="text" id="edit-description" name="description" class="w-full px-3 py-2 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-xs">
         </div>
         
-        <div>
+        <div class="relative">
           <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Aplica a Producto</label>
-          <select id="edit-productId" name="productId" class="w-full px-3 py-2 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs">
-            <option value="">-- No aplicar por producto --</option>
-            <% products.forEach(prod => { %>
-              <option value="<%= prod.id %>"><%= prod.name %> (<%= prod.barCode || 'Sin código' %>)</option>
-            <% }) %>
-          </select>
+          <div class="flex gap-2">
+            <input type="text" id="edit-productSearch" placeholder="Buscar por nombre o código..." class="w-full px-3 py-2 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs">
+            <button type="button" onclick="clearSelectedProduct('edit')" class="px-3 py-2 bg-neutral-800 hover:bg-neutral-750 text-neutral-300 rounded-xl text-xs border border-neutral-750">✕</button>
+          </div>
+          <input type="hidden" name="productId" id="edit-productId">
+          <div id="edit-productDropdown" class="hidden absolute bg-neutral-950 border border-neutral-850 rounded-xl mt-1 max-h-48 overflow-y-auto z-50 text-xs w-full shadow-lg divide-y divide-neutral-800/60"></div>
         </div>
         <div>
           <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Aplica a Categoría</label>
@@ -356,8 +356,62 @@
     }
   }
 
+  const productsList = <%- JSON.stringify(products) %>;
+
+  function setupProductSearch(prefix) {
+    const searchInput = document.getElementById(`${prefix}-productSearch`);
+    const idInput = document.getElementById(`${prefix}-productId`);
+    const dropdown = document.getElementById(`${prefix}-productDropdown`);
+    if (!searchInput || !dropdown) return;
+
+    searchInput.addEventListener('input', () => {
+      const query = searchInput.value.toLowerCase().trim();
+      if (!query) {
+        dropdown.classList.add('hidden');
+        return;
+      }
+
+      const matches = productsList.filter(p => 
+        p.name.toLowerCase().includes(query) || 
+        (p.barCode && p.barCode.toLowerCase().includes(query))
+      ).slice(0, 10);
+
+      if (matches.length === 0) {
+        dropdown.innerHTML = `<div class="p-3 text-neutral-500 text-center">No se encontraron productos</div>`;
+      } else {
+        dropdown.innerHTML = matches.map(p => `
+          <div onclick="selectProductForPromo('${prefix}', ${p.id}, '${p.name.replace(/'/g, "\\'")}', '${p.barCode || ''}')" class="p-2.5 hover:bg-neutral-800 cursor-pointer text-white flex justify-between gap-2 transition-colors">
+            <span class="font-bold text-xs">${p.name}</span>
+            <span class="font-mono text-[10px] text-neutral-450">${p.barCode || 'Sin código'}</span>
+          </div>
+        `).join('');
+      }
+      dropdown.classList.remove('hidden');
+    });
+
+    // Close dropdown on click outside
+    document.addEventListener('click', (e) => {
+      if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.classList.add('hidden');
+      }
+    });
+  }
+
+  function selectProductForPromo(prefix, id, name, barcode) {
+    document.getElementById(`${prefix}-productId`).value = id;
+    document.getElementById(`${prefix}-productSearch`).value = `${name} (${barcode || 'Sin código'})`;
+    document.getElementById(`${prefix}-productDropdown`).classList.add('hidden');
+  }
+
+  function clearSelectedProduct(prefix) {
+    document.getElementById(`${prefix}-productId`).value = '';
+    document.getElementById(`${prefix}-productSearch`).value = '';
+    document.getElementById(`${prefix}-productDropdown`).classList.add('hidden');
+  }
+
   function openCreateModal() {
     document.getElementById('create-modal').classList.remove('hidden');
+    clearSelectedProduct('create');
     toggleFormFields('create');
   }
 
@@ -369,7 +423,15 @@
     document.getElementById('edit-form').action = `/promotions/${promo.id}/edit`;
     document.getElementById('edit-name').value = promo.name;
     document.getElementById('edit-description').value = promo.description || '';
+    
     document.getElementById('edit-productId').value = promo.productId || '';
+    if (promo.productId) {
+      const prod = productsList.find(p => p.id === promo.productId);
+      document.getElementById('edit-productSearch').value = prod ? `${prod.name} (${prod.barCode || 'Sin código'})` : '';
+    } else {
+      document.getElementById('edit-productSearch').value = '';
+    }
+
     document.getElementById('edit-categoryId').value = promo.categoryId || '';
     document.getElementById('edit-type').value = promo.type;
     
@@ -426,6 +488,8 @@
       showToast('Operación realizada con éxito.', 'success');
       window.history.replaceState({}, document.title, window.location.pathname);
     }
+    setupProductSearch('create');
+    setupProductSearch('edit');
   });
 </script>
 

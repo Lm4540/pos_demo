@@ -185,6 +185,45 @@ const getRegistrationOptions = async (req, res) => {
   }
 };
 
+const getDeviceNameFromUserAgent = (userAgent) => {
+  if (!userAgent) return 'Dispositivo Desconocido';
+  
+  let os = 'Dispositivo';
+  let browser = 'Navegador';
+
+  if (userAgent.includes('Windows NT 10.0')) {
+    os = 'Windows 10/11';
+  } else if (userAgent.includes('Windows NT 6.1')) {
+    os = 'Windows 7';
+  } else if (userAgent.includes('Macintosh') && userAgent.includes('Intel Mac OS')) {
+    os = 'macOS';
+  } else if (userAgent.includes('iPhone')) {
+    const match = userAgent.match(/iPhone OS (\d+_\d+)/);
+    os = match ? `iPhone (iOS ${match[1].replace('_', '.')})` : 'iPhone';
+  } else if (userAgent.includes('iPad')) {
+    os = 'iPad';
+  } else if (userAgent.includes('Android')) {
+    const match = userAgent.match(/Android\s+[^;]+;\s*([^;)]+)/);
+    os = match ? match[1].trim() : 'Android';
+  } else if (userAgent.includes('Linux')) {
+    os = 'Linux';
+  }
+
+  if (userAgent.includes('Chrome') && !userAgent.includes('Edg') && !userAgent.includes('OPR')) {
+    browser = 'Chrome';
+  } else if (userAgent.includes('Safari') && !userAgent.includes('Chrome')) {
+    browser = 'Safari';
+  } else if (userAgent.includes('Firefox')) {
+    browser = 'Firefox';
+  } else if (userAgent.includes('Edg')) {
+    browser = 'Edge';
+  } else if (userAgent.includes('OPR') || userAgent.includes('Opera')) {
+    browser = 'Opera';
+  }
+
+  return `${os} (${browser})`;
+};
+
 const verifyRegistration = async (req, res) => {
   try {
     const user = req.user;
@@ -209,7 +248,8 @@ const verifyRegistration = async (req, res) => {
         userId: user.id,
         publicKey: Buffer.from(credentialPublicKey).toString('base64url'),
         counter,
-        deviceType: verification.registrationInfo.credentialDeviceType || 'unknown'
+        deviceType: verification.registrationInfo.credentialDeviceType || 'unknown',
+        deviceName: getDeviceNameFromUserAgent(req.headers['user-agent'])
       });
 
       await logAction({

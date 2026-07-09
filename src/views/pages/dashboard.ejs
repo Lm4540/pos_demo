@@ -1,5 +1,29 @@
 <%- include('../partials/head', { title: 'Panel Principal' }) %>
 
+<style>
+  @keyframes critical-pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5);
+      border-color: rgba(239, 68, 68, 0.7);
+    }
+
+    50% {
+      box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+      border-color: rgba(239, 68, 68, 1);
+      background-color: rgba(127, 29, 29, 0.35);
+    }
+
+    100% {
+      box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+      border-color: rgba(239, 68, 68, 0.7);
+    }
+  }
+
+  .animate-critical-pulse {
+    animation: critical-pulse 2.5s infinite ease-in-out;
+  }
+</style>
+
 <div class="flex-grow flex flex-col min-h-screen bg-neutral-950">
   <!-- Nav Bar -->
   <nav class="bg-neutral-900 border-b border-neutral-800 px-6 py-4 flex items-center justify-between shadow-md">
@@ -14,12 +38,18 @@
         <span class="text-xs block text-neutral-400 font-medium">Sucursal: <strong class="text-blue-400"><%= user.branch ? user.branch.name : 'Ninguna' %></strong></span>
       </div>
     </div>
-    
+
     <div class="flex items-center gap-4">
       <div class="text-right hidden sm:block">
         <span class="text-sm font-semibold text-white block"><%= user.fullName %></span>
         <span class="text-xs text-neutral-500 capitalize"><%= user.roleId %></span>
       </div>
+      <a href="/profile" class="bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 px-4 py-2 rounded-xl text-sm font-medium text-neutral-300 transition-all shadow-sm flex items-center gap-1.5">
+        <svg class="h-4 w-4 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+        <span>Mi Perfil</span>
+      </a>
       <a href="/auth/logout" class="bg-neutral-800 hover:bg-red-950 hover:text-red-200 border border-neutral-700 hover:border-red-900 px-4 py-2 rounded-xl text-sm font-medium text-neutral-300 transition-all shadow-sm">
         Cerrar Sesión
       </a>
@@ -33,124 +63,97 @@
         <h1 class="text-3xl font-extrabold text-white tracking-tight">Bienvenido, <%= user.fullName %></h1>
         <p class="text-neutral-400 text-sm mt-1">El Salvador POS - Gestión y Administración</p>
       </div>
-      
-      <!-- Biometrics link status -->
-      <div>
-        <% if (!hasBiometrics) { %>
-          <button id="btn-enroll-biometric" class="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-5 py-3 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-blue-500/20 cursor-pointer">
-            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 009 11.571V11a4 4 0 118 0v.571c0 1.253.25 2.45.71 3.536m-8.62-4.897a6.7 6.7 0 00-.71-2.585M15 7h.01" />
-            </svg>
-            <span>Vincular Huella / Biometría</span>
-          </button>
-        <% } else { %>
-          <div class="flex items-center gap-2 bg-emerald-950/40 border border-emerald-800 text-emerald-450 px-5 py-3 rounded-xl text-sm font-bold shadow-md">
-            <svg class="h-5 w-5 text-emerald-450" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-            <span>Huella Vinculada</span>
-          </div>
-        <% } %>
-      </div>
     </div>
 
     <!-- Alertas de Stock y Vencimiento -->
     <% if (criticalStockProducts.length > 0 || expiringBatches.length > 0) { %>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        
-        <!-- Stock Crítico -->
-        <% if (criticalStockProducts.length > 0) { %>
-          <div class="bg-red-950/20 border border-red-900/60 p-5 rounded-2xl space-y-3">
-            <h4 class="text-sm font-bold text-red-400 flex items-center gap-2">
-              <svg class="h-5 w-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-              <span>ALERTA DE STOCK CRÍTICO (Agotándose)</span>
-            </h4>
-            <div class="max-h-60 overflow-y-auto space-y-2">
-              <% criticalStockProducts.forEach(bp => { %>
-                <div class="flex items-center justify-between p-2.5 bg-neutral-950/50 border border-red-900/30 rounded-xl">
-                  <div>
-                    <span class="text-xs font-bold text-white block"><%= bp.product ? bp.product.name : 'Artículo' %></span>
-                    <span class="text-[10px] text-neutral-500">Cód: <%= bp.product ? bp.product.barCode : 'N/A' %></span>
-                  </div>
-                  <div class="text-right">
-                    <span class="text-xs font-mono font-bold text-red-400 block"><%= bp.totalStock %> uds</span>
-                    <span class="text-[9px] text-neutral-500 block">Mínimo: <%= bp.minStock %></span>
-                  </div>
-                </div>
-              <% }) %>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      <!-- Stock Crítico -->
+      <% if (criticalStockProducts.length > 0) { %>
+      <div class="bg-red-950/20 border border-red-900/60 p-5 rounded-2xl space-y-3">
+        <h4 class="text-sm font-bold text-red-400 flex items-center gap-2">
+          <svg class="h-5 w-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <span>ALERTA DE STOCK CRÍTICO (Agotándose)</span>
+        </h4>
+        <div class="max-h-60 overflow-y-auto space-y-2">
+          <% criticalStockProducts.forEach(bp => { %>
+          <div class="flex items-center justify-between p-2.5 bg-neutral-950/50 border border-red-900/30 rounded-xl">
+            <div>
+              <span class="text-xs font-bold text-white block"><%= bp.product ? bp.product.name : 'Artículo' %></span>
+              <span class="text-[10px] text-neutral-500">Cód: <%= bp.product ? bp.product.barCode : 'N/A' %></span>
+            </div>
+            <div class="text-right">
+              <span class="text-xs font-mono font-bold text-red-400 block"><%= bp.totalStock %> uds</span>
+              <span class="text-[9px] text-neutral-500 block">Mínimo: <%= bp.minStock %></span>
             </div>
           </div>
-        <% } %>
-
-        <!-- Próximos a Vencer -->
-        <% if (expiringBatches.length > 0) { %>
-          <div class="bg-amber-950/20 border border-amber-900/60 p-5 rounded-2xl space-y-3">
-            <h4 class="text-sm font-bold text-amber-400 flex items-center gap-2">
-              <svg class="h-5 w-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>ALERTA DE EXPIRACIÓN PRÓXIMA (Menos de 30 días)</span>
-            </h4>
-            <div class="max-h-60 overflow-y-auto space-y-2">
-              <% expiringBatches.forEach(b => { %>
-                <% const diffTime = new Date(b.expirationDate) - new Date(); %>
-                <% const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); %>
-                <div class="flex items-center justify-between p-2.5 bg-neutral-950/50 border border-amber-900/30 rounded-xl">
-                  <div>
-                    <span class="text-xs font-bold text-white block"><%= b.product ? b.product.name : 'Artículo' %></span>
-                    <span class="text-[10px] text-neutral-500">Lote: <strong class="text-neutral-400 font-mono"><%= b.batchCode %></strong></span>
-                  </div>
-                  <div class="text-right">
-                    <span class="text-xs font-semibold text-amber-400 block">Vence en <%= diffDays %> días</span>
-                    <span class="text-[9px] text-neutral-500 block">Fecha: <%= new Date(b.expirationDate).toLocaleDateString('es-SV') %></span>
-                  </div>
-                </div>
-              <% }) %>
-            </div>
-          </div>
-        <% } %>
-
+          <% }) %>
+        </div>
       </div>
+      <% } %>
+
+      <!-- Próximos a Vencer -->
+      <% if (expiringBatches.length > 0) { %>
+      <div class="bg-amber-950/20 border border-amber-900/60 p-5 rounded-2xl space-y-3">
+        <h4 class="text-sm font-bold text-amber-400 flex items-center gap-2">
+          <svg class="h-5 w-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>ALERTA DE EXPIRACIÓN PRÓXIMA (Menos de 30 días)</span>
+        </h4>
+        <div class="max-h-60 overflow-y-auto space-y-2">
+          <% expiringBatches.forEach(b => { %>
+          <% const diffTime = new Date(b.expirationDate) - new Date(); %>
+          <% const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); %>
+          <% const isCritical = diffDays <= 15; %>
+          <div class="flex items-center justify-between p-2.5 rounded-xl border transition-all <%= isCritical ? 'bg-red-950/20 border-red-500/80 animate-critical-pulse' : 'bg-neutral-950/50 border-amber-900/30' %>">
+            <div>
+              <span class="text-xs font-bold text-white block"><%= b.product ? b.product.name : 'Artículo' %></span>
+              <span class="text-[10px] text-neutral-500">Lote: <strong class="text-neutral-400 font-mono"><%= b.batchCode %></strong></span>
+            </div>
+            <div class="text-right">
+              <span class="text-xs font-bold <%= isCritical ? 'text-red-400 font-black' : 'text-amber-400 font-semibold' %> block">Vence en <%= diffDays %> días</span>
+              <span class="text-[9px] text-neutral-500 block">Fecha: <%= new Date(b.expirationDate).toLocaleDateString('es-SV') %></span>
+            </div>
+          </div>
+          <% }) %>
+        </div>
+      </div>
+      <% } %>
+
+    </div>
     <% } %>
 
     <!-- Operations Modules -->
     <div class="space-y-4">
       <h2 class="text-lg font-bold text-neutral-400 tracking-wider uppercase">Operaciones de Caja y Ventas</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
         
-        <!-- Punto de Venta (POS) -->
-        <a href="/sales/pos" class="group bg-neutral-900 border border-neutral-800 hover:border-emerald-500 p-6 rounded-2xl transition-all shadow-sm hover:shadow-lg hover:shadow-emerald-500/5 hover:-translate-y-1 block">
-          <div class="h-12 w-12 bg-emerald-950 border border-emerald-800 rounded-xl flex items-center justify-center group-hover:bg-emerald-600 transition-colors">
-            <svg class="h-6 w-6 text-emerald-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+
+        <a href="/sales/pos-touch" class="group bg-neutral-900 border border-neutral-800 hover:border-violet-500 p-6 rounded-2xl transition-all shadow-sm hover:shadow-lg hover:shadow-violet-500/5 hover:-translate-y-1 block">
+          <div class="h-12 w-12 bg-violet-950 border border-violet-800 rounded-xl flex items-center justify-center group-hover:bg-violet-600 transition-colors">
+            <svg class="h-6 w-6 text-violet-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
             </svg>
           </div>
           <h3 class="text-xl font-bold text-white mt-4">Punto de Venta (POS)</h3>
-          <p class="text-neutral-400 text-sm mt-1">Registra y factura ventas al contado o al crédito con descarga de stock.</p>
+          <p class="text-neutral-400 text-sm mt-1">Versión táctil optimizada para monitores touch y flujos rápidos de servicio.</p>
         </a>
 
         <!-- Control de Caja -->
-        <div class="group bg-neutral-900 border border-neutral-800 hover:border-teal-500 p-6 rounded-2xl transition-all shadow-sm hover:shadow-lg hover:shadow-teal-500/5 hover:-translate-y-1 block">
-          <a href="/cashier/details">
-            <div class="h-12 w-12 bg-teal-950 border border-teal-800 rounded-xl flex items-center justify-center group-hover:bg-teal-600 transition-colors">
-              <svg class="h-6 w-6 text-teal-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <h3 class="text-xl font-bold text-white mt-4">Control de Caja</h3>
-            <p class="text-neutral-400 text-sm mt-1">Apertura y cierre de turnos, depósitos y retiros de efectivo.</p>
-          </a>
-          <% if (user.roleId === 'admin' || user.roleId === 'supervisor') { %>
-            <div class="border-t border-neutral-800/80 pt-3 mt-3">
-              <a href="/cashier/history" class="text-xs font-bold text-teal-400 hover:text-teal-300 hover:underline inline-flex items-center gap-1 cursor-pointer">
-                <span>📊 Historial de Cortes/Arqueos</span>
-                <span>→</span>
-              </a>
-            </div>
-          <% } %>
-        </div>
+        <a href="/cashier/details" class="group bg-neutral-900 border border-neutral-800 hover:border-teal-500 p-6 rounded-2xl transition-all shadow-sm hover:shadow-lg hover:shadow-teal-500/5 hover:-translate-y-1 block">
+          <div class="h-12 w-12 bg-teal-950 border border-teal-800 rounded-xl flex items-center justify-center group-hover:bg-teal-600 transition-colors">
+            <svg class="h-6 w-6 text-teal-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-white mt-4">Control de Caja</h3>
+          <p class="text-neutral-400 text-sm mt-1">Apertura y cierre de turnos, depósitos y retiros de efectivo.</p>
+        </a>
 
         <!-- Registro de Compras -->
         <% if (user.roleId === 'admin' || user.roleId === 'supervisor') { %>
@@ -180,23 +183,15 @@
 
         <!-- Reporte Financiero (Supervisor/Admin) -->
         <% if (user.roleId === 'admin' || user.roleId === 'supervisor') { %>
-        <div class="group bg-neutral-900 border border-neutral-800 hover:border-violet-500 p-6 rounded-2xl transition-all shadow-sm hover:shadow-lg hover:shadow-violet-500/5 hover:-translate-y-1 block">
-          <a href="/reports">
-            <div class="h-12 w-12 bg-violet-950 border border-violet-800 rounded-xl flex items-center justify-center group-hover:bg-violet-600 transition-colors">
-              <svg class="h-6 w-6 text-violet-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm8-12V7a2 2 0 00-2-2H5a2 2 0 00-2 2v4h5" />
-              </svg>
-            </div>
-            <h3 class="text-xl font-bold text-white mt-4">Reportes Financieros</h3>
-            <p class="text-neutral-400 text-sm mt-1">Visualiza balances de ventas, compras, costos de inventario y utilidades netas.</p>
-          </a>
-          <div class="border-t border-neutral-800/80 pt-3 mt-3">
-            <a href="/reports/stock" class="text-xs font-bold text-violet-400 hover:text-violet-300 hover:underline inline-flex items-center gap-1 cursor-pointer">
-              <span>📦 Reporte de Stock Completo</span>
-              <span>→</span>
-            </a>
+        <a href="/reports" class="group bg-neutral-900 border border-neutral-800 hover:border-violet-500 p-6 rounded-2xl transition-all shadow-sm hover:shadow-lg hover:shadow-violet-500/5 hover:-translate-y-1 block">
+          <div class="h-12 w-12 bg-violet-950 border border-violet-800 rounded-xl flex items-center justify-center group-hover:bg-violet-600 transition-colors">
+            <svg class="h-6 w-6 text-violet-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm8-12V7a2 2 0 00-2-2H5a2 2 0 00-2 2v4h5" />
+            </svg>
           </div>
-        </div>
+          <h3 class="text-xl font-bold text-white mt-4">Reportes Financieros</h3>
+          <p class="text-neutral-400 text-sm mt-1">Visualiza balances de ventas, compras, costos de inventario y utilidades netas.</p>
+        </a>
         <% } %>
 
         <!-- Traslados entre Sucursales (Supervisor/Admin) -->
@@ -225,6 +220,19 @@
         </a>
         <% } %>
 
+        <!-- Levantamiento Inicial de Inventario (Supervisor/Admin) -->
+        <% if (user.roleId === 'admin' || user.roleId === 'supervisor') { %>
+        <a href="/inventory/initial-load" class="group bg-neutral-900 border border-neutral-800 hover:border-emerald-500 p-6 rounded-2xl transition-all shadow-sm hover:shadow-lg hover:shadow-emerald-500/5 hover:-translate-y-1 block">
+          <div class="h-12 w-12 bg-emerald-950 border border-emerald-800 rounded-xl flex items-center justify-center group-hover:bg-emerald-600 transition-colors">
+            <svg class="h-6 w-6 text-emerald-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-white mt-4">Levantamiento de Inventario</h3>
+          <p class="text-neutral-400 text-sm mt-1">Carga inicial de catálogo y registro de existencias físicas por primera vez.</p>
+        </a>
+        <% } %>
+
         <!-- Promociones y Ofertas (Supervisor/Admin) -->
         <% if (user.roleId === 'admin' || user.roleId === 'supervisor') { %>
         <a href="/promotions" class="group bg-neutral-900 border border-neutral-800 hover:border-pink-500 p-6 rounded-2xl transition-all shadow-sm hover:shadow-lg hover:shadow-pink-500/5 hover:-translate-y-1 block">
@@ -238,6 +246,58 @@
         </a>
         <% } %>
 
+        <!-- Accesos Directos -->
+        <% if (user.roleId === 'admin' || user.roleId === 'supervisor') { %>
+        <div class="bg-neutral-900 border border-neutral-800 p-6 rounded-2xl shadow-sm sm:col-span-2">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="h-10 w-10 bg-neutral-800 border border-neutral-700 rounded-xl flex items-center justify-center">
+              <svg class="h-5 w-5 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+              </svg>
+            </div>
+            <h3 class="text-sm font-bold text-white uppercase tracking-wider">Accesos Directos</h3>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <a href="/cashier/history" class="flex items-center gap-3 px-4 py-3 bg-neutral-950 border border-neutral-800 hover:border-teal-500/50 rounded-xl transition-all group cursor-pointer">
+              <div class="h-8 w-8 bg-teal-950 border border-teal-800/50 rounded-lg flex items-center justify-center flex-shrink-0">
+                <span class="text-sm">📊</span>
+              </div>
+              <div>
+                <span class="text-xs font-bold text-white group-hover:text-teal-400 transition-colors">Historial de Cortes/Arqueos</span>
+                <span class="block text-[10px] text-neutral-500">Revisión de cierres de caja y cuadres</span>
+              </div>
+            </a>
+            <a href="/reports/stock" class="flex items-center gap-3 px-4 py-3 bg-neutral-950 border border-neutral-800 hover:border-violet-500/50 rounded-xl transition-all group cursor-pointer">
+              <div class="h-8 w-8 bg-violet-950 border border-violet-800/50 rounded-lg flex items-center justify-center flex-shrink-0">
+                <span class="text-sm">📦</span>
+              </div>
+              <div>
+                <span class="text-xs font-bold text-white group-hover:text-violet-400 transition-colors">Reporte de Stock Completo</span>
+                <span class="block text-[10px] text-neutral-500">Existencias actuales por sucursal y producto</span>
+              </div>
+            </a>
+            <a href="/sales/history" class="flex items-center gap-3 px-4 py-3 bg-neutral-950 border border-neutral-800 hover:border-blue-500/50 rounded-xl transition-all group cursor-pointer">
+              <div class="h-8 w-8 bg-blue-950 border border-blue-800/50 rounded-lg flex items-center justify-center flex-shrink-0">
+                <span class="text-sm">🧾</span>
+              </div>
+              <div>
+                <span class="text-xs font-bold text-white group-hover:text-blue-400 transition-colors">Historial de Tickets</span>
+                <span class="block text-[10px] text-neutral-500">Consulta, reimprime o anula tickets emitidos</span>
+              </div>
+            </a>
+            <a href="/audit-logs" class="flex items-center gap-3 px-4 py-3 bg-neutral-950 border border-neutral-800 hover:border-amber-500/50 rounded-xl transition-all group cursor-pointer">
+              <div class="h-8 w-8 bg-amber-950 border border-amber-800/50 rounded-lg flex items-center justify-center flex-shrink-0">
+                <span class="text-sm">📋</span>
+              </div>
+              <div>
+                <span class="text-xs font-bold text-white group-hover:text-amber-400 transition-colors">Auditoría del Sistema</span>
+                <span class="block text-[10px] text-neutral-500">Registro de acciones y cambios por usuario</span>
+              </div>
+            </a>
+          </div>
+        </div>
+        <% } %>
+
       </div>
     </div>
 
@@ -245,7 +305,7 @@
     <div class="space-y-4 pt-6">
       <h2 class="text-lg font-bold text-neutral-400 tracking-wider uppercase">Catálogos y Configuración</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        
+
         <!-- Productos -->
         <a href="/products" class="group bg-neutral-900 border border-neutral-800 hover:border-cyan-500 p-6 rounded-2xl transition-all shadow-sm hover:shadow-lg hover:shadow-cyan-500/5 hover:-translate-y-1 block">
           <div class="h-12 w-12 bg-cyan-950 border border-cyan-800 rounded-xl flex items-center justify-center group-hover:bg-cyan-600 transition-colors">
@@ -331,55 +391,7 @@
         </a>
         <% } %>
 
-        <!-- Biometric Devices Management (Shown at bottom if already enrolled) -->
-        <% if (hasBiometrics) { %>
-        <div class="md:col-span-2 xl:col-span-3 mt-4 pt-6 border-t border-neutral-800">
-          <div class="bg-neutral-900 border border-neutral-800 p-6 rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-sm">
-            <div>
-              <h4 class="text-sm font-bold text-white uppercase tracking-wider">Métodos de Autenticación Vinculados</h4>
-              <p class="text-xs text-neutral-400 mt-1">Ya tienes dispositivos biométricos registrados para iniciar sesión sin contraseña.</p>
-            </div>
-            <button id="btn-enroll-biometric" class="bg-neutral-850 hover:bg-neutral-800 text-neutral-300 border border-neutral-700 px-4 py-2.5 rounded-xl text-xs font-semibold cursor-pointer whitespace-nowrap transition-all shadow-sm">
-              Registrar Otro Dispositivo
-            </button>
-          </div>
-        </div>
-        <% } %>
   </main>
 </div>
-
-<script>
-  // Script to register/enroll new biometric credentials
-  document.getElementById('btn-enroll-biometric').addEventListener('click', async () => {
-    try {
-      // 1. Fetch options
-      const resp = await fetch('/auth/register-options');
-      if (!resp.ok) {
-        throw new Error('No autorizado o error al obtener opciones de registro biométrico.');
-      }
-      const options = await resp.json();
-
-      // 2. Client registration via WebAuthn API
-      const attestationResp = await SimpleWebAuthnBrowser.startRegistration({ optionsJSON: options });
-
-      // 3. Post to verify and save
-      const verificationResp = await fetch('/auth/register-verification', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(attestationResp)
-      });
-
-      const verificationResult = await verificationResp.json();
-      if (verificationResult.success) {
-        showToast('¡Biometría vinculada con éxito! Ahora puedes iniciar sesión de forma rápida.', 'success');
-      } else {
-        showToast('Error al vincular biometría: ' + verificationResult.message, 'error');
-      }
-    } catch (err) {
-      console.error(err);
-      showToast('Error en enrolamiento biométrico: ' + (err.message || 'Verifica la compatibilidad de tu navegador o dispositivo.'), 'error');
-    }
-  });
-</script>
 
 <%- include('../partials/foot') %>

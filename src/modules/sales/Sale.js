@@ -56,6 +56,11 @@ class Sale extends Model {
         type: DataTypes.DECIMAL(12, 2),
         allowNull: false,
         defaultValue: 0.00
+      },
+      cardTransactionRef: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+        defaultValue: null
       }
     }, {
       sequelize,

@@ -295,8 +295,69 @@
     .light-mode .border-indigo-800 {
       border-color: #c7d2fe !important;
     }
+
+    /* Light mode badge visual adjustments */
+    .light-mode span.bg-neutral-800,
+    .light-mode span.bg-neutral-800\/40,
+    .light-mode span.bg-neutral-850,
+    .light-mode span.bg-neutral-850\/40,
+    .light-mode span.bg-neutral-900,
+    .light-mode span.bg-neutral-900\/40,
+    .light-mode span.bg-neutral-950,
+    .light-mode span.bg-neutral-950\/40 {
+      background-color: #f3f4f6 !important;
+      color: #4b5563 !important;
+      border: 1px solid #e5e7eb !important;
+    }
+
+    /* Touchscreen adjustments for Windows touch screen */
+    select, input[type="date"], input[type="time"] {
+      touch-action: manipulation;
+    }
+
+    /* Dark mode input vs placeholder differentiation */
+    html:not(.light-mode) input::placeholder, 
+    html:not(.light-mode) textarea::placeholder {
+      color: #6b7280 !important;
+      opacity: 1 !important;
+    }
+    html:not(.light-mode) input,
+    html:not(.light-mode) select,
+    html:not(.light-mode) textarea {
+      color: #ffffff !important;
+    }
   </style>
   <script>
+    // Client-side error tracking
+    window.addEventListener('error', function(event) {
+      if (event.filename && event.filename.includes('log-error')) return;
+      fetch('/log-error', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          route: window.location.pathname + window.location.search,
+          method: 'CLIENT_JS',
+          message: event.message,
+          stack: event.error ? event.error.stack : (event.filename + ':' + event.lineno + ':' + event.colno),
+          payload: { userAgent: navigator.userAgent, referrer: document.referrer }
+        })
+      }).catch(e => console.error('Failed to log client error:', e));
+    });
+
+    window.addEventListener('unhandledrejection', function(event) {
+      fetch('/log-error', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          route: window.location.pathname + window.location.search,
+          method: 'CLIENT_PROMISE',
+          message: event.reason ? (event.reason.message || String(event.reason)) : 'Unhandled Rejection',
+          stack: event.reason && event.reason.stack ? event.reason.stack : null,
+          payload: { userAgent: navigator.userAgent }
+        })
+      }).catch(e => console.error('Failed to log client rejection:', e));
+    });
+
     // Theme setter script - runs before body parses to prevent screen flash
     const currentTheme = localStorage.getItem('theme') || 'dark';
     if (currentTheme === 'light') {

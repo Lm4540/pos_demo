@@ -1,0 +1,1768 @@
+<%- include('../../partials/head', { title: 'POS Touch' }) %>
+
+<style>
+  /* Custom POS Touch theme styling overrides */
+  .light-mode main {
+    background-color: #f3f4f6 !important;
+  }
+
+  .light-mode main>div:first-child {
+    background-color: #ffffff !important;
+    border-color: #e5e7eb !important;
+  }
+
+  .light-mode main>div:last-child {
+    background-color: #f3f4f6 !important;
+    border-color: #e5e7eb !important;
+  }
+
+  /* Text colors overrides in light mode */
+  .light-mode #cart-total {
+    color: #2563eb !important;
+  }
+
+  .light-mode #cart-subtotal {
+    color: #1f2937 !important;
+  }
+
+  .light-mode #active-client-name {
+    color: #111827 !important;
+  }
+
+  /* Light mode overrides for opacity background classes */
+  .light-mode #totals-card {
+    background-color: #ffffff !important;
+    border-color: #e5e7eb !important;
+  }
+
+  .light-mode #totals-card span {
+    color: #1f2937 !important;
+  }
+
+  .light-mode #totals-card #cart-discount-row span {
+    color: #ef4444 !important;
+  }
+
+  .light-mode #totals-card #cart-total {
+    color: #2563eb !important;
+  }
+
+  .light-mode #customer-card {
+    background-color: #ffffff !important;
+    border-color: #e5e7eb !important;
+  }
+
+  .light-mode #customer-card button {
+    background-color: #ffffff !important;
+    border-color: #d1d5db !important;
+  }
+
+  .light-mode #payment-methods-card {
+    background-color: #ffffff !important;
+    border-color: #e5e7eb !important;
+  }
+
+  .light-mode #switches-card {
+    background-color: #ffffff !important;
+    border-color: #e5e7eb !important;
+  }
+
+  .light-mode #switches-card>div {
+    background-color: #f9fafb !important;
+    border-color: #e5e7eb !important;
+  }
+
+  .light-mode #switches-card span {
+    color: #4b5563 !important;
+  }
+
+  .light-mode #cart-header-title {
+    background-color: #f9fafb !important;
+    border-color: #e5e7eb !important;
+  }
+
+  .light-mode #cart-header-title h2 {
+    color: #4b5563 !important;
+  }
+
+  /* Payment Selector active / inactive states in light mode */
+  .light-mode #btn-pay-cash.active-cash {
+    background-color: #d1fae5 !important;
+    border-color: #10b981 !important;
+    color: #065f46 !important;
+  }
+
+  .light-mode #btn-pay-card.active-card {
+    background-color: #dbeafe !important;
+    border-color: #3b82f6 !important;
+    color: #1e3a8a !important;
+  }
+
+  .light-mode #btn-pay-credit.active-credit {
+    background-color: #fef3c7 !important;
+    border-color: #f59e0b !important;
+    color: #78350f !important;
+  }
+
+  .light-mode #btn-pay-split.active-split {
+    background-color: #ede9fe !important;
+    border-color: #8b5cf6 !important;
+    color: #4c1d95 !important;
+  }
+
+  .light-mode #btn-pay-cash:not(.active-cash),
+  .light-mode #btn-pay-card:not(.active-card),
+  .light-mode #btn-pay-credit:not(.active-credit),
+  .light-mode #btn-pay-split:not(.active-split) {
+    background-color: #ffffff !important;
+    border-color: #e5e7eb !important;
+    color: #4b5563 !important;
+  }
+
+  /* Cálculo de vuelto card in light mode */
+  .light-mode .vuelto-card {
+    background-color: #ffffff !important;
+    border-color: #e5e7eb !important;
+    color: #1f2937 !important;
+  }
+
+  .light-mode .vuelto-card input {
+    background-color: #ffffff !important;
+    color: #111827 !important;
+    border-color: #e5e7eb !important;
+  }
+
+  .light-mode .vuelto-card .quick-bill-btn {
+    background-color: #ffffff !important;
+    border-color: #e5e7eb !important;
+    color: #1f2937 !important;
+  }
+
+  .light-mode .vuelto-card .quick-bill-btn:hover {
+    border-color: #3b82f6 !important;
+    background-color: #f9fafb !important;
+  }
+
+  /* Catalog list and dialog overrides in light mode */
+  .light-mode #product-search-modal>div,
+  .light-mode #custom-prompt-modal>div {
+    background-color: #ffffff !important;
+    border-color: #e5e7eb !important;
+    color: #1f2937 !important;
+  }
+
+  .light-mode #product-search-modal h3 span,
+  .light-mode #custom-prompt-modal h3 {
+    color: #111827 !important;
+  }
+
+  .light-mode #product-search-modal input,
+  .light-mode #custom-prompt-modal input {
+    background-color: #f9fafb !important;
+    color: #111827 !important;
+    border-color: #d1d5db !important;
+  }
+
+  .light-mode .cat-tab-btn:not(.bg-blue-600) {
+    background-color: #f3f4f6 !important;
+    border-color: #d1d5db !important;
+    color: #4b5563 !important;
+  }
+
+  .light-mode .catalog-item-card {
+    background-color: #ffffff !important;
+    border-color: #e5e7eb !important;
+  }
+
+  .light-mode .catalog-item-card span {
+    color: #1f2937 !important;
+  }
+
+  .light-mode .catalog-item-card .text-white {
+    color: #111827 !important;
+  }
+
+  /* Persistent Cobra button light mode overrides */
+  .light-mode #touch-cobrar-btn {
+    background-color: #2563eb !important;
+    color: #ffffff !important;
+    border: none !important;
+  }
+
+  .light-mode #touch-cobrar-btn:hover {
+    background-color: #1d4ed8 !important;
+  }
+
+  /* Active states in dark mode */
+  #btn-pay-cash.active-cash {
+    background-color: rgba(16, 185, 129, 0.15) !important;
+    border-color: #10b981 !important;
+    color: #34d399 !important;
+  }
+
+  #btn-pay-card.active-card {
+    background-color: rgba(59, 130, 246, 0.15) !important;
+    border-color: #3b82f6 !important;
+    color: #60a5fa !important;
+  }
+
+  #btn-pay-credit.active-credit {
+    background-color: rgba(245, 158, 11, 0.15) !important;
+    border-color: #f59e0b !important;
+    color: #fbbf24 !important;
+  }
+
+  #btn-pay-split.active-split {
+    background-color: rgba(139, 92, 246, 0.15) !important;
+    border-color: #8b5cf6 !important;
+    color: #a78bfa !important;
+  }
+
+  /* Default inactive styles in dark mode */
+  #btn-pay-cash:not(.active-cash),
+  #btn-pay-card:not(.active-card),
+  #btn-pay-credit:not(.active-credit),
+  #btn-pay-split:not(.active-split) {
+    background-color: #0a0a0a !important;
+    border-color: #262626 !important;
+    color: #a3a3a3 !important;
+  }
+
+  /* Vibrant Green highlight for Vuelto/Change */
+  #cash-change-display {
+    color: #10b981 !important;
+  }
+
+  .light-mode #cash-change-display {
+    color: #10b981 !important;
+  }
+
+  /* Switch coloring custom overrides */
+  #print-ticket-switch+div,
+  #voice-synthesis-switch+div {
+    background-color: #4b5563 !important;
+    /* dark gray when off in dark mode */
+  }
+
+  .light-mode #print-ticket-switch+div,
+  .light-mode #voice-synthesis-switch+div {
+    background-color: #d1d5db !important;
+    /* light gray when off in light mode */
+  }
+
+  #print-ticket-switch:checked+div {
+    background-color: #2563eb !important;
+    /* blue when active */
+  }
+
+  #voice-synthesis-switch:checked+div {
+    background-color: #4f46e5 !important;
+    /* indigo/violet when active */
+  }
+
+  /* Scanner bar & celeste search button */
+  #scanner-bar {
+    background-color: transparent !important;
+  }
+
+  .light-mode #scanner-bar {
+    background-color: #ffffff !important;
+    border-color: #e5e7eb !important;
+  }
+
+  #btn-search-product {
+    background-color: #0ea5e9 !important;
+    /* sky-500 celeste */
+    color: #ffffff !important;
+    border: none !important;
+  }
+
+  #btn-search-product:hover {
+    background-color: #0284c7 !important;
+    /* sky-600 */
+  }
+</style>
+
+<div class="h-screen w-screen bg-neutral-950 flex flex-col overflow-hidden text-white select-none">
+  <!-- Top bar -->
+  <nav class="bg-neutral-900 border-b border-neutral-800 px-4 py-2 flex items-center justify-between shadow-md flex-shrink-0">
+    <div class="flex items-center gap-3">
+      <a href="/dashboard" class="h-10 w-10 bg-neutral-800 hover:bg-neutral-750 text-neutral-300 rounded-xl flex items-center justify-center transition-colors">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        </svg>
+      </a>
+      <div>
+        <span class="text-sm font-bold block text-white leading-tight">POS Touch</span>
+        <span class="text-[10px] text-neutral-400">Turno: <strong class="text-indigo-400">#<%= turn.id %></strong> | Sucursal: <%= user.branch ? user.branch.name : 'N/A' %></span>
+      </div>
+    </div>
+
+    <!-- Right Top actions -->
+    <div class="flex items-center gap-2">
+      <a href="/sales/history" class="h-10 w-10 bg-neutral-800 hover:bg-neutral-750 text-neutral-300 rounded-xl flex items-center justify-center transition-colors" title="Historial">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2" />
+        </svg>
+      </a>
+      <button onclick="openCustomerDisplay()" class="h-10 w-10 bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-900/60 text-indigo-400 rounded-xl flex items-center justify-center transition-colors" title="Pantalla Cliente">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+      </button>
+      <button id="btn-theme-toggle" onclick="toggleTheme()" class="h-10 w-10 bg-neutral-800 hover:bg-neutral-750 text-neutral-350 rounded-xl flex items-center justify-center transition-colors">
+        <svg id="theme-sun-icon" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
+        </svg>
+        <svg id="theme-moon-icon" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- POS Main workspace -->
+  <main class="flex-grow flex overflow-hidden">
+
+    <!-- Left Panel: Cart & Scanner Bar (60% width) -->
+    <div class="w-[60%] flex flex-col bg-neutral-950 border-r border-neutral-900">
+
+      <!-- Top Scanner Bar -->
+      <div id="scanner-bar" class="p-3 bg-neutral-900/40 border-b border-neutral-900 flex gap-2 flex-shrink-0 items-center">
+        <div class="relative flex-grow">
+          <input type="text" id="barcode-input" class="w-full pl-10 pr-3 py-3.5 bg-neutral-950 border border-neutral-800 text-white rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono font-bold" placeholder="Escanear código de barras..." autofocus>
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center text-neutral-550 pointer-events-none">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+        </div>
+        <button id="btn-search-product" onclick="openProductSearchModal()" class="px-5 py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-extrabold text-sm flex items-center gap-1.5 transition-all shadow-md shadow-blue-500/10 cursor-pointer">
+          <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <span>Buscar Producto</span>
+        </button>
+      </div>
+
+      <!-- Cart list -->
+      <div class="flex-grow flex flex-col overflow-hidden">
+        <div id="cart-header-title" class="p-3 border-b border-neutral-900 flex justify-between items-center bg-neutral-900/20 flex-shrink-0">
+          <h2 class="text-xs font-bold text-neutral-400 uppercase tracking-wider">Detalles de la Venta</h2>
+          <button onclick="clearCart()" class="px-3 py-1.5 text-xs font-bold bg-red-950/60 hover:bg-red-900 text-red-400 border border-red-900/60 rounded-xl cursor-pointer">Vaciar Todo</button>
+        </div>
+
+        <div id="cart-items-container" class="flex-grow overflow-y-auto p-3 space-y-2.5 no-scrollbar">
+          <div class="text-center py-10 text-neutral-500 text-xs">El carrito está vacío</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Panel: Totals, Controls & Keypad (40% width) -->
+    <div class="w-[40%] flex flex-col bg-neutral-900/30 overflow-hidden">
+
+      <!-- Cart Totals Info -->
+      <div id="totals-card" class="p-4 bg-neutral-900/80 space-y-2.5 flex-shrink-0 border-b border-neutral-900">
+        <div class="flex justify-between items-center text-xs text-neutral-400">
+          <span>Subtotal Bruto:</span>
+          <span id="cart-subtotal" class="font-mono">$0.00</span>
+        </div>
+        <div id="cart-discount-row" class="hidden flex justify-between items-center text-xs text-red-450">
+          <span>Descuento Aplicado:</span>
+          <span id="cart-discount" class="font-mono font-bold">-$0.00</span>
+        </div>
+        <div class="flex justify-between items-center text-lg font-black border-t border-neutral-800/80 pt-2">
+          <span>TOTAL COMPRA:</span>
+          <span id="cart-total" class="text-2xl text-blue-400 font-mono font-black">$0.00</span>
+        </div>
+      </div>
+
+      <!-- Customer Selector card -->
+      <div id="customer-card" class="p-3 bg-neutral-900/30 border-b border-neutral-900 flex-shrink-0">
+        <button onclick="openClientSearchModal()" class="w-full bg-neutral-950 border border-neutral-850 hover:border-amber-500/80 p-3 rounded-2xl flex items-center justify-between text-left hover:bg-neutral-900/30 transition-all cursor-pointer">
+          <div>
+            <span class="text-[9px] uppercase tracking-wider font-bold text-neutral-500 block">Cliente</span>
+            <span id="active-client-name" class="text-xs font-bold text-white block">Consumidor Final</span>
+          </div>
+          <svg class="h-4 w-4 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Payment Method buttons selector (Colored & Large) -->
+      <div id="payment-methods-card" class="p-3 bg-neutral-900/30 border-b border-neutral-900 grid grid-cols-4 gap-2 flex-shrink-0">
+        <button onclick="setPaymentMethod('cash')" id="btn-pay-cash" class="flex flex-col items-center justify-center py-3 active-cash rounded-2xl transition-all cursor-pointer">
+          <svg class="h-5 w-5 mb-1 text-emerald-450" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span class="text-[10px] font-black tracking-wide">EFECTIVO</span>
+        </button>
+        <button onclick="setPaymentMethod('card')" id="btn-pay-card" class="flex flex-col items-center justify-center py-3 rounded-2xl transition-all cursor-pointer">
+          <svg class="h-5 w-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+          </svg>
+          <span class="text-[10px] font-black tracking-wide">TARJETA</span>
+        </button>
+        <button onclick="setPaymentMethod('credit')" id="btn-pay-credit" class="flex flex-col items-center justify-center py-3 rounded-2xl transition-all cursor-pointer">
+          <svg class="h-5 w-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span class="text-[10px] font-black tracking-wide">CRÉDITO</span>
+        </button>
+        <button onclick="setPaymentMethod('split')" id="btn-pay-split" class="flex flex-col items-center justify-center py-3 rounded-2xl transition-all cursor-pointer">
+          <svg class="h-5 w-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+          <span class="text-[10px] font-black tracking-wide">DIVIDIDO</span>
+        </button>
+      </div>
+
+      <!-- Card transaction ref panel -->
+      <div id="card-ref-container" class="p-3 bg-neutral-950 border-b border-neutral-900 flex items-center gap-2 hidden flex-shrink-0">
+        <span class="text-[9px] text-neutral-450 font-bold uppercase whitespace-nowrap tracking-wider">Ref. Tarjeta:</span>
+        <input type="text" id="card-transaction-ref" class="flex-grow px-3 py-2.5 bg-neutral-900 border border-neutral-800 text-white text-xs rounded-xl font-mono focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="# Transacción POS">
+      </div>
+
+      <!-- Split payment panel -->
+      <div id="split-payment-breakdown" class="p-3 bg-neutral-950 border-b border-neutral-900 space-y-2 hidden flex-shrink-0">
+        <div class="grid grid-cols-3 gap-2">
+          <div>
+            <label class="block text-[8px] text-neutral-400 uppercase mb-0.5">Efectivo ($)</label>
+            <input type="number" step="0.01" min="0" id="split-cash-input" value="0.00" class="w-full text-center px-1.5 py-1.5 bg-neutral-900 border border-neutral-800 text-white rounded-xl text-xs font-mono focus:ring-1 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-[8px] text-neutral-400 uppercase mb-0.5">Tarjeta ($)</label>
+            <input type="number" step="0.01" min="0" id="split-card-input" value="0.00" class="w-full text-center px-1.5 py-1.5 bg-neutral-900 border border-neutral-800 text-white rounded-xl text-xs font-mono focus:ring-1 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-[8px] text-neutral-400 uppercase mb-0.5">Crédito ($)</label>
+            <input type="number" step="0.01" min="0" id="split-credit-input" value="0.00" class="w-full text-center px-1.5 py-1.5 bg-neutral-900 border border-neutral-800 text-white rounded-xl text-xs font-mono focus:ring-1 focus:ring-blue-500">
+          </div>
+        </div>
+        <div class="flex justify-between items-center text-[10px]">
+          <span class="text-neutral-500 font-bold uppercase tracking-wider">Diferencia:</span>
+          <span id="split-remaining" class="font-bold font-mono text-red-400">$0.00</span>
+        </div>
+      </div>
+
+      <!-- Control switches row -->
+      <div id="switches-card" class="px-3 py-2 bg-neutral-950/20 border-b border-neutral-900 grid grid-cols-2 gap-2 flex-shrink-0">
+        <!-- Print switch -->
+        <div class="flex justify-between items-center px-2 py-1 bg-neutral-900/60 rounded-xl border border-neutral-850">
+          <span class="text-[9px] font-bold text-neutral-450 uppercase tracking-wider">Imp. Ticket</span>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="print-ticket-switch" class="sr-only peer" checked>
+            <div class="w-7 h-4 bg-neutral-850 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
+          </label>
+        </div>
+        <!-- Voice switch -->
+        <div class="flex justify-between items-center px-2 py-1 bg-neutral-900/60 rounded-xl border border-neutral-850">
+          <span class="text-[9px] font-bold text-neutral-450 uppercase tracking-wider">Voz Cliente</span>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="voice-synthesis-switch" class="sr-only peer" checked>
+            <div class="w-7 h-4 bg-neutral-850 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-600"></div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Vuelto & Billetes Rápidos card -->
+      <div id="cash-payment-details" class="vuelto-card p-5 bg-neutral-900 border border-neutral-800 rounded-3xl space-y-4 m-3 flex-shrink-0">
+        <div class="flex justify-between items-center">
+          <span class="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Cálculo de Vuelto</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 items-center">
+          <div class="bg-neutral-950 p-2.5 rounded-2xl border border-neutral-850">
+            <label class="block text-[9px] text-neutral-500 font-bold uppercase tracking-wider mb-1">Efectivo Recibido ($)</label>
+            <input type="number" step="0.01" min="0" id="cash-received-input" value="0.00" class="w-full text-center bg-transparent text-white rounded-xl text-2xl font-mono font-bold focus:outline-none" placeholder="0.00">
+          </div>
+          <div class="flex flex-col justify-center text-center border-l border-neutral-800 pl-3">
+            <span class="text-[9px] text-neutral-500 font-bold uppercase tracking-wider mb-1">Vuelto</span>
+            <span id="cash-change-display" class="text-3xl font-black text-emerald-450 font-mono font-bold">$0.00</span>
+          </div>
+        </div>
+
+        <div class="space-y-1.5">
+          <span class="text-[9px] font-bold text-neutral-500 uppercase tracking-wider block">Billetes Rápidos</span>
+          <div class="grid grid-cols-6 gap-1.5">
+            <button type="button" onclick="addQuickBill(1)" class="quick-bill-btn py-2.5 bg-neutral-950 border border-neutral-850 text-white rounded-xl font-bold text-xs text-center cursor-pointer transition-all hover:bg-neutral-850">+ $1</button>
+            <button type="button" onclick="addQuickBill(5)" class="quick-bill-btn py-2.5 bg-neutral-950 border border-neutral-850 text-white rounded-xl font-bold text-xs text-center cursor-pointer transition-all hover:bg-neutral-850">+ $5</button>
+            <button type="button" onclick="addQuickBill(10)" class="quick-bill-btn py-2.5 bg-neutral-950 border border-neutral-850 text-white rounded-xl font-bold text-xs text-center cursor-pointer transition-all hover:bg-neutral-850">+ $10</button>
+            <button type="button" onclick="addQuickBill(20)" class="quick-bill-btn py-2.5 bg-neutral-950 border border-neutral-850 text-white rounded-xl font-bold text-xs text-center cursor-pointer transition-all hover:bg-neutral-850">+ $20</button>
+            <button type="button" onclick="addQuickBill(50)" class="quick-bill-btn py-2.5 bg-neutral-950 border border-neutral-850 text-white rounded-xl font-bold text-xs text-center cursor-pointer transition-all hover:bg-neutral-850">+ $50</button>
+            <button type="button" onclick="addQuickBill(100)" class="quick-bill-btn py-2.5 bg-neutral-950 border border-neutral-850 text-white rounded-xl font-bold text-xs text-center cursor-pointer transition-all hover:bg-neutral-850">+ $100</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <button type="button" onclick="setExactCash()" class="quick-bill-btn py-3 bg-neutral-950 border border-neutral-850 text-white rounded-2xl font-bold text-xs text-center cursor-pointer transition-all hover:bg-neutral-850">Monto Exacto</button>
+          <button type="button" onclick="clearCashReceived()" class="quick-bill-btn py-3 bg-neutral-950 border border-neutral-850 text-white rounded-2xl font-bold text-xs text-center cursor-pointer transition-all hover:bg-neutral-850">Limpiar</button>
+        </div>
+      </div>
+
+      <!-- Persistent Cobrar Button at the bottom -->
+      <div class="p-3 pt-0 flex-shrink-0">
+        <button type="button" id="touch-cobrar-btn" onclick="submitSale()" class="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-2xl text-sm text-center shadow-lg shadow-blue-500/20 cursor-pointer transition-all">COBRAR</button>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Modal Catálogo de Productos (Búsqueda de productos) -->
+<div id="product-search-modal" class="fixed inset-0 bg-neutral-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+  <div class="bg-neutral-900 border border-neutral-800 w-full max-w-4xl p-6 rounded-3xl shadow-2xl relative flex flex-col max-h-[85vh]">
+    <div class="flex justify-between items-center pb-3 border-b border-neutral-800 mb-4 flex-shrink-0">
+      <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+        <svg class="h-5 w-5 text-blue-450" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <span>Catálogo de Productos y Servicios</span>
+      </h3>
+      <button onclick="closeProductSearchModal()" class="text-neutral-500 hover:text-white text-lg cursor-pointer">✕</button>
+    </div>
+
+    <!-- Search catalog input -->
+    <div class="relative mb-4 flex-shrink-0">
+      <input type="text" id="touch-search-input" class="w-full pl-10 pr-3 py-3 bg-neutral-950 border border-neutral-850 text-white rounded-2xl text-xs focus:outline-none" placeholder="Buscar por código o nombre...">
+      <div class="absolute inset-y-0 left-0 pl-3 flex items-center text-neutral-555 pointer-events-none">
+        <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- Categories slider inside modal -->
+    <div class="mb-4 flex gap-2 overflow-x-auto scrollbar-none flex-shrink-0 py-1 border-b border-neutral-800/40">
+      <button onclick="filterFrequentByCategory('all')" id="tab-cat-all" class="cat-tab-btn px-4 py-2 rounded-xl text-[11px] font-bold bg-blue-600 text-white shadow-md shadow-blue-500/10 min-w-[80px] whitespace-nowrap">Todas</button>
+      <% categories.forEach(cat => { %>
+      <button onclick="filterFrequentByCategory(<%= cat.id %>)" id="tab-cat-<%= cat.id %>" class="cat-tab-btn px-4 py-2 rounded-xl text-[11px] font-bold bg-neutral-950 border border-neutral-850 text-neutral-450 hover:text-white min-w-[80px] whitespace-nowrap"><%= cat.name %></button>
+      <% }) %>
+      <button onclick="filterFrequentByCategory('services')" id="tab-cat-services" class="cat-tab-btn px-4 py-2 rounded-xl text-[11px] font-bold bg-neutral-950 border border-neutral-850 text-neutral-450 hover:text-white min-w-[80px] whitespace-nowrap">Servicios</button>
+    </div>
+
+    <!-- Catalog Grid of frequent & search results inside modal -->
+    <div id="catalog-modal-grid" class="flex-grow overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-1 no-scrollbar max-h-[45vh]">
+      <!-- Catalog items will be rendered dynamically by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- Client Search Modal -->
+<div id="client-search-modal" class="fixed inset-0 bg-neutral-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+  <div class="bg-neutral-900 border border-neutral-800 w-full max-w-md p-5 rounded-3xl shadow-2xl relative">
+    <div class="flex justify-between items-center pb-3 border-b border-neutral-800 mb-3">
+      <h3 class="text-sm font-bold text-white uppercase tracking-wider">Cliente de Venta</h3>
+      <button onclick="closeClientSearchModal()" class="text-neutral-500 hover:text-white cursor-pointer">✕</button>
+    </div>
+    <div class="space-y-3">
+      <input type="text" id="client-search-query" class="w-full px-3 py-2.5 bg-neutral-950 border border-neutral-850 text-white rounded-xl text-xs focus:outline-none" placeholder="Buscar cliente...">
+      <div id="client-search-results" class="max-h-40 overflow-y-auto space-y-1.5 no-scrollbar"></div>
+      <button onclick="selectClient('', 'Consumidor Final', '')" class="w-full py-2 bg-neutral-950 hover:bg-neutral-900 border border-neutral-800 text-white text-xs font-bold rounded-xl text-center cursor-pointer">Consumidor Final</button>
+    </div>
+  </div>
+</div>
+
+<!-- Custom Prompt Modal -->
+<div id="custom-prompt-modal" class="fixed inset-0 bg-neutral-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+  <div class="bg-neutral-900 border border-neutral-800 w-full max-w-sm p-6 rounded-3xl shadow-2xl space-y-4">
+    <div class="flex justify-between items-center pb-2 border-b border-neutral-800/60">
+      <h3 id="custom-prompt-title" class="text-sm font-bold text-white uppercase tracking-wider">Entrada de Datos</h3>
+      <button type="button" onclick="closeCustomPrompt()" class="text-neutral-500 hover:text-white cursor-pointer text-xs">✕</button>
+    </div>
+    <div class="space-y-3">
+      <label id="custom-prompt-label" class="block text-xs font-semibold text-neutral-450 uppercase tracking-wider"></label>
+      <input type="text" id="custom-prompt-input" class="w-full px-3.5 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs transition-all">
+    </div>
+    <div class="flex justify-end gap-3 pt-2">
+      <button type="button" onclick="closeCustomPrompt()" class="px-4 py-2 text-xs font-semibold text-neutral-400 bg-neutral-800 hover:bg-neutral-750 rounded-xl transition-all cursor-pointer">
+        Cancelar
+      </button>
+      <button type="button" id="custom-prompt-submit-btn" class="px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 rounded-xl transition-all cursor-pointer shadow-md shadow-blue-500/10">
+        Aceptar
+      </button>
+    </div>
+  </div>
+</div>
+
+<select id="client-id-select" class="hidden">
+  <option value="">Consumidor Final</option>
+  <% clients.forEach(c => { %>
+  <option value="<%= c.id %>" data-limit="<%= c.creditLimit %>" data-balance="<%= c.currentBalance %>" data-is-overdue="<%= c.isOverdue %>" data-overdue-days="<%= c.overdueDays %>">
+    <%= c.name %>
+  </option>
+  <% }) %>
+</select>
+
+<!-- Success/Ticket Modal -->
+<div id="ticket-modal" class="fixed inset-0 bg-neutral-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+  <div class="bg-neutral-900 border border-neutral-800 w-full max-w-sm rounded-3xl shadow-2xl p-6 relative">
+    <h3 class="text-lg font-bold text-white text-center mb-4">Venta Exitosa</h3>
+    <div id="printable-ticket" class="bg-white text-black p-4 font-mono text-[10px] border border-neutral-200 rounded-xl max-h-72 overflow-y-auto"></div>
+    <div class="grid grid-cols-2 gap-3 mt-5">
+      <button onclick="closeTicketModal()" class="py-3 text-xs font-bold text-neutral-400 bg-neutral-850 hover:bg-neutral-800 border border-neutral-800 rounded-2xl text-center cursor-pointer">Nueva Venta</button>
+      <button onclick="printTicket()" class="py-3 text-xs font-black text-white bg-blue-600 hover:bg-blue-500 rounded-2xl text-center cursor-pointer">Imprimir</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  @media print {
+    body * {
+      visibility: hidden;
+    }
+
+    #printable-ticket,
+    #printable-ticket * {
+      visibility: visible;
+    }
+
+    #printable-ticket {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 80mm;
+      border: none;
+    }
+  }
+</style>
+
+<script src="/js/escpos-printer.js"></script>
+<script>
+  const printerClient = new WebPOSPrinterLocalServer('wss://localhost:4567');
+  printerClient.connect();
+  window.currentUserFullName = '<%= user.fullName %>';
+  window.lastCompletedSaleData = null;
+
+  const promotions = <%- JSON.stringify(promotions) %>;
+
+  // Default combined items list
+  const frequentItemsList = <%- JSON.stringify(frequentProducts.map(bp => ({
+    productId: bp.productId,
+    name: bp.product.name,
+    salePrice: bp.salePrice,
+    totalStock: bp.totalStock,
+    categoryId: bp.product.categoryId,
+    imagePath: bp.product.imagePath,
+    type: 'physical'
+  }))) %>;
+
+  const serviceItemsList = <%- JSON.stringify(serviceProducts.map(sp => ({
+    productId: sp.id,
+    name: sp.name,
+    salePrice: sp.branchProducts && sp.branchProducts[0] ? parseFloat(sp.branchProducts[0].salePrice) : 0,
+    totalStock: 9999,
+    categoryId: sp.categoryId,
+    imagePath: sp.imagePath,
+    type: 'service'
+  }))) %>;
+
+  const defaultCatalogItems = [...frequentItemsList, ...serviceItemsList];
+  let currentFilterCategory = 'all';
+  let cart = [];
+  let paymentMethod = 'cash';
+  let lastCompletedCart = [];
+  let lastCompletedPaymentMethod = 'cash';
+
+  // BroadcastChannel for customer display communication
+  const posChannel = new BroadcastChannel('pos-customer-display');
+
+  // Active virtual input for virtual keyboard focus binding
+  let activeVirtualInput = null;
+
+  function focusVirtualInput(inputEl) {
+    activeVirtualInput = inputEl;
+  }
+
+  // Quick bills addition
+  function addQuickBill(amount) {
+    const input = document.getElementById('cash-received-input');
+    if (!input) return;
+    const current = parseFloat(input.value) || 0;
+    input.value = (current + amount).toFixed(2);
+    input.dispatchEvent(new Event('input', {
+      bubbles: true
+    }));
+  }
+
+  function setExactCash() {
+    const input = document.getElementById('cash-received-input');
+    if (!input) return;
+    const totalNet = getCartTotals().net;
+    input.value = totalNet.toFixed(2);
+    input.dispatchEvent(new Event('input', {
+      bubbles: true
+    }));
+  }
+
+  function clearCashReceived() {
+    const input = document.getElementById('cash-received-input');
+    if (!input) return;
+    input.value = '0.00';
+    input.dispatchEvent(new Event('input', {
+      bubbles: true
+    }));
+  }
+
+  // Auto-open customer display window
+  let customerDisplayWindow = null;
+
+  function openCustomerDisplay() {
+    if (customerDisplayWindow && !customerDisplayWindow.closed) return;
+    const features = 'menubar=no,toolbar=no,location=no,status=no,scrollbars=no,resizable=yes';
+    customerDisplayWindow = window.open('/sales/customer-display', 'CustomerDisplay', `${features},width=1024,height=768`);
+  }
+
+  function emitCartUpdate() {
+    const totals = getCartTotals();
+    const receivedEl = document.getElementById('cash-received-input');
+    const cashReceived = receivedEl ? (parseFloat(receivedEl.value) || 0) : 0;
+    const changeAmount = Math.max(0, cashReceived - totals.net);
+
+    posChannel.postMessage({
+      type: 'cart_update',
+      data: {
+        items: cart.map(i => ({
+          name: i.name,
+          price: i.price,
+          quantity: i.quantity,
+          type: i.type || 'physical',
+          customDescription: i.customDescription || null
+        })),
+        totalGross: totals.gross,
+        totalDiscount: totals.discount,
+        totalNet: totals.net,
+        paymentMethod: paymentMethod,
+        cashReceived: cashReceived,
+        changeAmount: changeAmount
+      }
+    });
+  }
+
+  function getCartTotals() {
+    let totalGross = 0;
+    let totalDiscount = 0;
+    cart.forEach(item => {
+      const price = parseFloat(item.price);
+      let promo = promotions.find(p => p.productId === item.productId);
+      if (!promo && item.categoryId) {
+        promo = promotions.find(p => p.categoryId === item.categoryId);
+      }
+      let discount = 0;
+      if (promo) {
+        if (promo.type === 'percentage') {
+          discount = price * (parseFloat(promo.value) / 100) * item.quantity;
+        } else if (promo.type === 'fixed_price') {
+          const promoPrice = parseFloat(promo.value);
+          if (promoPrice < price) {
+            discount = (price - promoPrice) * item.quantity;
+          }
+        } else if (promo.type === 'bulk') {
+          const buyQty = promo.buyQty;
+          const payQty = promo.payQty;
+          if (item.quantity >= buyQty) {
+            const groups = Math.floor(item.quantity / buyQty);
+            const freeUnits = groups * (buyQty - payQty);
+            discount = freeUnits * price;
+          }
+        }
+      }
+      totalGross += price * item.quantity;
+      totalDiscount += discount;
+    });
+    return {
+      gross: totalGross,
+      discount: totalDiscount,
+      net: totalGross - totalDiscount
+    };
+  }
+
+  function addToCart(productId, name, price, stock, categoryId, type = 'physical') {
+    if (type === 'service' && parseFloat(price) === 0) {
+      showCustomPrompt(
+        `Precio del Servicio`,
+        `Ingrese el precio para el servicio "${name}":`,
+        '0.00',
+        (inputPrice) => {
+          const parsed = parseFloat(inputPrice);
+          if (isNaN(parsed) || parsed < 0) {
+            showToast('Precio inválido.', 'warning');
+            return;
+          }
+          addToCart(productId, name, parsed, stock, categoryId, type);
+        }
+      );
+      return;
+    }
+
+    const existing = cart.find(i => i.productId === productId);
+    if (existing) {
+      if (type !== 'service' && existing.quantity >= stock) {
+        showToast(`Stock insuficiente. Solo quedan ${stock} unidades.`, 'warning');
+        return;
+      }
+      existing.quantity += 1;
+    } else {
+      if (type !== 'service' && stock <= 0) {
+        showToast('Producto agotado.', 'warning');
+        return;
+      }
+      cart.push({
+        productId,
+        name,
+        price,
+        quantity: 1,
+        stock,
+        categoryId,
+        type,
+        customDescription: null
+      });
+    }
+    renderCart();
+
+    // Auto-focus back to barcode scanner
+    const barInput = document.getElementById('barcode-input');
+    if (barInput) {
+      barInput.focus();
+      focusVirtualInput(barInput);
+    }
+  }
+
+  function updateQty(productId, delta, idx) {
+    const item = idx !== undefined ? cart[idx] : cart.find(i => i.productId === productId);
+    if (!item) return;
+    if (delta > 0 && item.type !== 'service' && item.quantity >= item.stock) {
+      showToast('Existencia máxima alcanzada.', 'warning');
+      return;
+    }
+    item.quantity += delta;
+    if (item.quantity <= 0) {
+      if (idx !== undefined) cart.splice(idx, 1);
+      else cart = cart.filter(i => i.productId !== productId);
+    }
+    renderCart();
+  }
+
+  function removeCartItem(productId) {
+    cart = cart.filter(i => i.productId !== productId);
+    renderCart();
+  }
+
+  function editServiceDescription(productId, idx) {
+    const item = cart[idx];
+    if (!item) return;
+    showCustomPrompt(
+      `Editar Descripción`,
+      `Descripción del servicio:`,
+      item.customDescription || item.name,
+      (desc) => {
+        item.customDescription = desc.trim() || null;
+        renderCart();
+      }
+    );
+  }
+
+  function editServicePrice(productId, idx) {
+    const item = cart[idx];
+    if (!item) return;
+    showCustomPrompt(
+      `Editar Precio`,
+      `Nuevo precio del servicio:`,
+      item.price.toString(),
+      (newPrice) => {
+        const parsed = parseFloat(newPrice);
+        if (!isNaN(parsed) && parsed >= 0) {
+          item.price = parsed;
+          renderCart();
+        } else {
+          showToast('Precio inválido.', 'warning');
+        }
+      }
+    );
+  }
+
+  function showCustomPrompt(title, label, defaultValue, onSubmit) {
+    document.getElementById('custom-prompt-title').innerText = title;
+    document.getElementById('custom-prompt-label').innerText = label;
+    const input = document.getElementById('custom-prompt-input');
+    input.value = defaultValue;
+
+    // Clear previous submit listener by replacing the button with a clone
+    const submitBtn = document.getElementById('custom-prompt-submit-btn');
+    const newSubmitBtn = submitBtn.cloneNode(true);
+    submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
+
+    newSubmitBtn.addEventListener('click', () => {
+      const value = input.value.trim();
+      onSubmit(value);
+      closeCustomPrompt();
+    });
+
+    // Also support Enter key
+    input.onkeypress = (e) => {
+      if (e.key === 'Enter') {
+        newSubmitBtn.click();
+      }
+    };
+
+    document.getElementById('custom-prompt-modal').classList.remove('hidden');
+    setTimeout(() => input.focus(), 50);
+  }
+
+  function closeCustomPrompt() {
+    document.getElementById('custom-prompt-modal').classList.add('hidden');
+  }
+
+  function clearCart() {
+    cart = [];
+    renderCart();
+  }
+
+  function renderCart() {
+    const container = document.getElementById('cart-items-container');
+    if (cart.length === 0) {
+      container.innerHTML = `<div class="text-center py-10 text-neutral-500 text-xs">El carrito está vacío</div>`;
+      document.getElementById('cart-subtotal').innerText = '$0.00';
+      document.getElementById('cart-total').innerText = '$0.00';
+      updateChangeCalculation();
+      emitCartUpdate();
+      return;
+    }
+
+    let totalGross = 0;
+    let totalDiscount = 0;
+
+    container.innerHTML = cart.map((item, idx) => {
+      const price = parseFloat(item.price);
+      let promo = promotions.find(p => p.productId === item.productId);
+      if (!promo && item.categoryId) {
+        promo = promotions.find(p => p.categoryId === item.categoryId);
+      }
+      let discount = 0;
+      let promoText = '';
+      if (promo) {
+        if (promo.type === 'percentage') {
+          discount = price * (parseFloat(promo.value) / 100) * item.quantity;
+          promoText = `<span class="text-[9px] font-bold text-red-400 block">Desc. ${promo.value}%</span>`;
+        } else if (promo.type === 'fixed_price') {
+          if (parseFloat(promo.value) < price) {
+            discount = (price - parseFloat(promo.value)) * item.quantity;
+            promoText = `<span class="text-[9px] font-bold text-red-400 block">Promo $${promo.value}</span>`;
+          }
+        } else if (promo.type === 'bulk') {
+          if (item.quantity >= promo.buyQty) {
+            const groups = Math.floor(item.quantity / promo.buyQty);
+            discount = groups * (promo.buyQty - promo.payQty) * price;
+            promoText = `<span class="text-[9px] font-bold text-red-400 block">Promo ${promo.buyQty}x${promo.payQty}</span>`;
+          }
+        }
+      }
+      const itemGross = price * item.quantity;
+      const itemNet = itemGross - discount;
+      totalGross += itemGross;
+      totalDiscount += discount;
+
+      const isService = item.type === 'service';
+      const displayName = item.customDescription || item.name;
+
+      return `
+        <div class="flex items-center justify-between p-3 bg-neutral-950 border border-neutral-850 rounded-2xl">
+          <div class="flex-grow max-w-[50%]">
+            <span class="text-xs font-bold text-white block truncate">${displayName}</span>
+            <span class="text-[10px] text-neutral-500">$${price.toFixed(2)} ${isService ? '✦ Servicio' : ''}</span>
+            ${isService ? `<div class="flex gap-2 mt-1"><button onclick="editServiceDescription(${item.productId}, ${idx})" class="text-[9px] font-bold text-blue-400 hover:underline cursor-pointer">✏️ Desc.</button><button onclick="editServicePrice(${item.productId}, ${idx})" class="text-[9px] font-bold text-amber-400 hover:underline cursor-pointer">💲 Precio</button></div>` : ''}
+            ${promoText}
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="updateQty(${item.productId}, -1, ${idx})" class="h-8 w-8 rounded-xl bg-neutral-850 hover:bg-neutral-800 flex items-center justify-center text-white text-xs cursor-pointer font-bold">-</button>
+            <span class="w-6 text-center text-xs font-bold text-white">${item.quantity}</span>
+            <button onclick="updateQty(${item.productId}, 1, ${idx})" class="h-8 w-8 rounded-xl bg-neutral-850 hover:bg-neutral-800 flex items-center justify-center text-white text-xs cursor-pointer font-bold">+</button>
+            <button onclick="removeCartItem(${item.productId})" class="h-8 w-8 ml-2 text-red-500 hover:text-red-400 text-sm flex items-center justify-center cursor-pointer font-bold">✕</button>
+          </div>
+          <span class="text-xs font-bold text-white w-14 text-right font-mono">$${itemNet.toFixed(2)}</span>
+        </div>
+      `;
+    }).join('');
+
+    const totalNet = totalGross - totalDiscount;
+    document.getElementById('cart-subtotal').innerText = `$${totalGross.toFixed(2)}`;
+    document.getElementById('cart-total').innerText = `$${totalNet.toFixed(2)}`;
+
+    const discountRow = document.getElementById('cart-discount-row');
+    const discountSpan = document.getElementById('cart-discount');
+    if (totalDiscount > 0) {
+      discountSpan.innerText = `-$${totalDiscount.toFixed(2)}`;
+      discountRow.classList.remove('hidden');
+    } else {
+      discountRow.classList.add('hidden');
+    }
+
+    if (paymentMethod === 'split') {
+      document.getElementById('split-cash-input').value = totalNet.toFixed(2);
+      document.getElementById('split-card-input').value = '0.00';
+      document.getElementById('split-credit-input').value = '0.00';
+      updateSplitBreakdownTotals();
+    }
+
+    updateChangeCalculation();
+    emitCartUpdate();
+  }
+
+  function updateChangeCalculation() {
+    const totalNet = getCartTotals().net;
+    const received = parseFloat(document.getElementById('cash-received-input').value) || 0;
+    const change = Math.max(0, received - totalNet);
+    const display = document.getElementById('cash-change-display');
+    if (display) {
+      display.innerText = `$${change.toFixed(2)}`;
+    }
+    posChannel.postMessage({
+      type: 'cash_received_update',
+      data: {
+        cashReceived: received,
+        changeAmount: change
+      }
+    });
+  }
+
+  function setPaymentMethod(method) {
+    paymentMethod = method;
+    const btnCash = document.getElementById('btn-pay-cash');
+    const btnCard = document.getElementById('btn-pay-card');
+    const btnCredit = document.getElementById('btn-pay-credit');
+    const btnSplit = document.getElementById('btn-pay-split');
+    const splitBreakdown = document.getElementById('split-payment-breakdown');
+    const cardRefContainer = document.getElementById('card-ref-container');
+    const cashContainer = document.getElementById('cash-payment-details');
+
+    // Remove active classes
+    btnCash.classList.remove('active-cash');
+    btnCard.classList.remove('active-card');
+    btnCredit.classList.remove('active-credit');
+    btnSplit.classList.remove('active-split');
+
+    if (method === 'cash') {
+      btnCash.classList.add('active-cash');
+      splitBreakdown.classList.add('hidden');
+      if (cardRefContainer) cardRefContainer.classList.add('hidden');
+      if (cashContainer) cashContainer.classList.remove('hidden');
+      // Autofocus cash received input
+      const cashInput = document.getElementById('cash-received-input');
+      if (cashInput) {
+        cashInput.focus();
+        focusVirtualInput(cashInput);
+      }
+    } else if (method === 'card') {
+      btnCard.classList.add('active-card');
+      splitBreakdown.classList.add('hidden');
+      if (cashContainer) cashContainer.classList.add('hidden');
+      if (cardRefContainer) cardRefContainer.classList.remove('hidden');
+      const refInput = document.getElementById('card-transaction-ref');
+      if (refInput) {
+        refInput.focus();
+        focusVirtualInput(refInput);
+      }
+    } else if (method === 'credit') {
+      btnCredit.classList.add('active-credit');
+      splitBreakdown.classList.add('hidden');
+      if (cashContainer) cashContainer.classList.add('hidden');
+      if (cardRefContainer) cardRefContainer.classList.add('hidden');
+      openClientSearchModal();
+    } else if (method === 'split') {
+      btnSplit.classList.add('active-split');
+      splitBreakdown.classList.remove('hidden');
+      if (cashContainer) cashContainer.classList.add('hidden');
+      if (cardRefContainer) cardRefContainer.classList.remove('hidden');
+
+      const totalNet = getCartTotals().net;
+      document.getElementById('split-cash-input').value = totalNet.toFixed(2);
+      document.getElementById('split-card-input').value = '0.00';
+      document.getElementById('split-credit-input').value = '0.00';
+      updateSplitBreakdownTotals();
+
+      const splitCashInput = document.getElementById('split-cash-input');
+      if (splitCashInput) {
+        splitCashInput.focus();
+        focusVirtualInput(splitCashInput);
+      }
+    }
+    emitCartUpdate();
+  }
+
+  function updateSplitBreakdownTotals() {
+    const cashVal = parseFloat(document.getElementById('split-cash-input').value) || 0;
+    const cardVal = parseFloat(document.getElementById('split-card-input').value) || 0;
+    const creditVal = parseFloat(document.getElementById('split-credit-input').value) || 0;
+    const totalNet = getCartTotals().net;
+    const sum = cashVal + cardVal + creditVal;
+    const remaining = totalNet - sum;
+    const remainingSpan = document.getElementById('split-remaining');
+    if (Math.abs(remaining) < 0.01) {
+      remainingSpan.innerText = "$0.00 (Cuadrado)";
+      remainingSpan.className = "font-bold text-emerald-450 font-mono text-xs";
+    } else {
+      remainingSpan.innerText = (remaining > 0 ? "Falta " : "Sobra ") + `$${Math.abs(remaining).toFixed(2)}`;
+      remainingSpan.className = "font-bold text-red-400 font-mono text-xs";
+    }
+  }
+
+  // Bind inputs for cash received and split payments
+  window.addEventListener('DOMContentLoaded', () => {
+    // Set cash method by default
+    setPaymentMethod('cash');
+
+    const cashInput = document.getElementById('cash-received-input');
+    if (cashInput) {
+      cashInput.addEventListener('input', updateChangeCalculation);
+      focusVirtualInput(cashInput);
+    }
+
+    ['split-cash-input', 'split-card-input', 'split-credit-input'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', updateSplitBreakdownTotals);
+    });
+
+    // Global focus tracking listener to bind virtual keypad to clicked inputs
+    document.addEventListener('focusin', (e) => {
+      if (e.target.tagName === 'INPUT') {
+        activeVirtualInput = e.target;
+      }
+    });
+
+    // Sync speech switch
+    const voiceSwitch = document.getElementById('voice-synthesis-switch');
+    if (voiceSwitch) {
+      const isVoiceEnabled = localStorage.getItem('voice_customer_enabled') !== 'false';
+      voiceSwitch.checked = isVoiceEnabled;
+      voiceSwitch.addEventListener('change', (e) => {
+        localStorage.setItem('voice_customer_enabled', e.target.checked ? 'true' : 'false');
+        posChannel.postMessage({
+          type: 'voice_update',
+          data: {
+            enabled: e.target.checked
+          }
+        });
+      });
+      posChannel.postMessage({
+        type: 'voice_update',
+        data: {
+          enabled: isVoiceEnabled
+        }
+      });
+    }
+
+    // Intercept theme toggle to sync client display theme
+    const originalToggleTheme = window.toggleTheme;
+    window.toggleTheme = function() {
+      if (originalToggleTheme) originalToggleTheme();
+      setTimeout(syncCustomerDisplayTheme, 100);
+    };
+
+    // Close modals when clicking outside
+    const productModal = document.getElementById('product-search-modal');
+    if (productModal) {
+      productModal.addEventListener('click', (e) => {
+        if (e.target === productModal) {
+          closeProductSearchModal();
+        }
+      });
+    }
+
+    const clientModal = document.getElementById('client-search-modal');
+    if (clientModal) {
+      clientModal.addEventListener('click', (e) => {
+        if (e.target === clientModal) {
+          closeClientSearchModal();
+        }
+      });
+    }
+
+    // Initial theme sync
+    syncCustomerDisplayTheme();
+  });
+
+  function syncCustomerDisplayTheme() {
+    const isLight = document.documentElement.classList.contains('light-mode');
+    posChannel.postMessage({
+      type: 'theme_update',
+      data: {
+        theme: isLight ? 'light' : 'dark'
+      }
+    });
+  }
+
+  // Client search and selection
+  function openClientSearchModal() {
+    document.getElementById('client-search-modal').classList.remove('hidden');
+    const query = document.getElementById('client-search-query');
+    query.value = '';
+    query.focus();
+    focusVirtualInput(query);
+    document.getElementById('client-search-results').innerHTML = '';
+  }
+
+  function closeClientSearchModal() {
+    document.getElementById('client-search-modal').classList.add('hidden');
+    // Focus barcode scanner back
+    const barInput = document.getElementById('barcode-input');
+    if (barInput) {
+      barInput.focus();
+      focusVirtualInput(barInput);
+    }
+  }
+
+  function selectClient(id, name, dui) {
+    document.getElementById('client-id-select').value = id;
+    document.getElementById('active-client-name').innerText = name;
+    closeClientSearchModal();
+    showToast(`Cliente: ${name}`, 'success');
+  }
+
+  document.getElementById('client-search-query').addEventListener('input', async (e) => {
+    const q = e.target.value.trim();
+    if (q.length < 2) return;
+    try {
+      const resp = await fetch(`/clients/api/search?q=${encodeURIComponent(q)}`);
+      const data = await resp.json();
+      const container = document.getElementById('client-search-results');
+      container.innerHTML = '';
+      if (data.success && data.clients.length > 0) {
+        data.clients.forEach(c => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = "w-full text-left bg-neutral-950 p-2.5 border border-neutral-850 rounded-xl text-xs cursor-pointer";
+          btn.innerHTML = `<strong>${c.name}</strong><br><span class="text-neutral-500">DUI: ${c.dui || 'N/A'}</span>`;
+          btn.onclick = () => selectClient(c.id, c.name, c.dui);
+          container.appendChild(btn);
+        });
+      } else {
+        container.innerHTML = '<div class="text-center text-neutral-600 text-xs py-2">Sin resultados</div>';
+      }
+    } catch (e) {}
+  });
+
+  // Modal Catalog search logic
+  function openProductSearchModal() {
+    document.getElementById('product-search-modal').classList.remove('hidden');
+    document.getElementById('touch-search-input').value = '';
+    filterFrequentByCategory('all');
+    renderCatalogItems(defaultCatalogItems);
+    setTimeout(() => {
+      const input = document.getElementById('touch-search-input');
+      input.focus();
+      focusVirtualInput(input);
+    }, 100);
+  }
+
+  function closeProductSearchModal() {
+    document.getElementById('product-search-modal').classList.add('hidden');
+    const barInput = document.getElementById('barcode-input');
+    if (barInput) {
+      barInput.focus();
+      focusVirtualInput(barInput);
+    }
+  }
+
+  function renderCatalogItems(items) {
+    const grid = document.getElementById('catalog-modal-grid');
+    if (items.length === 0) {
+      grid.innerHTML = '<div class="col-span-full text-center text-neutral-600 text-xs py-8">Sin resultados</div>';
+      return;
+    }
+
+    grid.innerHTML = items.map(item => {
+      const isService = item.type === 'service';
+      const categoryValue = isService ? 'services' : (item.categoryId || 'null');
+
+      const isHidden = (currentFilterCategory === 'all') ? false : (
+        currentFilterCategory === 'services' ? !isService : (
+          String(item.categoryId) !== String(currentFilterCategory)
+        )
+      );
+
+      return `
+        <button 
+          onclick="addToCart(${item.productId}, '${item.name.replace(/'/g, "\\'")}', ${item.salePrice}, ${item.totalStock}, ${item.categoryId || 'null'}, '${item.type}')"
+          data-category-id="${categoryValue}"
+          class="catalog-item-card p-3 bg-neutral-950 border border-neutral-850 hover:border-blue-500 rounded-2xl flex flex-col items-center justify-between text-center transition-all min-h-[130px] hover:scale-[1.02] cursor-pointer ${isHidden ? 'hidden' : ''}">
+          <div class="h-10 w-10 bg-neutral-900 rounded-xl overflow-hidden flex items-center justify-center border border-neutral-800">
+            ${item.imagePath ? `
+              <img src="${item.imagePath}" class="h-full w-full object-cover">
+            ` : (isService ? `
+              <svg class="h-5 w-5 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            ` : `
+              <svg class="h-5 w-5 text-neutral-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              </svg>
+            `)}
+          </div>
+          <span class="text-[11px] font-bold line-clamp-2 mt-2 leading-tight w-full text-white">${item.name}</span>
+          <div class="mt-2 w-full flex items-center justify-between text-[9px] font-bold">
+            <span class="${isService ? 'text-violet-400' : 'text-blue-400'}">$${parseFloat(item.salePrice).toFixed(2)}</span>
+            <span class="text-neutral-500">${isService ? 'Servicio' : 'Stock: ' + item.totalStock}</span>
+          </div>
+        </button>
+      `;
+    }).join('');
+  }
+
+  // Tab filter trigger
+  function filterFrequentByCategory(catId) {
+    currentFilterCategory = String(catId);
+    document.querySelectorAll('.cat-tab-btn').forEach(btn => {
+      btn.className = "cat-tab-btn px-4 py-2 rounded-xl text-[11px] font-bold bg-neutral-950 border border-neutral-850 text-neutral-450 hover:text-white min-w-[80px] whitespace-nowrap cursor-pointer";
+    });
+    const active = document.getElementById(catId === 'all' ? 'tab-cat-all' : (catId === 'services' ? 'tab-cat-services' : `tab-cat-${catId}`));
+    if (active) {
+      active.className = "cat-tab-btn px-4 py-2 rounded-xl text-[11px] font-bold bg-blue-600 text-white shadow-md shadow-blue-500/10 min-w-[80px] whitespace-nowrap cursor-pointer";
+    }
+
+    document.querySelectorAll('.catalog-item-card').forEach(card => {
+      const cardCatId = card.dataset.categoryId;
+      const isService = cardCatId === 'services';
+
+      const shouldShow = (catId === 'all' && !isService) ||
+        (catId === 'services' && isService) ||
+        (catId !== 'all' && catId !== 'services' && String(cardCatId) === String(catId));
+
+      if (shouldShow) card.classList.remove('hidden');
+      else card.classList.add('hidden');
+    });
+  }
+
+  // Autocomplete predictive search inside modal
+  document.getElementById('touch-search-input').addEventListener('input', async (e) => {
+    const val = e.target.value.trim();
+    if (val.length < 2) {
+      renderCatalogItems(defaultCatalogItems);
+      filterFrequentByCategory(currentFilterCategory);
+      return;
+    }
+    try {
+      const resp = await fetch(`/sales/api/products?q=${encodeURIComponent(val)}`);
+      const results = await resp.json();
+
+      const searchItems = results.map(r => ({
+        productId: r.id,
+        name: r.name,
+        salePrice: r.salePrice,
+        totalStock: r.totalStock,
+        categoryId: r.categoryId,
+        imagePath: r.imagePath,
+        type: r.type || 'physical'
+      }));
+      renderCatalogItems(searchItems);
+    } catch (e) {}
+  });
+
+  // Barcode Scanning Keypress events
+  document.getElementById('barcode-input').addEventListener('keypress', async (e) => {
+    if (e.key === 'Enter') {
+      const code = e.target.value.trim();
+      if (code === '') return;
+      e.target.value = '';
+      await processScannerCode(code);
+    }
+  });
+
+  // Global document-level barcode scanner interceptor
+  let scannerBuffer = '';
+  let lastKeyTime = Date.now();
+  document.addEventListener('keydown', (e) => {
+    const activeEl = document.activeElement;
+    if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'SELECT' || activeEl.tagName === 'TEXTAREA')) {
+      return;
+    }
+    if (e.ctrlKey || e.altKey || e.metaKey || e.key === 'Shift') {
+      return;
+    }
+    const currentTime = Date.now();
+    if (currentTime - lastKeyTime > 80) {
+      scannerBuffer = '';
+    }
+    lastKeyTime = currentTime;
+    if (e.key.length === 1) {
+      scannerBuffer += e.key;
+    } else if (e.key === 'Enter') {
+      const code = scannerBuffer.trim();
+      if (code.length >= 3) {
+        e.preventDefault();
+        scannerBuffer = '';
+        processScannerCode(code);
+      }
+    }
+  });
+
+  async function processScannerCode(code) {
+    try {
+      const resp = await fetch(`/sales/api/products?q=${encodeURIComponent(code)}`);
+      const results = await resp.json();
+      if (results && results.length > 0) {
+        const bp = results[0];
+        addToCart(bp.id, bp.name, bp.salePrice, bp.totalStock, bp.categoryId, bp.type);
+        showToast(`Agregado: ${bp.name} (Cant: 1)`, 'success');
+        playScanSound();
+      } else {
+        showToast(`Código de barras "${code}" no encontrado o sin existencias.`, 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Error al procesar el código de barras.', 'error');
+    }
+  }
+
+  function playScanSound() {
+    try {
+      const audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
+      osc.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.08);
+    } catch (e) {}
+  }
+
+  // Submit Touch Sale
+  async function submitSale() {
+    if (cart.length === 0) {
+      showToast('El carrito está vacío.', 'warning');
+      return;
+    }
+    const clientId = document.getElementById('client-id-select').value;
+    const totalNet = getCartTotals().net;
+    let splitCash = 0.00;
+    let splitCard = 0.00;
+    let splitCredit = 0.00;
+
+    if (paymentMethod === 'credit' && !clientId) {
+      showToast('Seleccione un cliente registrado para crédito.', 'warning');
+      return;
+    }
+
+    if (paymentMethod === 'split') {
+      splitCash = parseFloat(document.getElementById('split-cash-input').value) || 0;
+      splitCard = parseFloat(document.getElementById('split-card-input').value) || 0;
+      splitCredit = parseFloat(document.getElementById('split-credit-input').value) || 0;
+      const sum = splitCash + splitCard + splitCredit;
+      if (Math.abs(sum - totalNet) > 0.01) {
+        showToast('El pago dividido no cuadra.', 'error');
+        return;
+      }
+    }
+
+    const cardTransactionRef = document.getElementById('card-transaction-ref')?.value?.trim() || '';
+    const hasCardPayment = paymentMethod === 'card' || (paymentMethod === 'split' && splitCard > 0);
+    if (hasCardPayment && !cardTransactionRef) {
+      showToast('Ingrese la referencia de la tarjeta.', 'warning');
+      document.getElementById('card-transaction-ref')?.focus();
+      return;
+    }
+
+    const cobraBtn = document.getElementById('touch-cobrar-btn');
+    if (cobraBtn) {
+      cobraBtn.disabled = true;
+      cobraBtn.innerText = 'PROCESANDO...';
+    }
+
+    try {
+      const resp = await fetch('/sales', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          clientId: clientId || null,
+          paymentMethod,
+          items: cart.map(i => ({
+            productId: i.productId,
+            quantity: i.quantity,
+            customDescription: i.customDescription || null,
+            unitPrice: i.type === 'service' ? i.price : undefined
+          })),
+          splitCash,
+          splitCard,
+          splitCredit,
+          cardTransactionRef: hasCardPayment ? cardTransactionRef : null
+        })
+      });
+
+      const resData = await resp.json();
+      if (resData.success) {
+        showToast('Venta procesada.', 'success');
+        buildPrintTicket(resData.ticketNumber, resData.saleId, splitCash, splitCard, splitCredit, cardTransactionRef);
+
+        window.lastCompletedSaleData = {
+          ticketNumber: resData.ticketNumber,
+          saleId: resData.saleId,
+          cashPaid: splitCash,
+          cardPaid: splitCard,
+          creditPaid: splitCredit,
+          cardRef: hasCardPayment ? cardTransactionRef : null
+        };
+        handlePOSPrinting(resData.ticketNumber, resData.saleId, splitCash, splitCard, splitCredit, window.lastCompletedSaleData.cardRef);
+
+        const cashReceived = parseFloat(document.getElementById('cash-received-input').value) || 0;
+        const cashToPay = paymentMethod === 'cash' ? totalNet : (paymentMethod === 'split' ? splitCash : 0);
+        const changeGiven = Math.max(0, cashReceived - cashToPay);
+
+        posChannel.postMessage({
+          type: 'sale_completed',
+          data: {
+            totalAmount: totalNet,
+            changeAmount: paymentMethod === 'cash' ? changeGiven : 0,
+            cashReceived: paymentMethod === 'cash' ? cashReceived : 0,
+            paymentMethod
+          }
+        });
+
+        clearCart();
+
+        const isPrintEnabled = document.getElementById('print-ticket-switch')?.checked;
+        if (isPrintEnabled) {
+          setTimeout(() => {
+            // window.location.reload();
+          }, 1200);
+        } else {
+          document.getElementById('ticket-modal').classList.remove('hidden');
+        }
+      } else {
+        showToast('Error: ' + resData.message, 'error');
+        if (cobraBtn) {
+          cobraBtn.disabled = false;
+          cobraBtn.innerText = 'COBRAR';
+        }
+      }
+    } catch (e) {
+      showToast('Error de red.', 'error');
+      if (cobraBtn) {
+        cobraBtn.disabled = false;
+        cobraBtn.innerText = 'COBRAR';
+      }
+    }
+  }
+
+  function buildPrintTicket(ticketNumber, saleId, cashPaid, cardPaid, creditPaid, cardRef) {
+    const container = document.getElementById('printable-ticket');
+    const date = new Date().toLocaleString('es-SV');
+    const totals = getCartTotals();
+    const clientSelect = document.getElementById('client-id-select');
+    const clientName = clientSelect.value ? clientSelect.options[clientSelect.selectedIndex].text.trim() : 'Consumidor Final';
+
+    let paymentLabel = 'Efectivo';
+    if (paymentMethod === 'card') paymentLabel = 'Tarjeta';
+    if (paymentMethod === 'credit') paymentLabel = 'Crédito';
+    if (paymentMethod === 'split') {
+      paymentLabel = `Dividido:<br>- Efec: $${cashPaid.toFixed(2)}<br>- Tarj: $${cardPaid.toFixed(2)}<br>- Créd: $${creditPaid.toFixed(2)}`;
+    }
+
+    container.innerHTML = `
+      <div style="text-align: center; margin-bottom: 10px;">
+        <strong style="font-size: 12px;">RG SIMPLE POS</strong><br>
+        <span>Sucursal El Salvador</span><br>
+        <span>Ticket #: ${ticketNumber}</span><br>
+        <span>Fecha: ${date}</span>
+      </div>
+      <div style="border-bottom: 1px dashed #000; margin-bottom: 8px;"></div>
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 8px;">
+        <thead>
+          <tr style="border-b: 1px solid #000;">
+            <th style="text-align: left;">Art</th>
+            <th style="text-align: center;">Cant</th>
+            <th style="text-align: right;">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${cart.map(item => {
+            const price = parseFloat(item.price);
+            let promo = promotions.find(p => p.productId === item.productId);
+            if (!promo && item.categoryId) {
+              promo = promotions.find(p => p.categoryId === item.categoryId);
+            }
+            let discount = 0;
+            if (promo) {
+              if (promo.type === 'percentage') {
+                discount = price * (parseFloat(promo.value) / 100) * item.quantity;
+              } else if (promo.type === 'fixed_price') {
+                const promoPrice = parseFloat(promo.value);
+                if (promoPrice < price) discount = (price - promoPrice) * item.quantity;
+              } else if (promo.type === 'bulk') {
+                if (item.quantity >= promo.buyQty) {
+                  const groups = Math.floor(item.quantity / promo.buyQty);
+                  discount = groups * (promo.buyQty - promo.payQty) * price;
+                }
+              }
+            }
+            return ` <
+      tr >
+      <
+      td > $ {
+        item.customDescription || item.name
+      } < /td> <
+      td style = "text-align: center;" > $ {
+        item.quantity
+      } < /td> <
+      td style = "text-align: right;" > $$ {
+        ((price * item.quantity) - discount).toFixed(2)
+      } < /td> <
+      /tr>
+    `;
+          }).join('')}
+        </tbody>
+      </table>
+      <div style="border-bottom: 1px dashed #000; margin-bottom: 8px;"></div>
+      <div style="display: flex; justify-content: space-between; font-weight: bold;">
+        <span>Total:</span>
+        <span>$${totals.net.toFixed(2)}</span>
+      </div>
+      <div style="margin-top: 8px;">
+        <span>Método: ${paymentLabel}</span><br>
+        <span>Cliente: ${clientName}</span><br>
+        <span>Cajero: ${window.currentUserFullName}</span>
+      </div>
+      <div style="text-align: center; margin-top: 15px;">
+        <span>¡Gracias por su compra!</span>
+      </div>
+    `;
+  }
+
+  function printTicket() {
+    window.print();
+  }
+
+  function closeTicketModal() {
+    document.getElementById('ticket-modal').classList.add('hidden');
+    // window.location.reload();
+  }
+
+  async function handlePOSPrinting(ticketNumber, saleId, cashPaid, cardPaid, creditPaid, cardRef) {
+    const isPrintEnabled = document.getElementById('print-ticket-switch')?.checked;
+    const sep = '----------------------------------------';
+
+    if (!isPrintEnabled) {
+      try {
+        const builder = new ESCPOSBuilder();
+        builder.initialize().cashDrawer().newLineN(2);
+        await printerClient.sendCommands(builder.build());
+      } catch (err) {
+        console.error('Error al abrir cajón:', err);
+      }
+      return;
+    }
+
+    try {
+      const builder = new ESCPOSBuilder();
+      builder.initialize().cashDrawer().setFont('A');
+
+      // ── Encabezado ──
+      builder.align('center');
+      builder.bold(true).doubleHeightWidth(true);
+      builder.text('<%= user.branch ? user.branch.name : "RG SIMPLE POS" %>');
+      builder.newLine();
+      builder.text(sep).newLine();
+
+      // ── Info del ticket ──
+      builder.align('left');
+      builder.text(`Ticket #: ${ticketNumber}`).newLine();
+      builder.text(`Fecha: ${new Date().toLocaleString('es-SV')}`).newLine();
+
+      const clientSelect = document.getElementById('client-id-select');
+      const clientName = clientSelect && clientSelect.value ?
+        clientSelect.options[clientSelect.selectedIndex].text.split('(')[0].trim() :
+        'Consumidor Final';
+      builder.text(`Cliente: ${clientName}`).newLine();
+      builder.text(sep).newLine();
+
+      // ── Encabezado de artículos ──
+      builder.bold(true);
+      builder.itemLine('Articulo', 'Cant', 'Precio', 'Total');
+      builder.bold(false);
+      builder.newLine();
+
+      // ── Líneas de artículos ──
+      cart.forEach(item => {
+        const price = parseFloat(item.price);
+        let promo = typeof promotions !== 'undefined' ? promotions.find(p => p.productId === item.productId) : null;
+        if (!promo && item.categoryId && typeof promotions !== 'undefined') {
+          promo = promotions.find(p => p.categoryId === item.categoryId);
+        }
+        let discount = 0;
+        if (promo) {
+          if (promo.type === 'percentage') {
+            discount = price * (parseFloat(promo.value) / 100) * item.quantity;
+          } else if (promo.type === 'fixed_price') {
+            const pp = parseFloat(promo.value);
+            if (pp < price) discount = (price - pp) * item.quantity;
+          } else if (promo.type === 'bulk' && item.quantity >= promo.buyQty) {
+            discount = Math.floor(item.quantity / promo.buyQty) * (promo.buyQty - promo.payQty) * price;
+          }
+        }
+        const net = (price * item.quantity) - discount;
+        builder.itemLine(item.customDescription || item.name, item.quantity, price, net);
+        builder.newLine();
+        if (discount > 0) {
+          builder.text(`  Desc: -$${discount.toFixed(2)}`).newLine();
+        }
+      });
+
+      builder.text(sep).newLine();
+
+      // ── Totales ──
+      const totals = getCartTotals();
+      builder.align('right');
+      if (totals.discount > 0) {
+        builder.text(`Subtotal: $${totals.gross.toFixed(2)}`).newLine();
+        builder.text(`Descuento: -$${totals.discount.toFixed(2)}`).newLine();
+      }
+      builder.bold(true);
+      builder.text(`TOTAL: $${totals.net.toFixed(2)}`);
+      builder.bold(false).newLine();
+
+      // ── Detalle de pago ──
+      builder.text(sep).newLine();
+      builder.align('left');
+      let payLabel = 'Efectivo';
+      if (paymentMethod === 'card') payLabel = 'Tarjeta';
+      if (paymentMethod === 'credit') payLabel = 'Credito';
+      if (paymentMethod === 'split') payLabel = 'Mixto';
+      builder.text(`Forma de pago: ${payLabel}`).newLine();
+
+      if (paymentMethod === 'split') {
+        if (cashPaid > 0) builder.text(`  Efectivo: $${cashPaid.toFixed(2)}`).newLine();
+        if (cardPaid > 0) builder.text(`  Tarjeta:  $${cardPaid.toFixed(2)}`).newLine();
+        if (creditPaid > 0) builder.text(`  Credito:  $${creditPaid.toFixed(2)}`).newLine();
+      }
+      if (cardRef) {
+        builder.text(`Ref. Tarjeta: ${cardRef}`).newLine();
+      }
+      if (paymentMethod === 'cash' || (paymentMethod === 'split' && cashPaid > 0)) {
+        const totalPaid = paymentMethod === 'split' ? (cashPaid + cardPaid + creditPaid) : cashPaid;
+        const change = totalPaid - totals.net;
+        if (change > 0) {
+          builder.text(`Recibido: $${totalPaid.toFixed(2)}`).newLine();
+          builder.bold(true);
+          builder.text(`Cambio:   $${change.toFixed(2)}`);
+          builder.bold(false).newLine();
+        }
+      }
+
+      // ── Pie ──
+      builder.newLine();
+      builder.align('center');
+      builder.text('¡Gracias por su compra!').newLine();
+      builder.newLineN(4);
+      builder.cut(false);
+
+      await printerClient.sendCommands(builder.build());
+      showToast('Ticket impreso con éxito.', 'success');
+    } catch (err) {
+      console.error('Error al imprimir ticket:', err);
+      showToast('Error de conexión con la impresora.', 'error');
+    }
+  }
+</script>
+
+<%- include('../../partials/foot') %>

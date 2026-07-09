@@ -16,4 +16,10 @@ router.post('/audits/api/finalize', checkPermission('inventory.adjust'), invento
 router.get('/audits/:id', checkPermission('inventory.adjust'), inventoryController.renderAuditCount);
 router.get('/audits/:id/report', checkPermission('inventory.view'), inventoryController.renderAuditReport);
 
+// Levantamiento Inicial de Inventario
+const upload = require('../../core/middlewares/upload');
+router.get('/initial-load', checkPermission('inventory.adjust'), inventoryController.renderInitialLoad);
+router.post('/initial-load/product', checkPermission('inventory.adjust'), upload.single('image'), inventoryController.quickCreateProduct);
+router.post('/initial-load/submit', checkPermission('inventory.adjust'), inventoryController.submitInitialLoad);
+
 module.exports = router;

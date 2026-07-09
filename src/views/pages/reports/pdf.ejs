@@ -216,7 +216,10 @@
               <tr>
                 <th>Producto</th>
                 <th class="text-center">Cant.</th>
-                <th class="text-right">Total Ingresos</th>
+                <th class="text-right">Ingresos</th>
+                <th class="text-right">Costo</th>
+                <th class="text-right">Ganancia</th>
+                <th class="text-right">Margen</th>
               </tr>
             </thead>
             <tbody>
@@ -225,6 +228,9 @@
                   <td class="font-bold"><%= ts.name %></td>
                   <td class="text-center font-mono"><%= ts.totalQty %></td>
                   <td class="text-right font-mono">$<%= parseFloat(ts.totalRevenue).toFixed(2) %></td>
+                  <td class="text-right font-mono">$<%= parseFloat(ts.totalCost || 0).toFixed(2) %></td>
+                  <td class="text-right font-mono" style="color: #10b981; font-weight: bold;">$<%= parseFloat(ts.totalProfit || 0).toFixed(2) %></td>
+                  <td class="text-right font-mono" style="color: #6366f1; font-weight: bold;"><%= parseFloat(ts.margin || 0).toFixed(1) %>%</td>
                 </tr>
               <% }) %>
             </tbody>

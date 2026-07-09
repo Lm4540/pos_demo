@@ -23,88 +23,87 @@
         <h2 class="text-lg font-bold text-white">Artículos Registrados</h2>
         <div class="flex items-center gap-3">
           <!-- Search input -->
-          <input 
-            type="text" 
-            id="product-search" 
-            onkeyup="filterProducts()" 
-            class="px-4 py-2 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-64" 
-            placeholder="Buscar por nombre o código...">
-          
+          <input type="text" id="product-search" onkeyup="filterProducts()" class="px-4 py-2 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-64" placeholder="Buscar por nombre o código...">
+
           <% if (user.roleId === 'admin') { %>
-            <button onclick="openCreateModal()" class="bg-blue-600 hover:bg-blue-500 px-4 py-2.5 rounded-xl text-xs font-bold text-white transition-all shadow-md shadow-blue-500/10 flex items-center gap-1.5 cursor-pointer">
-              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
-              <span>Nuevo Producto</span>
-            </button>
+          <button onclick="openVariantsModal()" class="bg-violet-600 hover:bg-violet-500 px-4 py-2.5 rounded-xl text-xs font-bold text-white transition-all shadow-md shadow-violet-500/10 flex items-center gap-1.5 cursor-pointer">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+            </svg>
+            <span>Crear con Variantes</span>
+          </button>
+          <button onclick="openCreateModal()" class="bg-blue-600 hover:bg-blue-500 px-4 py-2.5 rounded-xl text-xs font-bold text-white transition-all shadow-md shadow-blue-500/10 flex items-center gap-1.5 cursor-pointer">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            <span>Nuevo Producto</span>
+          </button>
           <% } %>
         </div>
       </div>
-      
+
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-6" id="products-list-grid">
         <% products.forEach(p => { %>
-          <div class="product-item bg-neutral-950 border border-neutral-800 rounded-2xl p-4 flex gap-4 hover:border-neutral-700 transition-colors" data-name="<%= p.name.toLowerCase() %>" data-barcode="<%= (p.barCode || '').toLowerCase() %>">
-            <div class="h-20 w-20 flex-shrink-0 bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden flex items-center justify-center">
-              <% if (p.imagePath) { %>
-                <img src="<%= p.imagePath %>" alt="<%= p.name %>" class="h-full w-full object-cover">
+        <div class="product-item bg-neutral-950 border border-neutral-800 rounded-2xl p-4 flex gap-4 hover:border-neutral-700 transition-colors" data-name="<%= p.name.toLowerCase() %>" data-barcode="<%= (p.barCode || '').toLowerCase() %>">
+          <div class="h-20 w-20 flex-shrink-0 bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden flex items-center justify-center">
+            <% if (p.imagePath) { %>
+            <img src="<%= p.imagePath %>" alt="<%= p.name %>" class="h-full w-full object-cover">
+            <% } else { %>
+            <svg class="h-8 w-8 text-neutral-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <% } %>
+          </div>
+          <div class="flex-grow flex flex-col justify-between">
+            <div>
+              <h3 class="font-bold text-white leading-tight text-base"><%= p.name %></h3>
+              <p class="text-xs text-neutral-500 mt-1">Cód: <span class="font-mono text-neutral-400"><%= p.barCode || 'Sin código' %></span></p>
+              <div class="flex gap-2 flex-wrap mt-2">
+                <% if (p.isFrequent) { %>
+                <span class="inline-block px-2 py-0.5 text-[10px] font-bold uppercase rounded bg-neutral-800 text-neutral-300 border border-neutral-700">
+                  Alta Rotación
+                </span>
+                <% } %>
+                <% if (p.category) { %>
+                <span class="inline-block px-2 py-0.5 text-[10px] font-bold uppercase rounded bg-neutral-800 text-neutral-300 border border-neutral-700">
+                  <%= p.category.name %>
+                </span>
+                <% } %>
+              </div>
+            </div>
+
+            <div class="flex justify-end gap-3 text-xs font-semibold mt-2">
+              <% if (p.type === 'service') { %>
+              <a href="/products/<%= p.id %>/service-movements" class="text-indigo-400 hover:text-indigo-300 hover:underline cursor-pointer">
+                Ver Movimientos
+              </a>
               <% } else { %>
-                <svg class="h-8 w-8 text-neutral-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
+              <a href="/products/<%= p.id %>/kardex" class="text-indigo-400 hover:text-indigo-300 hover:underline cursor-pointer">
+                Ver Kardex
+              </a>
+              <% } %>
+              <% if (user.roleId === 'admin' || user.roleId === 'supervisor') { %>
+              <% const branchBP = p.branchProducts && p.branchProducts.find(bp => bp.branchId === user.branchId); %>
+              <% const salePrice = branchBP ? branchBP.salePrice : 0; %>
+              <% const minStock = branchBP ? branchBP.minStock : 0; %>
+              <button onclick="openBranchSettingsModal(<%= p.id %>, '<%= p.name.replace(/'/g, "\\'") %>', <%= salePrice %>, <%= minStock %>)" class="text-emerald-500 hover:text-emerald-400 hover:underline cursor-pointer">
+                Configurar
+              </button>
+              <button onclick="openAdjustModal(<%= p.id %>, '<%= p.name.replace(/'/g, "\\'") %>')" class="text-amber-500 hover:text-amber-400 hover:underline cursor-pointer">
+                Ajustar Stock
+              </button>
+              <% } %>
+              <% if (user.roleId === 'admin') { %>
+              <button onclick="openEditModal(<%= JSON.stringify(p) %>)" class="text-blue-500 hover:text-blue-400 hover:underline cursor-pointer">
+                Editar
+              </button>
+              <button onclick="deleteProduct(<%= p.id %>)" class="text-red-500 hover:text-red-400 hover:underline cursor-pointer">
+                Eliminar
+              </button>
               <% } %>
             </div>
-            <div class="flex-grow flex flex-col justify-between">
-              <div>
-                <h3 class="font-bold text-white leading-tight text-base"><%= p.name %></h3>
-                <p class="text-xs text-neutral-500 mt-1">Cód: <span class="font-mono text-neutral-400"><%= p.barCode || 'Sin código' %></span></p>
-                <div class="flex gap-2 flex-wrap mt-2">
-                  <% if (p.isFrequent) { %>
-                    <span class="inline-block px-2 py-0.5 text-[10px] font-bold uppercase rounded bg-blue-950/60 text-blue-400 border border-blue-900/60">
-                      Alta Rotación
-                    </span>
-                  <% } %>
-                  <% if (p.category) { %>
-                    <span class="inline-block px-2 py-0.5 text-[10px] font-bold uppercase rounded bg-neutral-800 text-neutral-300 border border-neutral-700">
-                      <%= p.category.name %>
-                    </span>
-                  <% } %>
-                </div>
-              </div>
-              
-                <div class="flex justify-end gap-3 text-xs font-semibold mt-2">
-                  <a href="/products/<%= p.id %>/kardex" class="text-indigo-400 hover:text-indigo-300 hover:underline cursor-pointer">
-                    Ver Kardex
-                  </a>
-                  <% if (user.roleId === 'admin' || user.roleId === 'supervisor') { %>
-                    <% const branchBP = p.branchProducts && p.branchProducts.find(bp => bp.branchId === user.branchId); %>
-                    <% const salePrice = branchBP ? branchBP.salePrice : 0; %>
-                    <% const minStock = branchBP ? branchBP.minStock : 0; %>
-                    <button 
-                      onclick="openBranchSettingsModal(<%= p.id %>, '<%= p.name.replace(/'/g, "\\'") %>', <%= salePrice %>, <%= minStock %>)"
-                      class="text-emerald-500 hover:text-emerald-400 hover:underline cursor-pointer">
-                      Configurar
-                    </button>
-                    <button 
-                      onclick="openAdjustModal(<%= p.id %>, '<%= p.name.replace(/'/g, "\\'") %>')"
-                      class="text-amber-500 hover:text-amber-400 hover:underline cursor-pointer">
-                      Ajustar Stock
-                    </button>
-                  <% } %>
-                  <% if (user.roleId === 'admin') { %>
-                    <button 
-                      onclick="openEditModal(<%= JSON.stringify(p) %>)"
-                      class="text-blue-500 hover:text-blue-400 hover:underline cursor-pointer">
-                      Editar
-                    </button>
-                    <button 
-                      onclick="deleteProduct(<%= p.id %>)"
-                      class="text-red-500 hover:text-red-400 hover:underline cursor-pointer">
-                      Eliminar
-                    </button>
-                  <% } %>
-                </div>
-            </div>
           </div>
+        </div>
         <% }) %>
       </div>
     </div>
@@ -122,70 +121,84 @@
         </svg>
       </button>
     </div>
-    
+
     <% if (error) { %>
-      <div class="bg-red-950/40 border border-red-800 text-red-200 px-4 py-2 rounded-lg text-xs mb-4">
-        <%= error %>
-      </div>
+    <div class="bg-red-950/40 border border-red-800 text-red-200 px-4 py-2 rounded-lg text-xs mb-4">
+      <%= error %>
+    </div>
     <% } %>
 
     <% if (user.roleId === 'admin') { %>
-      <form id="create-product-form" action="/products" method="POST" enctype="multipart/form-data" class="space-y-4 overflow-y-auto flex-grow pr-1" onsubmit="this.querySelector('button[type=submit]').disabled=true; this.querySelector('button[type=submit]').innerText='Registrando...';">
-        <div>
-          <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Nombre del Artículo *</label>
-          <input type="text" name="name" required class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm" placeholder="Coca Cola 1.5L">
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Código de Barras</label>
-          <input type="text" name="barCode" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm" placeholder="7501055300075">
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Categoría</label>
-          <select name="categoryId" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm">
-            <option value="">-- Sin categoría --</option>
-            <% categories.forEach(cat => { %>
-              <option value="<%= cat.id %>"><%= cat.name %></option>
-            <% }) %>
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">¿Producto Frecuente?</label>
-          <select name="isFrequent" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm">
-            <option value="false">No (Estándar)</option>
-            <option value="true">Sí (Mostrar en acceso rápido POS)</option>
-          </select>
-        </div>
-        
-        <!-- Image with worker compression status -->
-        <div>
-          <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Fotografía del Producto</label>
-          <input 
-            type="file" 
-            id="product-image-input" 
-            accept="image/*" 
-            class="w-full text-xs text-neutral-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-neutral-800 file:text-white hover:file:bg-neutral-750 file:cursor-pointer">
-          
-          <!-- Compression feedback -->
-          <div id="compression-status" class="mt-2 text-xs hidden">
-            <span class="text-blue-400 animate-pulse">Comprimiendo imagen con Web Worker...</span>
-          </div>
-          
-          <!-- Preview thumbnail -->
-          <div class="mt-3 hidden" id="preview-container">
-            <img id="image-preview" src="#" class="h-24 w-24 object-cover border border-neutral-800 rounded-xl">
-            <span class="text-[10px] text-emerald-400 block mt-1">✓ Imagen optimizada a máx. <%= maxPx %>px</span>
-          </div>
+    <form id="create-product-form" action="/products" method="POST" enctype="multipart/form-data" class="space-y-4 overflow-y-auto flex-grow pr-1" onsubmit="this.querySelector('button[type=submit]').disabled=true; this.querySelector('button[type=submit]').innerText='Registrando...';">
+      <div>
+        <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Nombre del Artículo *</label>
+        <input type="text" name="name" required class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm" placeholder="Coca Cola 1.5L">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Código de Barras</label>
+        <input type="text" name="barCode" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm" placeholder="7501055300075">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Categoría</label>
+        <select name="categoryId" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm">
+          <option value="">-- Sin categoría --</option>
+          <% categories.forEach(cat => { %>
+          <option value="<%= cat.id %>"><%= cat.name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">¿Producto Frecuente?</label>
+        <select name="isFrequent" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm">
+          <option value="false">No (Estándar)</option>
+          <option value="true">Sí (Mostrar en acceso rápido POS)</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Tipo de Artículo *</label>
+        <select name="type" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm">
+          <option value="physical">Físico (Controla Stock)</option>
+          <option value="service">Servicio (Sin Stock / Intangible)</option>
+        </select>
+      </div>
+
+      <!-- Image with worker compression status -->
+      <div>
+        <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Fotografía del Producto</label>
+        <input type="file" id="product-image-input" accept="image/*" class="w-full text-xs text-neutral-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-neutral-800 file:text-white hover:file:bg-neutral-750 file:cursor-pointer mb-2">
+
+        <label class="block text-[10px] font-semibold text-neutral-500 uppercase tracking-wider mb-1">O Pegar Link de Imagen / Captura de Pantalla</label>
+        <input type="text" id="create-image-paste-input" placeholder="Pegar link de imagen aquí o Ctrl+V para capturas..." class="w-full px-3 py-2 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs transition-all mb-2">
+        <input type="hidden" name="imageUrl" id="create-image-pasted-url">
+        <input type="hidden" name="imageBase64" id="create-image-base64">
+
+        <!-- Compression feedback -->
+        <div id="compression-status" class="mt-2 text-xs hidden">
+          <span class="text-blue-400 animate-pulse">Comprimiendo imagen con Web Worker...</span>
         </div>
 
-        <div class="flex justify-end gap-3 pt-3 border-t border-neutral-800">
-          <button type="button" onclick="closeCreateModal()" class="px-4 py-2.5 text-sm font-semibold text-neutral-400 bg-neutral-800 hover:bg-neutral-750 rounded-xl transition-all cursor-pointer">
-            Cancelar
-          </button>
-          <button type="submit" id="btn-submit" class="px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-xl transition-all cursor-pointer shadow-md shadow-blue-500/10">
-            Registrar Producto
-          </button>
+        <!-- Preview thumbnail -->
+        <div class="mt-3 hidden" id="preview-container">
+          <img id="image-preview" src="#" class="h-24 w-24 object-cover border border-neutral-800 rounded-xl">
+          <span class="text-[10px] text-emerald-400 block mt-1">✓ Imagen optimizada a máx. <%= maxPx %>px</span>
         </div>
-      </form>
+
+        <!-- Paste preview thumbnail -->
+        <div class="mt-3 hidden" id="create-pasted-preview-container">
+          <img id="create-pasted-preview" src="#" class="h-24 w-24 object-cover border border-neutral-800 rounded-xl">
+          <span class="text-[10px] text-blue-400 block mt-1">✓ Imagen de portapapeles/enlace lista</span>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-3 border-t border-neutral-800">
+        <button type="button" onclick="closeCreateModal()" class="px-4 py-2.5 text-sm font-semibold text-neutral-400 bg-neutral-800 hover:bg-neutral-750 rounded-xl transition-all cursor-pointer">
+          Cancelar
+        </button>
+        <button type="submit" id="btn-submit" class="px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-xl transition-all cursor-pointer shadow-md shadow-blue-500/10">
+          Registrar Producto
+        </button>
+      </div>
+    </form>
     <% } %>
   </div>
 </div>
@@ -194,7 +207,7 @@
 <div id="edit-modal" class="fixed inset-0 bg-neutral-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
   <div class="bg-neutral-900 border border-neutral-800 w-full max-w-md p-6 rounded-2xl shadow-2xl relative">
     <h2 class="text-xl font-bold text-white mb-4">Editar Producto</h2>
-    
+
     <form id="edit-form" method="POST" enctype="multipart/form-data" class="space-y-4">
       <div>
         <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Nombre del Artículo</label>
@@ -209,7 +222,7 @@
         <select id="edit-categoryId" name="categoryId" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm">
           <option value="">-- Sin categoría --</option>
           <% categories.forEach(cat => { %>
-            <option value="<%= cat.id %>"><%= cat.name %></option>
+          <option value="<%= cat.id %>"><%= cat.name %></option>
           <% }) %>
         </select>
       </div>
@@ -220,26 +233,40 @@
           <option value="true">Sí (Mostrar en acceso rápido POS)</option>
         </select>
       </div>
+      <div>
+        <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Tipo de Artículo *</label>
+        <select id="edit-type" name="type" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm">
+          <option value="physical">Físico (Controla Stock)</option>
+          <option value="service">Servicio (Sin Stock / Intangible)</option>
+        </select>
+      </div>
 
       <!-- Image upload with worker compression -->
       <div>
         <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Cambiar Fotografía</label>
-        <input 
-          type="file" 
-          id="edit-image-input" 
-          accept="image/*" 
-          class="w-full text-xs text-neutral-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-neutral-800 file:text-white hover:file:bg-neutral-750 file:cursor-pointer">
-        
+        <input type="file" id="edit-image-input" accept="image/*" class="w-full text-xs text-neutral-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-neutral-800 file:text-white hover:file:bg-neutral-750 file:cursor-pointer mb-2">
+
+        <label class="block text-[10px] font-semibold text-neutral-500 uppercase tracking-wider mb-1">O Pegar Link de Imagen / Captura de Pantalla</label>
+        <input type="text" id="edit-image-paste-input" placeholder="Pegar link de imagen aquí o Ctrl+V para capturas..." class="w-full px-3 py-2 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs transition-all mb-2">
+        <input type="hidden" name="imageUrl" id="edit-image-pasted-url">
+        <input type="hidden" name="imageBase64" id="edit-image-base64">
+
         <div id="edit-compression-status" class="mt-2 text-xs hidden">
           <span class="text-blue-400 animate-pulse">Comprimiendo imagen con Web Worker...</span>
         </div>
-        
+
         <div class="mt-3 hidden" id="edit-preview-container">
           <img id="edit-image-preview" src="#" class="h-24 w-24 object-cover border border-neutral-800 rounded-xl">
           <span class="text-[10px] text-emerald-400 block mt-1">✓ Imagen optimizada a máx. <%= maxPx %>px</span>
         </div>
+
+        <!-- Paste preview thumbnail -->
+        <div class="mt-3 hidden" id="edit-pasted-preview-container">
+          <img id="edit-pasted-preview" src="#" class="h-24 w-24 object-cover border border-neutral-800 rounded-xl">
+          <span class="text-[10px] text-blue-400 block mt-1">✓ Imagen de portapapeles/enlace lista</span>
+        </div>
       </div>
-      
+
       <div class="flex justify-end gap-3 pt-2">
         <button type="button" onclick="closeEditModal()" class="px-4 py-2 text-sm font-semibold text-neutral-400 bg-neutral-800 hover:bg-neutral-750 rounded-xl transition-all cursor-pointer">
           Cancelar
@@ -256,9 +283,9 @@
 <div id="adjust-modal" class="fixed inset-0 bg-neutral-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
   <div class="bg-neutral-900 border border-neutral-800 w-full max-w-md p-6 rounded-2xl shadow-2xl relative">
     <h2 class="text-xl font-bold text-white mb-4">Ajustar Inventario (Merma/Daño)</h2>
-    
+
     <p class="text-xs text-neutral-400 mb-4">Deducción manual de stock para el artículo: <strong id="adjust-product-name" class="text-white"></strong></p>
-    
+
     <form id="adjust-form" class="space-y-4">
       <div>
         <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Lote / Caducidad del Producto *</label>
@@ -274,7 +301,7 @@
         <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Justificación del Ajuste *</label>
         <input type="text" id="adjust-reason" name="reason" required class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" placeholder="Ej. Lote vencido, botella rota en pasillo, etc.">
       </div>
-      
+
       <div class="flex justify-end gap-3 pt-2">
         <button type="button" onclick="closeAdjustModal()" class="px-4 py-2.5 text-sm font-semibold text-neutral-400 bg-neutral-800 hover:bg-neutral-750 rounded-xl transition-all cursor-pointer">
           Cancelar
@@ -291,9 +318,9 @@
 <div id="branch-settings-modal" class="fixed inset-0 bg-neutral-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
   <div class="bg-neutral-900 border border-neutral-800 w-full max-w-sm p-6 rounded-2xl shadow-2xl relative">
     <h2 class="text-xl font-bold text-white mb-4">Configurar Producto en Sucursal</h2>
-    
+
     <p class="text-xs text-neutral-400 mb-4">Configura los valores locales de tu sucursal para: <strong id="settings-product-name" class="text-white"></strong></p>
-    
+
     <form id="branch-settings-form" class="space-y-4">
       <div>
         <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Precio de Venta ($ USD) *</label>
@@ -304,7 +331,7 @@
         <input type="number" id="settings-minStock" name="minStock" required min="0" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono" placeholder="0">
         <span class="text-[10px] block text-neutral-500 mt-1">Si el stock en esta sucursal es menor o igual a este valor, se generará una alerta.</span>
       </div>
-      
+
       <div class="flex justify-end gap-3 pt-2">
         <button type="button" onclick="closeBranchSettingsModal()" class="px-4 py-2 text-sm font-semibold text-neutral-400 bg-neutral-800 hover:bg-neutral-750 rounded-xl transition-all cursor-pointer">
           Cancelar
@@ -316,385 +343,762 @@
     </form>
   </div>
 </div>
+<!-- Variants Creator Modal Overlay -->
+  <div id="variants-modal" class="fixed inset-0 bg-neutral-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-neutral-900 border border-neutral-800 w-full max-w-2xl p-6 rounded-3xl shadow-2xl relative max-h-[90vh] flex flex-col">
+      <h2 class="text-xl font-bold text-white mb-2">Crear Producto con Variantes</h2>
+      <p class="text-xs text-neutral-400 mb-4">Ingresa el nombre base (ej: Camisa Polo) y añade combinaciones (ej: talla, color) para generarlos en lote.</p>
 
-<script>
-  // Filter products by search input
-  function filterProducts() {
-    const query = document.getElementById('product-search').value.toLowerCase();
-    const items = document.querySelectorAll('.product-item');
-    items.forEach(item => {
-      const name = item.dataset.name;
-      const barcode = item.dataset.barcode;
-      if (name.includes(query) || barcode.includes(query)) {
-        item.classList.remove('hidden');
-      } else {
-        item.classList.add('hidden');
-      }
-    });
-  }
+      <form id="variants-form" class="space-y-4 flex-grow flex flex-col overflow-hidden">
+        <!-- General shared details -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 flex-shrink-0">
+          <div>
+            <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Nombre Base *</label>
+            <input type="text" id="var-baseName" required class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" placeholder="Ej: Camisa Polo">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Categoría</label>
+            <select id="var-categoryId" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+              <option value="">Ninguna</option>
+              <% categories.forEach(cat => { %>
+              <option value="<%= cat.id %>"><%= cat.name %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Tipo de Artículo</label>
+            <select id="var-type" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+              <option value="physical">Físico (Controla Stock)</option>
+              <option value="service">Servicio (Sin Stock)</option>
+            </select>
+          </div>
+        </div>
 
-  // Edit modal helper
-  function openEditModal(product) {
-    document.getElementById('edit-form').action = `/products/${product.id}/edit`;
-    document.getElementById('edit-name').value = product.name;
-    document.getElementById('edit-barcode').value = product.barCode || '';
-    document.getElementById('edit-categoryId').value = product.categoryId || '';
-    document.getElementById('edit-isFrequent').value = product.isFrequent ? 'true' : 'false';
-    
-    const previewContainer = document.getElementById('edit-preview-container');
-    const imagePreview = document.getElementById('edit-image-preview');
-    
-    if (product.imagePath) {
-      imagePreview.src = product.imagePath;
-      previewContainer.classList.remove('hidden');
-    } else {
-      previewContainer.classList.add('hidden');
-    }
-    
-    document.getElementById('edit-modal').classList.remove('hidden');
-  }
+        <!-- List of variants -->
+        <div class="flex-grow flex flex-col overflow-hidden border-t border-neutral-800/60 pt-3">
+          <div class="flex justify-between items-center mb-2 flex-shrink-0">
+            <span class="text-xs font-bold text-neutral-400 uppercase tracking-wider">Combinaciones / Variantes</span>
+            <button type="button" onclick="addVariantRow()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs flex items-center gap-1">
+              <span>+ Agregar Variante</span>
+            </button>
+          </div>
 
-  function closeEditModal() {
-    document.getElementById('edit-modal').classList.add('hidden');
-  }
+          <div id="variants-list-container" class="space-y-3 overflow-y-auto pr-1 flex-grow no-scrollbar">
+            <!-- Populated by JS -->
+          </div>
+        </div>
 
-  async function deleteProduct(id) {
-    showConfirm('¿Estás seguro de que deseas eliminar este producto del catálogo?', async () => {
-      try {
-        const resp = await fetch(`/products/${id}`, { method: 'DELETE' });
-        const resData = await resp.json();
-        if (resData.success) {
-          window.location.reload();
+        <div class="flex justify-end gap-3 pt-3 flex-shrink-0 border-t border-neutral-800/60">
+          <button type="button" onclick="closeVariantsModal()" class="px-4 py-2.5 text-sm font-semibold text-neutral-400 bg-neutral-800 hover:bg-neutral-750 rounded-xl transition-all">
+            Cancelar
+          </button>
+          <button type="submit" id="btn-variants-submit" class="px-5 py-2.5 text-sm font-bold text-white bg-violet-600 hover:bg-violet-500 rounded-xl transition-all shadow-md shadow-violet-500/10">
+            Generar Lote de Variantes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Webcam Camera Scanner Overlay for Barcode Inputting -->
+  <div id="catalog-scanner-modal" class="fixed inset-0 bg-neutral-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-55">
+    <div class="bg-neutral-900 border border-neutral-800 w-full max-w-md p-6 rounded-3xl shadow-2xl relative flex flex-col">
+      <div class="flex justify-between items-center pb-3 border-b border-neutral-800 mb-4">
+        <h3 class="text-sm font-bold text-white uppercase tracking-wider">Escanear Código de Barras</h3>
+        <button type="button" onclick="closeCatalogScanner()" class="text-neutral-500 hover:text-white">✕</button>
+      </div>
+      <div class="bg-black rounded-2xl overflow-hidden aspect-video border border-neutral-800 relative">
+        <div id="catalog-qr-interactive" class="h-full w-full"></div>
+        <div class="absolute inset-0 border-2 border-dashed border-blue-500/30 m-6 pointer-events-none rounded-xl flex items-center justify-center">
+          <div class="w-full h-0.5 bg-red-500 animate-pulse"></div>
+        </div>
+      </div>
+      <p class="text-neutral-500 text-center text-xs mt-3">Coloque el código de barras frente a la cámara web</p>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/html5-qrcode"></script>
+
+  <script>
+    let shouldReloadOnClose = false;
+    let variantRowIndex = 0;
+
+    // Filter products by search input
+    function filterProducts() {
+      const query = document.getElementById('product-search').value.toLowerCase();
+      const items = document.querySelectorAll('.product-item');
+      items.forEach(item => {
+        const name = item.dataset.name;
+        const barcode = item.dataset.barcode;
+        if (name.includes(query) || barcode.includes(query)) {
+          item.classList.remove('hidden');
         } else {
-          showToast('Error: ' + resData.message, 'error');
+          item.classList.add('hidden');
         }
-      } catch (err) {
-        console.error(err);
-        showToast('Ocurrió un error al eliminar el producto.', 'error');
+      });
+    }
+
+    // Edit modal helper
+    function openEditModal(product) {
+      document.getElementById('edit-form').action = `/products/${product.id}/edit`;
+      document.getElementById('edit-name').value = product.name;
+      document.getElementById('edit-barcode').value = product.barCode || '';
+      document.getElementById('edit-categoryId').value = product.categoryId || '';
+      document.getElementById('edit-isFrequent').value = product.isFrequent ? 'true' : 'false';
+      document.getElementById('edit-type').value = product.type || 'physical';
+
+      // Reset paste fields
+      document.getElementById('edit-image-paste-input').value = '';
+      document.getElementById('edit-image-pasted-url').value = '';
+      document.getElementById('edit-image-base64').value = '';
+      document.getElementById('edit-pasted-preview-container').classList.add('hidden');
+      document.getElementById('edit-pasted-preview').src = '#';
+
+      const previewContainer = document.getElementById('edit-preview-container');
+      const imagePreview = document.getElementById('edit-image-preview');
+
+      if (product.imagePath) {
+        imagePreview.src = product.imagePath;
+        previewContainer.classList.remove('hidden');
+      } else {
+        previewContainer.classList.add('hidden');
       }
-    });
-  }
 
-  // Client-Side Image Compression using Web Worker
-  const maxPx = parseInt("<%= maxPx %>", 10) || 1200;
-  const quality = parseFloat("<%= quality %>") || 0.8;
-  
-  // Variables to hold compressed files
-  let compressedCreateFile = null;
-  let compressedEditFile = null;
+      document.getElementById('edit-modal').classList.remove('hidden');
+    }
 
-  // Setup worker
-  const compressionWorker = new Worker('/js/compression-worker.js');
+    function closeEditModal() {
+      document.getElementById('edit-modal').classList.add('hidden');
+    }
 
-  compressionWorker.onmessage = (event) => {
-    const { success, blob, filename, error } = event.data;
-    
-    if (success) {
-      const file = new File([blob], filename, { type: 'image/jpeg' });
-      
-      // Check which input was active
-      if (document.getElementById('product-image-input').files.length > 0 && !compressedCreateFile) {
-        compressedCreateFile = file;
+    async function deleteProduct(id) {
+      showConfirm('¿Estás seguro de que deseas eliminar este producto del catálogo?', async () => {
+        try {
+          const resp = await fetch(`/products/${id}`, {
+            method: 'DELETE'
+          });
+          const resData = await resp.json();
+          if (resData.success) {
+            window.location.reload();
+          } else {
+            showToast('Error: ' + resData.message, 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showToast('Ocurrió un error al eliminar el producto.', 'error');
+        }
+      });
+    }
+
+    // Client-Side Image Compression using Web Worker
+    const maxPx = parseInt("<%= maxPx %>", 10) || 1200;
+    const quality = parseFloat("<%= quality %>") || 0.8;
+
+    // Variables to hold compressed files
+    let compressedCreateFile = null;
+    let compressedEditFile = null;
+
+    // Setup worker
+    const compressionWorker = new Worker('/js/compression-worker.js');
+
+    compressionWorker.onmessage = (event) => {
+      const {
+        success,
+        blob,
+        filename,
+        error
+      } = event.data;
+
+      if (success) {
+        const file = new File([blob], filename, {
+          type: 'image/jpeg'
+        });
+
+        // Check which input was active
+        if (document.getElementById('product-image-input').files.length > 0 && !compressedCreateFile) {
+          compressedCreateFile = file;
+          document.getElementById('compression-status').classList.add('hidden');
+          const preview = document.getElementById('image-preview');
+          preview.src = URL.createObjectURL(file);
+          document.getElementById('preview-container').classList.remove('hidden');
+          document.getElementById('btn-submit').disabled = false;
+        } else {
+          compressedEditFile = file;
+          document.getElementById('edit-compression-status').classList.add('hidden');
+          const preview = document.getElementById('edit-image-preview');
+          preview.src = URL.createObjectURL(file);
+          document.getElementById('edit-preview-container').classList.remove('hidden');
+          document.getElementById('btn-edit-submit').disabled = false;
+        }
+      } else {
+        showToast('Error en la compresión: ' + error, 'error');
         document.getElementById('compression-status').classList.add('hidden');
-        const preview = document.getElementById('image-preview');
-        preview.src = URL.createObjectURL(file);
-        document.getElementById('preview-container').classList.remove('hidden');
-        document.getElementById('btn-submit').disabled = false;
-      } else {
-        compressedEditFile = file;
         document.getElementById('edit-compression-status').classList.add('hidden');
-        const preview = document.getElementById('edit-image-preview');
-        preview.src = URL.createObjectURL(file);
-        document.getElementById('edit-preview-container').classList.remove('hidden');
-        document.getElementById('btn-edit-submit').disabled = false;
       }
-    } else {
-      showToast('Error en la compresión: ' + error, 'error');
-      document.getElementById('compression-status').classList.add('hidden');
-      document.getElementById('edit-compression-status').classList.add('hidden');
+    };
+
+    // Add event listener for Create image input
+    const createImgInput = document.getElementById('product-image-input');
+    if (createImgInput) {
+      createImgInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        document.getElementById('compression-status').classList.remove('hidden');
+        document.getElementById('btn-submit').disabled = true;
+        compressedCreateFile = null;
+
+        // Send to worker
+        compressionWorker.postMessage({
+          file,
+          maxPx,
+          quality
+        });
+      });
     }
-  };
 
-  // Add event listener for Create image input
-  const createImgInput = document.getElementById('product-image-input');
-  if (createImgInput) {
-    createImgInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+    // Add event listener for Edit image input
+    const editImgInput = document.getElementById('edit-image-input');
+    if (editImgInput) {
+      editImgInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
 
-      document.getElementById('compression-status').classList.remove('hidden');
-      document.getElementById('btn-submit').disabled = true;
-      compressedCreateFile = null;
+        document.getElementById('edit-compression-status').classList.remove('hidden');
+        document.getElementById('btn-edit-submit').disabled = true;
+        compressedEditFile = null;
 
-      // Send to worker
-      compressionWorker.postMessage({ file, maxPx, quality });
-    });
-  }
+        // Send to worker
+        compressionWorker.postMessage({
+          file,
+          maxPx,
+          quality
+        });
+      });
+    }
 
-  // Add event listener for Edit image input
-  const editImgInput = document.getElementById('edit-image-input');
-  if (editImgInput) {
-    editImgInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+    // Overwrite forms submissions to send compressed blobs instead of raw files
+    const createForm = document.getElementById('create-product-form');
+    if (createForm) {
+      createForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-      document.getElementById('edit-compression-status').classList.remove('hidden');
-      document.getElementById('btn-edit-submit').disabled = true;
-      compressedEditFile = null;
+        if (createImgInput.files.length > 0 && !compressedCreateFile) {
+          showToast('Por favor espera a que finalice la optimización de la imagen.', 'warning');
+          return;
+        }
 
-      // Send to worker
-      compressionWorker.postMessage({ file, maxPx, quality });
-    });
-  }
+        const btn = document.getElementById('btn-submit');
+        btn.disabled = true;
+        btn.innerText = 'Guardando...';
 
-  // Overwrite forms submissions to send compressed blobs instead of raw files
-  const createForm = document.getElementById('create-product-form');
-  if (createForm) {
-    createForm.addEventListener('submit', async (e) => {
+        const formData = new FormData(createForm);
+        if (compressedCreateFile) {
+          formData.set('image', compressedCreateFile, compressedCreateFile.name);
+        }
+
+        try {
+          const res = await fetch('/products', {
+            method: 'POST',
+            headers: {
+              'Accept': 'application/json'
+            },
+            body: formData
+          });
+          const data = await res.json();
+          if (data.success) {
+            showToast(data.message || 'Producto registrado con éxito.', 'success');
+            createForm.reset();
+            compressedCreateFile = null;
+            document.getElementById('preview-container').classList.add('hidden');
+            document.getElementById('image-preview').src = '#';
+            document.getElementById('create-image-paste-input').value = '';
+            document.getElementById('create-image-pasted-url').value = '';
+            document.getElementById('create-image-base64').value = '';
+            document.getElementById('create-pasted-preview-container').classList.add('hidden');
+            document.getElementById('create-pasted-preview').src = '#';
+            shouldReloadOnClose = true;
+
+            btn.disabled = false;
+            btn.innerText = 'Registrar Producto';
+          } else {
+            showToast('Error: ' + data.message, 'error');
+            btn.disabled = false;
+            btn.innerText = 'Registrar Producto';
+          }
+        } catch (err) {
+          console.error(err);
+          showToast('Error al registrar el producto.', 'error');
+          btn.disabled = false;
+          btn.innerText = 'Registrar Producto';
+        }
+      });
+    }
+
+    const editForm = document.getElementById('edit-form');
+    if (editForm) {
+      editForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        if (editImgInput.files.length > 0 && !compressedEditFile) {
+          showToast('Por favor espera a que finalice la optimización de la imagen.', 'warning');
+          return;
+        }
+
+        const btn = document.getElementById('btn-edit-submit');
+        btn.disabled = true;
+        btn.innerText = 'Guardando...';
+
+        const formData = new FormData(editForm);
+        if (compressedEditFile) {
+          formData.set('image', compressedEditFile, compressedEditFile.name);
+        }
+
+        try {
+          const res = await fetch(editForm.action, {
+            method: 'POST',
+            headers: {
+              'Accept': 'application/json'
+            },
+            body: formData
+          });
+          const data = await res.json();
+          if (data.success) {
+            showToast(data.message || 'Producto actualizado con éxito.', 'success');
+            window.location.reload();
+          } else {
+            showToast('Error: ' + data.message, 'error');
+            btn.disabled = false;
+            btn.innerText = 'Guardar Cambios';
+          }
+        } catch (err) {
+          console.error(err);
+          showToast('Error al actualizar el producto.', 'error');
+          btn.disabled = false;
+          btn.innerText = 'Guardar Cambios';
+        }
+      });
+    }
+
+    // Stock Adjustment (Mermas) JS Handler
+    let currentAdjustProductId = null;
+
+    async function openAdjustModal(productId, productName) {
+      currentAdjustProductId = productId;
+      document.getElementById('adjust-product-name').innerText = productName;
+
+      const batchSelect = document.getElementById('adjust-batchId');
+      batchSelect.innerHTML = '<option value="">Cargando lotes disponibles...</option>';
+
+      document.getElementById('adjust-quantity').value = '';
+      document.getElementById('adjust-reason').value = '';
+
+      document.getElementById('adjust-modal').classList.remove('hidden');
+
+      try {
+        const resp = await fetch(`/products/${productId}/batches`);
+        if (!resp.ok) throw new Error('Error al obtener lotes.');
+        const batches = await resp.json();
+
+        if (batches.length === 0) {
+          batchSelect.innerHTML = '<option value="">No hay lotes con stock disponibles en tu sucursal.</option>';
+          return;
+        }
+
+        batchSelect.innerHTML = batches.map(b => {
+          const expText = b.expirationDate ? ` (Vence: ${new Date(b.expirationDate).toLocaleDateString('es-SV')})` : ' (Sin vencimiento)';
+          return `<option value="${b.id}" data-max="${b.currentQuantity}">Lote: ${b.batchCode}${expText} - Disp: ${b.currentQuantity} uds</option>`;
+        }).join('');
+      } catch (err) {
+        console.error(err);
+        batchSelect.innerHTML = '<option value="">Error al cargar lotes.</option>';
+      }
+    }
+
+    function closeAdjustModal() {
+      document.getElementById('adjust-modal').classList.add('hidden');
+      currentAdjustProductId = null;
+    }
+
+    document.getElementById('adjust-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      
-      if (createImgInput.files.length > 0 && !compressedCreateFile) {
-        showToast('Por favor espera a que finalice la optimización de la imagen.', 'warning');
+      if (!currentAdjustProductId) return;
+
+      const batchId = document.getElementById('adjust-batchId').value;
+      const quantity = document.getElementById('adjust-quantity').value;
+      const reason = document.getElementById('adjust-reason').value;
+
+      if (!batchId) {
+        showToast('Debe seleccionar un lote válido.', 'warning');
         return;
       }
-      
-      const btn = document.getElementById('btn-submit');
-      btn.disabled = true;
-      btn.innerText = 'Guardando...';
 
-      const formData = new FormData(createForm);
-      if (compressedCreateFile) {
-        formData.set('image', compressedCreateFile, compressedCreateFile.name);
+      const selectOpt = document.querySelector(`#adjust-batchId option[value="${batchId}"]`);
+      if (!selectOpt || !selectOpt.dataset.max) {
+        showToast('Lote seleccionado no válido.', 'error');
+        return;
       }
-      
+
+      const maxAvailable = parseInt(selectOpt.dataset.max, 10);
+      const parsedQty = parseInt(quantity, 10);
+      if (parsedQty > maxAvailable) {
+        showToast(`La cantidad ingresada supera el stock disponible en este lote (${maxAvailable} uds).`, 'error');
+        return;
+      }
+
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.innerText = 'Procesando...';
+
       try {
-        const res = await fetch('/products', {
+        const resp = await fetch(`/products/${currentAdjustProductId}/adjust`, {
           method: 'POST',
-          body: formData
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            batchId,
+            quantity: parsedQty,
+            reason
+          })
         });
-        if (res.redirected) {
-          window.location.href = res.url;
+
+        const resData = await resp.json();
+        if (resp.ok && resData.success) {
+          showToast(resData.message, 'success');
+          closeAdjustModal();
+          setTimeout(() => {
+            window.location.reload();
+          }, 800);
         } else {
-          window.location.reload();
+          showToast(resData.message || 'Error al registrar el ajuste.', 'error');
+          submitBtn.disabled = false;
+          submitBtn.innerText = 'Deducir Stock';
         }
       } catch (err) {
         console.error(err);
-        showToast('Error al registrar el producto.', 'error');
-        btn.disabled = false;
-        btn.innerText = 'Registrar Producto';
+        showToast('Error de red al registrar el ajuste.', 'error');
       }
     });
-  }
 
-  const editForm = document.getElementById('edit-form');
-  if (editForm) {
-    editForm.addEventListener('submit', async (e) => {
+    let currentSettingsProductId = null;
+
+    function openBranchSettingsModal(productId, productName, salePrice, minStock) {
+      currentSettingsProductId = productId;
+      document.getElementById('settings-product-name').innerText = productName;
+      document.getElementById('settings-salePrice').value = parseFloat(salePrice).toFixed(2);
+      document.getElementById('settings-minStock').value = parseInt(minStock, 10);
+      document.getElementById('branch-settings-modal').classList.remove('hidden');
+    }
+
+    function closeBranchSettingsModal() {
+      document.getElementById('branch-settings-modal').classList.add('hidden');
+      currentSettingsProductId = null;
+    }
+
+    document.getElementById('branch-settings-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      
-      if (editImgInput.files.length > 0 && !compressedEditFile) {
-        showToast('Por favor espera a que finalice la optimización de la imagen.', 'warning');
-        return;
-      }
+      if (!currentSettingsProductId) return;
 
-      const btn = document.getElementById('btn-edit-submit');
-      btn.disabled = true;
-      btn.innerText = 'Guardando...';
+      const salePrice = document.getElementById('settings-salePrice').value;
+      const minStock = document.getElementById('settings-minStock').value;
 
-      const formData = new FormData(editForm);
-      if (compressedEditFile) {
-        formData.set('image', compressedEditFile, compressedEditFile.name);
-      }
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.innerText = 'Guardando...';
 
       try {
-        const res = await fetch(editForm.action, {
+        const resp = await fetch(`/products/${currentSettingsProductId}/branch-settings`, {
           method: 'POST',
-          body: formData
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            salePrice,
+            minStock
+          })
         });
-        if (res.redirected) {
-          window.location.href = res.url;
+
+        const resData = await resp.json();
+        if (resp.ok && resData.success) {
+          showToast(resData.message, 'success');
+          closeBranchSettingsModal();
+          setTimeout(() => {
+            window.location.reload();
+          }, 800);
         } else {
-          window.location.reload();
+          showToast(resData.message || 'Error al guardar la configuración.', 'error');
+          submitBtn.disabled = false;
+          submitBtn.innerText = 'Guardar Configuración';
         }
       } catch (err) {
         console.error(err);
-        showToast('Error al actualizar el producto.', 'error');
-        btn.disabled = false;
-        btn.innerText = 'Guardar Cambios';
-      }
-    });
-  }
-
-  // Stock Adjustment (Mermas) JS Handler
-  let currentAdjustProductId = null;
-
-  async function openAdjustModal(productId, productName) {
-    currentAdjustProductId = productId;
-    document.getElementById('adjust-product-name').innerText = productName;
-    
-    const batchSelect = document.getElementById('adjust-batchId');
-    batchSelect.innerHTML = '<option value="">Cargando lotes disponibles...</option>';
-    
-    document.getElementById('adjust-quantity').value = '';
-    document.getElementById('adjust-reason').value = '';
-    
-    document.getElementById('adjust-modal').classList.remove('hidden');
-
-    try {
-      const resp = await fetch(`/products/${productId}/batches`);
-      if (!resp.ok) throw new Error('Error al obtener lotes.');
-      const batches = await resp.json();
-      
-      if (batches.length === 0) {
-        batchSelect.innerHTML = '<option value="">No hay lotes con stock disponibles en tu sucursal.</option>';
-        return;
-      }
-
-      batchSelect.innerHTML = batches.map(b => {
-        const expText = b.expirationDate ? ` (Vence: ${new Date(b.expirationDate).toLocaleDateString('es-SV')})` : ' (Sin vencimiento)';
-        return `<option value="${b.id}" data-max="${b.currentQuantity}">Lote: ${b.batchCode}${expText} - Disp: ${b.currentQuantity} uds</option>`;
-      }).join('');
-    } catch (err) {
-      console.error(err);
-      batchSelect.innerHTML = '<option value="">Error al cargar lotes.</option>';
-    }
-  }
-
-  function closeAdjustModal() {
-    document.getElementById('adjust-modal').classList.add('hidden');
-    currentAdjustProductId = null;
-  }
-
-  document.getElementById('adjust-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (!currentAdjustProductId) return;
-
-    const batchId = document.getElementById('adjust-batchId').value;
-    const quantity = document.getElementById('adjust-quantity').value;
-    const reason = document.getElementById('adjust-reason').value;
-
-    if (!batchId) {
-      showToast('Debe seleccionar un lote válido.', 'warning');
-      return;
-    }
-
-    const selectOpt = document.querySelector(`#adjust-batchId option[value="${batchId}"]`);
-    if (!selectOpt || !selectOpt.dataset.max) {
-      showToast('Lote seleccionado no válido.', 'error');
-      return;
-    }
-    
-    const maxAvailable = parseInt(selectOpt.dataset.max, 10);
-    const parsedQty = parseInt(quantity, 10);
-    if (parsedQty > maxAvailable) {
-      showToast(`La cantidad ingresada supera el stock disponible en este lote (${maxAvailable} uds).`, 'error');
-      return;
-    }
-
-    const submitBtn = e.target.querySelector('button[type="submit"]');
-    submitBtn.disabled = true;
-    submitBtn.innerText = 'Procesando...';
-
-    try {
-      const resp = await fetch(`/products/${currentAdjustProductId}/adjust`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ batchId, quantity: parsedQty, reason })
-      });
-
-      const resData = await resp.json();
-      if (resp.ok && resData.success) {
-        showToast(resData.message, 'success');
-        closeAdjustModal();
-        setTimeout(() => {
-          window.location.reload();
-        }, 800);
-      } else {
-        showToast(resData.message || 'Error al registrar el ajuste.', 'error');
-        submitBtn.disabled = false;
-        submitBtn.innerText = 'Deducir Stock';
-      }
-    } catch (err) {
-      console.error(err);
-      showToast('Error de red al registrar el ajuste.', 'error');
-    }
-  });
-
-  let currentSettingsProductId = null;
-
-  function openBranchSettingsModal(productId, productName, salePrice, minStock) {
-    currentSettingsProductId = productId;
-    document.getElementById('settings-product-name').innerText = productName;
-    document.getElementById('settings-salePrice').value = parseFloat(salePrice).toFixed(2);
-    document.getElementById('settings-minStock').value = parseInt(minStock, 10);
-    document.getElementById('branch-settings-modal').classList.remove('hidden');
-  }
-
-  function closeBranchSettingsModal() {
-    document.getElementById('branch-settings-modal').classList.add('hidden');
-    currentSettingsProductId = null;
-  }
-
-  document.getElementById('branch-settings-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (!currentSettingsProductId) return;
-
-    const salePrice = document.getElementById('settings-salePrice').value;
-    const minStock = document.getElementById('settings-minStock').value;
-
-    const submitBtn = e.target.querySelector('button[type="submit"]');
-    submitBtn.disabled = true;
-    submitBtn.innerText = 'Guardando...';
-
-    try {
-      const resp = await fetch(`/products/${currentSettingsProductId}/branch-settings`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ salePrice, minStock })
-      });
-
-      const resData = await resp.json();
-      if (resp.ok && resData.success) {
-        showToast(resData.message, 'success');
-        closeBranchSettingsModal();
-        setTimeout(() => {
-          window.location.reload();
-        }, 800);
-      } else {
-        showToast(resData.message || 'Error al guardar la configuración.', 'error');
+        showToast('Error de red al guardar la configuración.', 'error');
         submitBtn.disabled = false;
         submitBtn.innerText = 'Guardar Configuración';
       }
-    } catch (err) {
-      console.error(err);
-      showToast('Error de red al guardar la configuración.', 'error');
-      submitBtn.disabled = false;
-      submitBtn.innerText = 'Guardar Configuración';
+    });
+
+    let activeScanInputId = null;
+    let catalogScannerInstance = null;
+
+    function openVariantsModal() {
+      document.getElementById('var-baseName').value = '';
+      document.getElementById('var-categoryId').value = '';
+      document.getElementById('var-type').value = 'physical';
+      document.getElementById('variants-list-container').innerHTML = '';
+
+      addVariantRow();
+      addVariantRow();
+
+      document.getElementById('variants-modal').classList.remove('hidden');
     }
-  });
 
-  function openCreateModal() {
-    document.getElementById('create-modal').classList.remove('hidden');
-  }
+    function closeVariantsModal() {
+      document.getElementById('variants-modal').classList.add('hidden');
+    }
 
-  function closeCreateModal() {
-    document.getElementById('create-modal').classList.add('hidden');
-  }
+    function addVariantRow() {
+      const container = document.getElementById('variants-list-container');
+      variantRowIndex++;
+      const rowId = 'var-row-' + Date.now() + '-' + variantRowIndex;
 
-  // Auto-open create modal if error exists
-  <% if (error) { %>
+      const rowDiv = document.createElement('div');
+      rowDiv.id = rowId;
+      rowDiv.className = "grid grid-cols-1 sm:grid-cols-6 gap-3 bg-neutral-950 p-3 rounded-2xl border border-neutral-900 items-end";
+
+      rowDiv.innerHTML = `
+      <div>
+        <label class="block text-[10px] font-semibold text-neutral-500 uppercase tracking-wider mb-0.5">Sufijo *</label>
+        <input type="text" required class="var-suffix-input w-full px-2.5 py-1.5 border border-neutral-800 bg-neutral-900 text-white rounded-lg text-xs" placeholder="Ej: S / Rojo">
+      </div>
+      <div>
+        <label class="block text-[10px] font-semibold text-neutral-500 uppercase tracking-wider mb-0.5">Código Barras</label>
+        <div class="flex gap-1.5">
+          <input type="text" class="var-barcode-input w-full px-2.5 py-1.5 border border-neutral-800 bg-neutral-900 text-white rounded-lg text-xs font-mono" id="barcode-${rowId}" placeholder="Escanea">
+          <button type="button" onclick="triggerCatalogScanner('barcode-${rowId}')" class="px-2 py-1.5 bg-neutral-800 hover:bg-neutral-750 text-neutral-300 rounded-lg text-[10px] flex items-center justify-center border border-neutral-750">
+            📷
+          </button>
+        </div>
+      </div>
+      <div>
+        <label class="block text-[10px] font-semibold text-neutral-500 uppercase tracking-wider mb-0.5">P. Venta ($) *</label>
+        <input type="number" step="0.01" min="0" required class="var-price-input w-full px-2.5 py-1.5 border border-neutral-800 bg-neutral-900 text-white rounded-lg text-xs font-mono" placeholder="0.00">
+      </div>
+      <div>
+        <label class="block text-[10px] font-semibold text-neutral-500 uppercase tracking-wider mb-0.5">P. Costo ($)</label>
+        <input type="number" step="0.01" min="0" class="var-cost-input w-full px-2.5 py-1.5 border border-neutral-800 bg-neutral-900 text-white rounded-lg text-xs font-mono" placeholder="0.00">
+      </div>
+      <div>
+        <label class="block text-[10px] font-semibold text-neutral-500 uppercase tracking-wider mb-0.5">Stock Apertura</label>
+        <input type="number" step="1" min="0" class="var-stock-input w-full px-2.5 py-1.5 border border-neutral-800 bg-neutral-900 text-white rounded-lg text-xs font-mono" placeholder="0">
+      </div>
+      <div class="flex justify-end">
+        <button type="button" onclick="removeVariantRow('${rowId}')" class="px-3 py-1.5 bg-red-950/40 border border-red-900/60 hover:bg-red-905 text-red-400 text-xs font-bold rounded-lg transition-colors w-full text-center">
+          Eliminar
+        </button>
+      </div>
+    `;
+
+      container.appendChild(rowDiv);
+    }
+
+    function removeVariantRow(rowId) {
+      const el = document.getElementById(rowId);
+      if (el) el.remove();
+    }
+
+    function triggerCatalogScanner(inputId) {
+      activeScanInputId = inputId;
+      document.getElementById('catalog-scanner-modal').classList.remove('hidden');
+      if (!catalogScannerInstance) {
+        catalogScannerInstance = new Html5Qrcode("catalog-qr-interactive");
+      }
+      catalogScannerInstance.start({
+          facingMode: "environment"
+        }, {
+          fps: 10,
+          qrbox: {
+            width: 250,
+            height: 250
+          }
+        },
+        (decodedText) => {
+          try {
+            const audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+            const osc = audioCtx.createOscillator();
+            osc.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+          } catch (e) {}
+
+          if (activeScanInputId) {
+            document.getElementById(activeScanInputId).value = decodedText;
+          }
+          closeCatalogScanner();
+        },
+        (errorMessage) => {}
+      ).catch(err => {
+        showToast("Error al abrir cámara.", "error");
+      });
+    }
+
+    function closeCatalogScanner() {
+      document.getElementById('catalog-scanner-modal').classList.add('hidden');
+      if (catalogScannerInstance) {
+        catalogScannerInstance.stop().catch(() => {});
+      }
+    }
+
+    document.getElementById('variants-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const baseName = document.getElementById('var-baseName').value.trim();
+      const categoryId = document.getElementById('var-categoryId').value;
+      const type = document.getElementById('var-type').value;
+
+      const rows = document.querySelectorAll('#variants-list-container > div');
+      if (rows.length === 0) {
+        showToast('Debe ingresar al menos una variante.', 'warning');
+        return;
+      }
+
+      const variants = [];
+      let isValid = true;
+
+      rows.forEach(row => {
+        const suffix = row.querySelector('.var-suffix-input').value.trim();
+        const barCode = row.querySelector('.var-barcode-input').value.trim();
+        const salePrice = parseFloat(row.querySelector('.var-price-input').value) || 0;
+        const averageCost = parseFloat(row.querySelector('.var-cost-input').value) || 0;
+        const totalStock = parseInt(row.querySelector('.var-stock-input').value, 10) || 0;
+
+        if (!suffix) {
+          showToast('El sufijo de la variante es obligatorio.', 'warning');
+          isValid = false;
+          return;
+        }
+
+        variants.push({
+          suffix,
+          barCode,
+          salePrice,
+          averageCost,
+          totalStock
+        });
+      });
+
+      if (!isValid) return;
+
+      const submitBtn = document.getElementById('btn-variants-submit');
+      submitBtn.disabled = true;
+      submitBtn.innerText = 'Creando variantes...';
+
+      try {
+        const resp = await fetch('/products/batch-create', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            baseName,
+            categoryId,
+            type,
+            variants
+          })
+        });
+        const data = await resp.json();
+
+        if (data.success) {
+          showToast('Variantes creadas correctamente.', 'success');
+          window.location.reload();
+        } else {
+          showToast('Error: ' + data.message, 'error');
+          submitBtn.disabled = false;
+          submitBtn.innerText = 'Generar Lote de Variantes';
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Error de red al crear variantes.', 'error');
+        submitBtn.disabled = false;
+        submitBtn.innerText = 'Generar Lote de Variantes';
+      }
+    });
+
+    function openCreateModal() {
+      shouldReloadOnClose = false;
+      document.getElementById('create-modal').classList.remove('hidden');
+    }
+
+    function closeCreateModal() {
+      document.getElementById('create-modal').classList.add('hidden');
+      if (shouldReloadOnClose) {
+        window.location.reload();
+      }
+    }
+
+    // Auto-open create modal if error exists
+    <% if (error) { %>
     window.onload = function() {
       openCreateModal();
     }
-  <% } %>
+    <% } %>
 
-  // URL Query parameter success indicator handler
-  window.addEventListener('DOMContentLoaded', () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('success')) {
-      showToast('Operación realizada con éxito.', 'success');
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-  });
-</script>
+    // URL Query parameter success indicator handler
+    window.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('success')) {
+        showToast('Operación realizada con éxito.', 'success');
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
 
-<%- include('../../partials/foot') %>
+      const setupPasteListener = (pasteInputId, urlHiddenId, base64HiddenId, previewContainerId, previewImgId) => {
+        const input = document.getElementById(pasteInputId);
+        if (!input) return;
+
+        // Listen to typing (link/url)
+        input.addEventListener('input', (e) => {
+          const val = e.target.value.trim();
+          if (val.startsWith('http://') || val.startsWith('https://')) {
+            document.getElementById(urlHiddenId).value = val;
+            document.getElementById(base64HiddenId).value = '';
+
+            const preview = document.getElementById(previewImgId);
+            preview.src = val;
+            document.getElementById(previewContainerId).classList.remove('hidden');
+          } else {
+            document.getElementById(urlHiddenId).value = '';
+            document.getElementById(previewContainerId).classList.add('hidden');
+          }
+        });
+
+        // Listen to paste (images from clipboard)
+        input.addEventListener('paste', (e) => {
+          const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+          for (const item of items) {
+            if (item.type.indexOf('image') === 0) {
+              const blob = item.getAsFile();
+              const reader = new FileReader();
+              reader.onload = function(event) {
+                const base64Data = event.target.result;
+                document.getElementById(base64HiddenId).value = base64Data;
+                document.getElementById(urlHiddenId).value = '';
+
+                const preview = document.getElementById(previewImgId);
+                preview.src = base64Data;
+                document.getElementById(previewContainerId).classList.remove('hidden');
+                input.value = '[Imagen del portapapeles pegada]';
+              };
+              reader.readAsDataURL(blob);
+              e.preventDefault();
+              break;
+            }
+          }
+        });
+      };
+
+      setupPasteListener('create-image-paste-input', 'create-image-pasted-url', 'create-image-base64', 'create-pasted-preview-container', 'create-pasted-preview');
+      setupPasteListener('edit-image-paste-input', 'edit-image-pasted-url', 'edit-image-base64', 'edit-pasted-preview-container', 'edit-pasted-preview');
+    });
+  </script>
+
+  <%- include('../../partials/foot') %>

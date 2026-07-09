@@ -18,6 +18,11 @@ class Product extends Model {
         type: DataTypes.STRING(150),
         allowNull: false
       },
+      type: {
+        type: DataTypes.ENUM('physical', 'service'),
+        allowNull: false,
+        defaultValue: 'physical'
+      },
       isFrequent: {
         type: DataTypes.BOOLEAN,
         allowNull: false,

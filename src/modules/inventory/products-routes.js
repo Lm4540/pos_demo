@@ -9,6 +9,7 @@ const upload = require('../../core/middlewares/upload');
 router.get('/', authMiddleware, checkPermission('inventory.view'), productsController.listProducts);
 
 // Catalog modifications (Admin only)
+router.post('/batch-create', authMiddleware, checkPermission('admin'), productsController.batchCreateProducts);
 router.post('/', authMiddleware, checkPermission('admin'), upload.single('image'), productsController.createProduct);
 router.post('/:id/edit', authMiddleware, checkPermission('admin'), upload.single('image'), productsController.updateProduct);
 router.delete('/:id', authMiddleware, checkPermission('admin'), productsController.deleteProduct);
@@ -17,6 +18,7 @@ router.delete('/:id', authMiddleware, checkPermission('admin'), productsControll
 router.get('/:id/batches', authMiddleware, checkPermission('inventory.view'), productsController.listBatches);
 router.post('/:id/adjust', authMiddleware, checkPermission('inventory.adjust'), productsController.adjustInventory);
 router.get('/:id/kardex', authMiddleware, checkPermission('inventory.view'), productsController.renderKardex);
+router.get('/:id/service-movements', authMiddleware, checkPermission('inventory.view'), productsController.renderServiceMovements);
 router.post('/:id/branch-settings', authMiddleware, checkPermission('inventory.adjust'), productsController.updateBranchSettings);
 
 module.exports = router;

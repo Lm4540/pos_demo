@@ -9,7 +9,7 @@ const listClients = async (req, res, next) => {
     const clients = await Client.findAll({
       where: whereClause,
       include: [{ model: Branch, as: 'branch' }],
-      order: [['name', 'ASC']]
+      order: [['currentBalance', 'DESC']]
     });
 
     const clientsWithAlerts = await Promise.all(clients.map(async (client) => {

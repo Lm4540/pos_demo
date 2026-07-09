@@ -24,6 +24,11 @@ class WebAuthnCredential extends Model {
         type: DataTypes.STRING(32),
         allowNull: true,
         defaultValue: null
+      },
+      deviceName: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+        defaultValue: null
       }
     }, {
       sequelize,

@@ -1,4 +1,4 @@
-const { Product, Category } = require('../../core/models');
+const { Product, Category, sequelize } = require('../../core/models');
 const { logAction } = require('../../core/services/auditService');
 const fs = require('fs');
 const path = require('path');
@@ -35,20 +35,67 @@ const listProducts = async (req, res, next) => {
   }
 };
 
+const saveImageFromBase64OrUrl = async (imageBase64, imageUrl) => {
+  const crypto = require('crypto');
+  const uploadDir = path.join(__dirname, '../../../storage/uploads');
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+
+  // Handle Base64 from clipboard
+  if (imageBase64 && imageBase64.trim() !== '') {
+    const matches = imageBase64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+    if (matches && matches.length === 3) {
+      const ext = matches[1].split('/')[1] || 'png';
+      const buffer = Buffer.from(matches[2], 'base64');
+      const filename = `pasted_${crypto.randomBytes(16).toString('hex')}.${ext}`;
+      const filePath = path.join(uploadDir, filename);
+      fs.writeFileSync(filePath, buffer);
+      return '/uploads/' + filename;
+    }
+  }
+
+  // Handle Image URL
+  if (imageUrl && imageUrl.trim() !== '') {
+    try {
+      const response = await fetch(imageUrl);
+      if (response.ok) {
+        const buffer = Buffer.from(await response.arrayBuffer());
+        const contentType = response.headers.get('content-type') || 'image/png';
+        const ext = contentType.split('/')[1] || 'png';
+        const filename = `url_${crypto.randomBytes(16).toString('hex')}.${ext}`;
+        const filePath = path.join(uploadDir, filename);
+        fs.writeFileSync(filePath, buffer);
+        return '/uploads/' + filename;
+      }
+    } catch (urlErr) {
+      console.error('Failed to download image from URL:', urlErr.message);
+    }
+  }
+
+  return null;
+};
+
 const createProduct = async (req, res, next) => {
-  const { barCode, name, isFrequent, categoryId } = req.body;
+  const { barCode, name, isFrequent, categoryId, type, imageBase64, imageUrl } = req.body;
   let imagePath = null;
   
   if (req.file) {
-    // Relative path for client viewing (we can serve storage/uploads static)
     imagePath = '/uploads/' + req.file.filename;
+  } else {
+    const savedPath = await saveImageFromBase64OrUrl(imageBase64, imageUrl);
+    if (savedPath) {
+      imagePath = savedPath;
+    }
   }
 
   try {
     if (!name || name.trim() === '') {
-      // Remove uploaded file if validation failed
       if (req.file) {
         fs.unlinkSync(req.file.path);
+      }
+      if (req.xhr || req.headers.accept?.includes('json')) {
+        return res.status(400).json({ success: false, message: 'El nombre del producto es obligatorio.' });
       }
       const products = await Product.findAll({ order: [['name', 'ASC']] });
       const categories = await Category.findAll({ order: [['name', 'ASC']] });
@@ -66,6 +113,7 @@ const createProduct = async (req, res, next) => {
       barCode: barCode && barCode.trim() !== '' ? barCode.trim() : null,
       name: name.trim(),
       isFrequent: isFrequent === 'true',
+      type: type || 'physical',
       imagePath,
       categoryId: categoryId && categoryId !== '' ? parseInt(categoryId, 10) : null
     });
@@ -78,14 +126,19 @@ const createProduct = async (req, res, next) => {
       ipAddress: req.ip
     });
 
+    if (req.xhr || req.headers.accept?.includes('json')) {
+      return res.json({ success: true, message: 'Producto registrado con éxito.', product: newProduct });
+    }
     return res.redirect('/products?success=1');
   } catch (error) {
-    // Remove uploaded file on database error
     if (req.file) {
       try { fs.unlinkSync(req.file.path); } catch(e) {}
     }
     
     if (error.name === 'SequelizeUniqueConstraintError') {
+      if (req.xhr || req.headers.accept?.includes('json')) {
+        return res.status(400).json({ success: false, message: 'El código de barras ya se encuentra asignado a otro producto.' });
+      }
       const products = await Product.findAll({ order: [['name', 'ASC']] });
       const categories = await Category.findAll({ order: [['name', 'ASC']] });
       return res.render('pages/products/index', {
@@ -103,11 +156,16 @@ const createProduct = async (req, res, next) => {
 
 const updateProduct = async (req, res, next) => {
   const { id } = req.params;
-  const { barCode, name, isFrequent, categoryId } = req.body;
+  const { barCode, name, isFrequent, categoryId, type, imageBase64, imageUrl } = req.body;
   let imagePath = null;
   
   if (req.file) {
     imagePath = '/uploads/' + req.file.filename;
+  } else {
+    const savedPath = await saveImageFromBase64OrUrl(imageBase64, imageUrl);
+    if (savedPath) {
+      imagePath = savedPath;
+    }
   }
 
   try {
@@ -121,11 +179,11 @@ const updateProduct = async (req, res, next) => {
       barCode: barCode && barCode.trim() !== '' ? barCode.trim() : null,
       name: name.trim(),
       isFrequent: isFrequent === 'true',
+      type: type || 'physical',
       categoryId: categoryId && categoryId !== '' ? parseInt(categoryId, 10) : null
     };
 
     if (imagePath) {
-      // Delete old image if exists
       if (product.imagePath) {
         const oldPath = path.join(__dirname, '../../../storage', product.imagePath.replace('/uploads/', 'uploads/'));
         try { fs.unlinkSync(oldPath); } catch(e) {}
@@ -143,6 +201,9 @@ const updateProduct = async (req, res, next) => {
       ipAddress: req.ip
     });
 
+    if (req.xhr || req.headers.accept?.includes('json')) {
+      return res.json({ success: true, message: 'Producto actualizado con éxito.', product });
+    }
     return res.redirect('/products?success=1');
   } catch (error) {
     if (req.file) {
@@ -341,6 +402,65 @@ const renderKardex = async (req, res, next) => {
   }
 };
 
+const renderServiceMovements = async (req, res, next) => {
+  const { id } = req.params;
+  const { startDate, endDate } = req.query;
+
+  try {
+    const { SaleDetail, Sale, Product, User, Branch } = require('../../core/models');
+    const { Op } = require('sequelize');
+
+    const product = await Product.findByPk(id);
+    if (!product || product.type !== 'service') {
+      return res.status(404).render('pages/error', {
+        title: 'Error',
+        message: 'Servicio no encontrado.',
+        user: req.user
+      });
+    }
+
+    const detailsWhere = { productId: id };
+    const saleIncludeWhere = {};
+
+    if (req.user.roleId !== 'admin') {
+      saleIncludeWhere.branchId = req.user.branchId;
+    }
+
+    if (startDate && endDate) {
+      saleIncludeWhere.createdAt = {
+        [Op.between]: [new Date(`${startDate}T00:00:00`), new Date(`${endDate}T23:59:59`)]
+      };
+    }
+
+    const movements = await SaleDetail.findAll({
+      where: detailsWhere,
+      include: [
+        {
+          model: Sale,
+          as: 'sale',
+          where: saleIncludeWhere,
+          required: true,
+          include: [
+            { model: User, as: 'user' },
+            { model: Branch, as: 'branch' }
+          ]
+        }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
+    return res.render('pages/products/service-movements', {
+      title: `Movimientos de Servicio - ${product.name}`,
+      product,
+      movements,
+      startDate: startDate || '',
+      endDate: endDate || ''
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 const updateBranchSettings = async (req, res, next) => {
   const { id } = req.params;
   const { salePrice, minStock } = req.body;
@@ -390,6 +510,81 @@ const updateBranchSettings = async (req, res, next) => {
   }
 };
 
+const batchCreateProducts = async (req, res, next) => {
+  const { baseName, categoryId, isFrequent, type, variants } = req.body;
+
+  if (!baseName || baseName.trim() === '') {
+    return res.status(400).json({ success: false, message: 'El nombre base es obligatorio.' });
+  }
+
+  if (!variants || !Array.isArray(variants) || variants.length === 0) {
+    return res.status(400).json({ success: false, message: 'Debe ingresar al menos una variante.' });
+  }
+
+  const { Branch, BranchProduct } = require('../../core/models');
+  const transaction = await sequelize.transaction();
+
+  try {
+    const createdProducts = [];
+    const allBranches = await Branch.findAll({ transaction });
+
+    for (const variant of variants) {
+      const suffix = variant.suffix ? variant.suffix.trim() : '';
+      const name = suffix ? `${baseName.trim()} (${suffix})` : baseName.trim();
+      const barCode = variant.barCode ? variant.barCode.trim() : null;
+
+      // Check unique barcode if provided
+      if (barCode) {
+        const existing = await Product.findOne({ where: { barCode }, transaction });
+        if (existing) {
+          throw new Error(`El código de barras "${barCode}" ya está asignado a otro producto.`);
+        }
+      }
+
+      const product = await Product.create({
+        name,
+        barCode: barCode || null,
+        type: type || 'physical',
+        isFrequent: isFrequent === true || isFrequent === 'true',
+        categoryId: categoryId ? parseInt(categoryId, 10) : null
+      }, { transaction });
+
+      // Initialize branch products with salePrice, averageCost, and totalStock
+      const salePrice = parseFloat(variant.salePrice) || 0.00;
+      const averageCost = parseFloat(variant.averageCost) || 0.00;
+      const totalStock = parseInt(variant.totalStock, 10) || 0;
+
+      for (const branch of allBranches) {
+        await BranchProduct.create({
+          productId: product.id,
+          branchId: branch.id,
+          totalStock: totalStock,
+          averageCost: averageCost,
+          salePrice: salePrice,
+          minStock: 0
+        }, { transaction });
+      }
+
+      createdProducts.push({ id: product.id, name: product.name, barCode: product.barCode });
+    }
+
+    await transaction.commit();
+
+    await logAction({
+      userId: req.user.id,
+      branchId: req.user.branchId,
+      action: 'inventory.batch_products_created',
+      details: { count: createdProducts.length, baseName },
+      ipAddress: req.ip
+    });
+
+    return res.json({ success: true, message: `${createdProducts.length} variante(s) creadas correctamente.`, products: createdProducts });
+  } catch (error) {
+    await transaction.rollback();
+    return res.status(400).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   listProducts,
   createProduct,
@@ -398,5 +593,7 @@ module.exports = {
   listBatches,
   adjustInventory,
   renderKardex,
-  updateBranchSettings
+  renderServiceMovements,
+  updateBranchSettings,
+  batchCreateProducts
 };

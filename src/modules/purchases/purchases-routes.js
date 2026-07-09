@@ -12,5 +12,6 @@ router.get('/new', purchasesController.renderNewPurchase);
 router.post('/', purchasesController.createPurchase);
 router.get('/payments', purchasesController.renderSupplierPayments);
 router.post('/payments', purchasesController.paySupplier);
+router.get('/:id', purchasesController.renderPurchaseDetail);
 
 module.exports = router;

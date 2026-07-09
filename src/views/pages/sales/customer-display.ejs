@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pantalla del Cliente - RG Simple POS</title>
+  <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      overflow: hidden;
+      background: #030712;
+    }
+
+    /* Idle animation */
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translateY(0px);
+      }
+
+      50% {
+        transform: translateY(-12px);
+      }
+    }
+
+    @keyframes pulse-glow {
+
+      0%,
+      100% {
+        opacity: 0.6;
+      }
+
+      50% {
+        opacity: 1;
+      }
+    }
+
+    @keyframes fade-in {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes slide-up {
+      from {
+        opacity: 0;
+        transform: translateY(40px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes bounce-in {
+      0% {
+        transform: scale(0.3);
+        opacity: 0;
+      }
+
+      50% {
+        transform: scale(1.05);
+      }
+
+      70% {
+        transform: scale(0.95);
+      }
+
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    @keyframes confetti-fall {
+      0% {
+        transform: translateY(-100%) rotate(0deg);
+        opacity: 1;
+      }
+
+      100% {
+        transform: translateY(100vh) rotate(720deg);
+        opacity: 0;
+      }
+    }
+
+    @keyframes shimmer {
+      0% {
+        background-position: -200% 0;
+      }
+
+      100% {
+        background-position: 200% 0;
+      }
+    }
+
+    .float-anim {
+      animation: float 4s ease-in-out infinite;
+    }
+
+    .fade-in {
+      animation: fade-in 0.6s ease-out forwards;
+    }
+
+    .slide-up {
+      animation: slide-up 0.5s ease-out forwards;
+    }
+
+    .bounce-in {
+      animation: bounce-in 0.8s ease-out forwards;
+    }
+
+    .shimmer-text {
+      background: linear-gradient(90deg, #60a5fa, #a78bfa, #60a5fa);
+      background-size: 200% 100%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: shimmer 3s linear infinite;
+    }
+
+    .confetti-piece {
+      position: fixed;
+      width: 10px;
+      height: 10px;
+      top: -20px;
+      animation: confetti-fall 3s ease-in forwards;
+    }
+
+    /* Scrollbar hide */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    /* Cart item enter animation */
+    .cart-item {
+      animation: slide-up 0.3s ease-out forwards;
+    }
+
+    #state-active,
+    #state-completed {
+      padding: 24px !important;
+    }
+
+    /* Light Mode overrides */
+    body.theme-light {
+      background: #f3f4f6 !important;
+      color: #1f2937 !important;
+    }
+
+    body.theme-light #state-idle {
+      background: #f3f4f6 !important;
+      color: #111827 !important;
+    }
+
+    body.theme-light #state-idle h1 {
+      color: #111827 !important;
+    }
+
+    body.theme-light #idle-message {
+      color: #4b5563 !important;
+    }
+
+    body.theme-light .shimmer-text {
+      background: linear-gradient(90deg, #2563eb, #7c3aed, #2563eb) !important;
+      background-size: 200% 100% !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+    }
+
+    body.theme-light #state-active {
+      background: rgba(255, 255, 255, 0.9) !important;
+      border-color: rgba(209, 213, 219, 0.8) !important;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+    }
+
+    body.theme-light #state-active .bg-neutral-900\/80 {
+      background: rgba(243, 244, 246, 0.9) !important;
+      border-color: rgba(229, 231, 235, 0.9) !important;
+    }
+
+    body.theme-light #state-active h2,
+    body.theme-light #state-active span {
+      color: #111827 !important;
+    }
+
+    body.theme-light #state-active p {
+      color: #4b5563 !important;
+    }
+
+    body.theme-light #active-clock {
+      color: #6b7280 !important;
+    }
+
+    body.theme-light .cart-item {
+      background: rgba(255, 255, 255, 0.9) !important;
+      border-color: rgba(229, 231, 235, 0.8) !important;
+    }
+
+    body.theme-light .cart-item span {
+      color: #1f2937 !important;
+    }
+
+    body.theme-light .cart-item .text-white {
+      color: #111827 !important;
+    }
+
+    body.theme-light .cart-item .text-neutral-500 {
+      color: #6b7280 !important;
+    }
+
+    body.theme-light #total-amount {
+      color: #2563eb !important;
+    }
+
+    body.theme-light #discount-amount {
+      color: #dc2626 !important;
+    }
+
+    body.theme-light #state-completed {
+      background: rgba(255, 255, 255, 0.9) !important;
+      border-color: rgba(209, 213, 219, 0.8) !important;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+    }
+
+    body.theme-light #state-completed h1 {
+      color: #065f46 !important;
+    }
+
+    body.theme-light #state-completed p {
+      color: #374151 !important;
+    }
+
+    body.theme-light #change-display div {
+      background: rgba(243, 244, 246, 0.9) !important;
+      border-color: rgba(229, 231, 235, 0.9) !important;
+    }
+
+    body.theme-light #completed-total {
+      color: #111827 !important;
+    }
+
+    body.theme-light #total-paid-display p {
+      color: #6b7280 !important;
+    }
+
+    body.theme-light #btn-toggle-voice {
+      background: rgba(255, 255, 255, 0.8) !important;
+      border-color: rgba(229, 231, 235, 0.8) !important;
+      color: #4b5563 !important;
+    }
+
+    body.theme-light #btn-toggle-voice:hover {
+      background: rgba(243, 244, 246, 0.9) !important;
+      color: #111827 !important;
+    }
+
+    /* Completed details card mode light overrides */
+    body.theme-light #completed-details-card {
+      background: rgba(255, 255, 255, 0.9) !important;
+      border-color: rgba(229, 231, 235, 0.9) !important;
+    }
+
+    body.theme-light #completed-details-card span {
+      color: #111827 !important;
+    }
+
+    body.theme-light #completed-details-card .text-emerald-400 {
+      color: #059669 !important;
+    }
+
+    body.theme-light #completed-details-card div.bg-emerald-500\/10 {
+      background-color: rgba(16, 185, 129, 0.15) !important;
+      border-color: rgba(16, 185, 129, 0.25) !important;
+    }
+
+    body.theme-light #active-cash-panel {
+      background: rgba(243, 244, 246, 0.9) !important;
+      border-color: rgba(229, 231, 235, 0.9) !important;
+    }
+
+    body.theme-light #active-cash-panel span {
+      color: #111827 !important;
+    }
+
+    body.theme-light #active-cash-panel .text-emerald-400 {
+      color: #059669 !important;
+    }
+  </style>
+</head>
+
+<body class="h-screen w-screen flex items-center justify-center p-6 transition-colors duration-300">
+
+  <!-- Local Audio Control Button (Top Right) -->
+  <button id="btn-toggle-voice" onclick="toggleLocalVoice()" class="fixed top-5 right-5 z-50 h-10 w-10 bg-neutral-900/60 border border-neutral-800 hover:bg-neutral-850 rounded-xl flex items-center justify-center text-neutral-450 hover:text-white transition-all cursor-pointer shadow-md" title="Mute/Unmute">
+    <!-- Speaker On SVG -->
+    <svg id="voice-on-icon" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M12 18.75V5.25L7.75 9.5H4.5v5h3.25L12 18.75z" />
+    </svg>
+    <!-- Speaker Off SVG -->
+    <svg id="voice-off-icon" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25M12 18.75V5.25L7.75 9.5H4.5v5h3.25L12 18.75z" />
+    </svg>
+  </button>
+
+  <!-- STATE: IDLE -->
+  <div id="state-idle" class="absolute inset-0 flex flex-col items-center justify-center px-8">
+    <!-- Background gradient orbs -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+      <div class="absolute -top-40 -left-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl"></div>
+      <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl"></div>
+      <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl"></div>
+    </div>
+
+    <div class="relative z-10 text-center float-anim">
+      <!-- Store Logo/Icon -->
+      <div class="mx-auto mb-8 w-28 h-28 rounded-3xl bg-gradient-to-br from-blue-600 to-violet-600 flex items-center justify-center shadow-2xl shadow-blue-500/20">
+        <svg class="w-16 h-16 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.15c0 .415.336.75.75.75z" />
+        </svg>
+      </div>
+
+      <h1 class="text-5xl font-black text-white mb-4 tracking-tight">Mini Market EL Kinder</h1>
+      <p id="idle-message" class="text-xl text-neutral-400 font-medium max-w-lg mx-auto leading-relaxed"><%= displayMessage %></p>
+
+      <!-- Clock -->
+      <div class="mt-10">
+        <span id="idle-clock" class="text-7xl font-black shimmer-text tracking-tight"></span>
+        <p id="idle-date" class="text-neutral-500 text-lg mt-2 font-medium"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATE: ACTIVE (Cart being filled, floats with padding margin) -->
+  <div id="state-active" class="hidden flex-col h-full w-full bg-neutral-900/60 border border-neutral-800 rounded-3xl overflow-hidden shadow-2xl backdrop-blur-xl transition-all duration-300">
+    <!-- Header -->
+    <div class="bg-neutral-900/80 backdrop-blur-xl border-b border-neutral-800 px-8 py-5 flex items-center justify-between flex-shrink-0">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-violet-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+          <svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-2xl font-black text-white tracking-tight">Su Compra</h2>
+          <p class="text-sm text-neutral-450"><span id="active-item-count">0</span> artículos</p>
+        </div>
+      </div>
+      <span id="active-clock" class="text-neutral-500 text-sm font-mono"></span>
+    </div>
+
+    <!-- Items List -->
+    <div id="cart-list" class="flex-grow overflow-y-auto px-8 py-6 space-y-3 no-scrollbar">
+      <!-- Items populated by BroadcastChannel -->
+    </div>
+
+    <!-- Totals Footer -->
+    <div class="bg-neutral-900/80 backdrop-blur-xl border-t border-neutral-800 px-8 py-6 flex-shrink-0">
+      <div id="discount-row" class="hidden flex justify-between text-lg mb-2">
+        <span class="text-neutral-400">Descuento:</span>
+        <span id="discount-amount" class="font-bold text-red-400">-$0.00</span>
+      </div>
+      <div class="flex justify-between items-end">
+        <span class="text-2xl text-neutral-450 font-semibold">Total a Pagar</span>
+        <span id="total-amount" class="text-6xl font-black text-white tracking-tight">$0.00</span>
+      </div>
+      <!-- Real-time Cash/Change display for customer -->
+      <div id="active-cash-panel" class="hidden mt-2 grid grid-cols-2 gap-4 mb-4 bg-neutral-950/60 p-4 border border-neutral-850 rounded-2xl">
+        <div class="text-left">
+          <span class="text-xs text-neutral-400 block mb-0.5 font-medium">Efectivo Recibido</span>
+          <span id="active-cash-received" class="text-xl font-bold text-white font-mono">$0.00</span>
+        </div>
+        <div class="text-right">
+          <span class="text-xs text-emerald-400 block mb-0.5 font-medium">Su Vuelto</span>
+          <span id="active-cash-change" class="text-xl font-bold text-emerald-400 font-mono">$0.00</span>
+        </div>
+      </div>
+
+
+    </div>
+  </div>
+
+  <!-- STATE: COMPLETED (Thank you / Change, floats with padding margin) -->
+  <div id="state-completed" class="hidden flex-col items-center justify-center h-full w-full bg-neutral-900/60 border border-neutral-800 rounded-3xl overflow-hidden shadow-2xl backdrop-blur-xl transition-all duration-300 relative">
+    <!-- Background gradient orbs -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+      <div class="absolute -top-40 -left-40 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl"></div>
+      <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
+    </div>
+
+    <div class="relative z-10 text-center">
+      <!-- Success checkmark -->
+      <div class="mx-auto mb-8 w-32 h-32 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-2xl shadow-emerald-500/30 bounce-in">
+        <svg class="w-20 h-20 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+        </svg>
+      </div>
+
+      <h1 class="text-5xl font-black text-white mb-3 tracking-tight fade-in">¡Gracias por su compra!</h1>
+      <p class="text-xl text-neutral-450 mb-10 fade-in" style="animation-delay: 0.2s">Agradecemos su preferencia</p>
+
+      <!-- Combined Checkout Details Card -->
+      <div id="completed-details-card" class="bg-neutral-900/60 backdrop-blur-xl border border-neutral-800 rounded-3xl p-6 w-96 mx-auto mt-6 fade-in space-y-4" style="animation-delay: 0.4s">
+
+        <!-- Total Row (Always visible) -->
+        <div class="flex justify-between items-center py-2 border-b border-neutral-800/60">
+          <span class="text-neutral-400 text-sm">Total Compra</span>
+          <span id="completed-total" class="text-2xl font-black text-white font-mono">$0.00</span>
+        </div>
+
+        <!-- Cash Details Container (Only shown for cash payments) -->
+        <div id="completed-cash-rows" class="hidden space-y-4">
+          <div class="flex justify-between items-center py-2 border-b border-neutral-800/60">
+            <span class="text-neutral-400 text-sm">Efectivo Recibido</span>
+            <span id="completed-received" class="text-2xl font-black text-white font-mono">$0.00</span>
+          </div>
+          <div class="flex justify-between items-center py-3 bg-emerald-500/10 rounded-2xl px-4 border border-emerald-500/20">
+            <span class="text-emerald-450 text-sm font-bold">Su Vuelto</span>
+            <span id="completed-change" class="text-3xl font-black text-emerald-450 font-mono">$0.00</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // BroadcastChannel for POS communication
+    const channel = new BroadcastChannel('pos-customer-display');
+
+    // State management
+    let currentState = 'idle';
+    let completedTimeout = null;
+    let voiceEnabled = true;
+    let lastTotalNet = 0;
+
+    // Load initial theme from localStorage
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    if (savedTheme === 'light') {
+      document.body.classList.add('theme-light');
+    }
+
+    function toggleLocalVoice(forcedValue) {
+      if (forcedValue !== undefined) {
+        voiceEnabled = forcedValue;
+      } else {
+        voiceEnabled = !voiceEnabled;
+      }
+      const onIcon = document.getElementById('voice-on-icon');
+      const offIcon = document.getElementById('voice-off-icon');
+
+      if (voiceEnabled) {
+        onIcon.classList.remove('hidden');
+        offIcon.classList.add('hidden');
+      } else {
+        onIcon.classList.add('hidden');
+        offIcon.classList.remove('hidden');
+      }
+    }
+
+    function speakText(text) {
+      if (!voiceEnabled) return;
+      try {
+        window.speechSynthesis.cancel(); // cancel any running speech
+        setTimeout(() => {
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = 'es-ES';
+          utterance.rate = 0.95;
+          window.speechSynthesis.speak(utterance);
+        }, 100);
+      } catch (err) {
+        console.error('Speech synthesis error:', err);
+      }
+    }
+
+    function setState(newState) {
+      currentState = newState;
+      document.getElementById('state-idle').classList.add('hidden');
+      document.getElementById('state-active').classList.add('hidden');
+      document.getElementById('state-completed').classList.add('hidden');
+
+      const el = document.getElementById(`state-${newState}`);
+      el.classList.remove('hidden');
+    }
+
+    // Clock update
+    function updateClocks() {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('es-SV', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      const dateStr = now.toLocaleDateString('es-SV', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+
+      const idleClock = document.getElementById('idle-clock');
+      const idleDate = document.getElementById('idle-date');
+      const activeClock = document.getElementById('active-clock');
+
+      if (idleClock) idleClock.textContent = timeStr;
+      if (idleDate) idleDate.textContent = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+      if (activeClock) activeClock.textContent = timeStr;
+    }
+    updateClocks();
+    setInterval(updateClocks, 1000);
+
+    // Handle messages from POS
+    channel.onmessage = (event) => {
+      const {
+        type,
+        data
+      } = event.data;
+
+      if (completedTimeout) {
+        clearTimeout(completedTimeout);
+        completedTimeout = null;
+      }
+
+      switch (type) {
+        case 'cart_update':
+          handleCartUpdate(data);
+          break;
+        case 'sale_completed':
+          handleSaleCompleted(data);
+          break;
+        case 'sale_reset':
+          setState('idle');
+          lastTotalNet = 0;
+          break;
+        case 'theme_update':
+          if (data.theme === 'light') {
+            document.body.classList.add('theme-light');
+          } else {
+            document.body.classList.remove('theme-light');
+          }
+          break;
+        case 'voice_update':
+          toggleLocalVoice(data.enabled);
+          break;
+        case 'cash_received_update':
+          const recEl = document.getElementById('active-cash-received');
+          const chgEl = document.getElementById('active-cash-change');
+          if (recEl) recEl.textContent = `$${parseFloat(data.cashReceived || 0).toFixed(2)}`;
+          if (chgEl) chgEl.textContent = `$${parseFloat(data.changeAmount || 0).toFixed(2)}`;
+          break;
+      }
+    };
+
+    function handleCartUpdate(data) {
+      const {
+        items,
+        totalGross,
+        totalDiscount,
+        totalNet
+      } = data;
+
+      if (!items || items.length === 0) {
+        setState('idle');
+        lastTotalNet = 0;
+        return;
+      }
+
+      setState('active');
+
+      // Update item count
+      const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
+      document.getElementById('active-item-count').textContent = totalItems;
+
+      // Render cart items
+      const cartList = document.getElementById('cart-list');
+      cartList.innerHTML = items.map((item, idx) => `
+        <div class="cart-item flex items-center justify-between p-5 bg-neutral-900/40 border border-neutral-800/30 rounded-2xl" style="animation-delay: ${idx * 0.05}s">
+          <div class="flex-grow">
+            <span class="text-lg font-bold text-white block">${item.customDescription || item.name}</span>
+            <span class="text-sm text-neutral-500">$${parseFloat(item.price).toFixed(2)} × ${item.quantity}</span>
+            ${item.type === 'service' ? '<span class="ml-2 text-xs bg-violet-950/60 border border-violet-800/40 text-violet-400 px-2 py-0.5 rounded-lg font-bold">SERVICIO</span>' : ''}
+          </div>
+          <span class="text-xl font-black text-white">$${(parseFloat(item.price) * item.quantity).toFixed(2)}</span>
+        </div>
+      `).join('');
+
+      // Auto-scroll to bottom
+      cartList.scrollTop = cartList.scrollHeight;
+
+      // Update totals
+      const discountRow = document.getElementById('discount-row');
+      if (totalDiscount > 0) {
+        discountRow.classList.remove('hidden');
+        discountRow.classList.add('flex');
+        document.getElementById('discount-amount').textContent = `-$${totalDiscount.toFixed(2)}`;
+      } else {
+        discountRow.classList.add('hidden');
+      }
+      document.getElementById('total-amount').textContent = `$${totalNet.toFixed(2)}`;
+
+      // Show/Hide active cash panel based on paymentMethod
+      const activeCashPanel = document.getElementById('active-cash-panel');
+      if (activeCashPanel) {
+        if (data.paymentMethod === 'cash') {
+          activeCashPanel.classList.remove('hidden');
+          activeCashPanel.classList.add('grid');
+          document.getElementById('active-cash-received').textContent = `$${parseFloat(data.cashReceived || 0).toFixed(2)}`;
+          document.getElementById('active-cash-change').textContent = `$${parseFloat(data.changeAmount || 0).toFixed(2)}`;
+        } else {
+          activeCashPanel.classList.add('hidden');
+          activeCashPanel.classList.remove('grid');
+        }
+      }
+
+      lastTotalNet = totalNet;
+    }
+
+    function handleSaleCompleted(data) {
+      const {
+        totalAmount,
+        changeAmount,
+        cashReceived,
+        paymentMethod
+      } = data;
+
+      setState('completed');
+
+      document.getElementById('completed-total').textContent = `$${parseFloat(totalAmount).toFixed(2)}`;
+
+      const cashRows = document.getElementById('completed-cash-rows');
+      if (paymentMethod === 'cash') {
+        if (cashRows) cashRows.classList.remove('hidden');
+        const recVal = document.getElementById('completed-received');
+        const chgVal = document.getElementById('completed-change');
+        if (recVal) recVal.textContent = `$${parseFloat(cashReceived || 0).toFixed(2)}`;
+        if (chgVal) chgVal.textContent = `$${parseFloat(changeAmount || 0).toFixed(2)}`;
+      } else {
+        if (cashRows) cashRows.classList.add('hidden');
+      }
+
+      // TTS: Speak thank you
+      speakText(`Gracias por su compra. Vuelva pronto.`);
+      lastTotalNet = 0;
+
+      // Spawn confetti
+      spawnConfetti();
+
+      // Return to idle after 8 seconds
+      completedTimeout = setTimeout(() => {
+        setState('idle');
+      }, 8000);
+    }
+
+    function spawnConfetti() {
+      const colors = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
+      const container = document.body;
+
+      for (let i = 0; i < 30; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.left = Math.random() * 100 + '%';
+        piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.animationDelay = (Math.random() * 2) + 's';
+        piece.style.animationDuration = (2 + Math.random() * 2) + 's';
+        piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+        piece.style.width = (6 + Math.random() * 8) + 'px';
+        piece.style.height = (6 + Math.random() * 8) + 'px';
+        container.appendChild(piece);
+
+        setTimeout(() => piece.remove(), 5000);
+      }
+    }
+
+    // Start in idle state
+    setState('idle');
+  </script>
+</body>
+
+</html>

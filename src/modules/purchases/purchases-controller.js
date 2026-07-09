@@ -272,10 +272,51 @@ const paySupplier = async (req, res, next) => {
   }
 };
 
+const renderPurchaseDetail = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { SupplierPayment } = require('../../core/models');
+    const whereClause = req.user.roleId === 'admin' ? {} : { branchId: req.user.branchId };
+    
+    const purchase = await Purchase.findOne({
+      where: { id, ...whereClause },
+      include: [
+        { model: Supplier, as: 'supplier' },
+        { model: Branch, as: 'branch' },
+        {
+          model: PurchaseDetail,
+          as: 'details',
+          include: [{ model: Product, as: 'product' }]
+        },
+        {
+          model: SupplierPayment,
+          as: 'payments'
+        }
+      ]
+    });
+
+    if (!purchase) {
+      return res.status(404).render('pages/error', {
+        title: 'Error',
+        message: 'Compra no encontrada o no pertenece a su sucursal.',
+        user: req.user
+      });
+    }
+
+    return res.render('pages/purchases/detail', {
+      title: `Detalle de Compra #${purchase.invoiceNumber}`,
+      purchase
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   listPurchases,
   renderNewPurchase,
   createPurchase,
   renderSupplierPayments,
-  paySupplier
+  paySupplier,
+  renderPurchaseDetail
 };
