@@ -41,15 +41,14 @@
         <h2 class="text-base font-bold text-white">Agregar Producto a Trasladar</h2>
         
         <div>
-          <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Producto a trasladar *</label>
-          <select id="select-product" onchange="loadProductBatches()" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
-            <option value="">Selecciona un producto con stock...</option>
-            <% branchProducts.forEach(bp => { %>
-              <option value="<%= bp.productId %>" data-name="<%= bp.product.name %>">
-                <%= bp.product.name %> (Disp: <%= bp.totalStock %> uds)
-              </option>
-            <% }) %>
-          </select>
+          <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Buscar Producto *</label>
+          <div class="relative">
+            <input type="text" id="productSearchInput" autocomplete="off" placeholder="Buscar por nombre o código..." class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+            <!-- Search Results Dropdown -->
+            <div id="productSearchResults" class="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto bg-neutral-900 border border-neutral-800 rounded-xl shadow-xl z-50 hidden divide-y divide-neutral-850">
+            </div>
+            <input type="hidden" id="productId">
+          </div>
         </div>
 
         <div id="batches-selection-container" class="hidden space-y-3">
@@ -111,10 +110,22 @@
 </div>
 
 <script>
+  const localProducts = [
+    <% branchProducts.forEach(bp => { %>
+      {
+        id: <%= bp.productId %>,
+        name: `<%= bp.product.name.replace(/`/g, '\\`').replace(/\$/g, '\\$') %>`,
+        barCode: `<%= (bp.product.barCode || '').replace(/`/g, '\\`').replace(/\$/g, '\\$') %>`,
+        totalStock: <%= bp.totalStock %>
+      },
+    <% }) %>
+  ];
+
   let transferItems = [];
+  let selectedProductName = '';
 
   async function loadProductBatches() {
-    const productId = document.getElementById('select-product').value;
+    const productId = document.getElementById('productId').value;
     const container = document.getElementById('batches-selection-container');
     const batchSelect = document.getElementById('select-batch');
 
@@ -144,12 +155,10 @@
   }
 
   function addProductToList() {
-    const prodSelect = document.getElementById('select-product');
+    const productId = document.getElementById('productId').value;
+    const productName = selectedProductName;
     const batchSelect = document.getElementById('select-batch');
     const qtyInput = document.getElementById('transfer-qty');
-
-    const productId = prodSelect.value;
-    const productName = prodSelect.options[prodSelect.selectedIndex].dataset.name;
     const batchId = batchSelect.value;
     
     if (!productId || !batchId) {
@@ -284,6 +293,74 @@
       btnSubmit.innerText = 'Procesar Traslado';
     }
   }
+
+  // Autocomplete search listeners
+  window.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('productSearchInput');
+    const searchResults = document.getElementById('productSearchResults');
+
+    searchInput.addEventListener('input', () => {
+      const query = searchInput.value.toLowerCase().trim();
+      if (!query) {
+        searchResults.classList.add('hidden');
+        return;
+      }
+      const filtered = localProducts.filter(p => 
+        p.name.toLowerCase().includes(query) || 
+        p.barCode.toLowerCase().includes(query)
+      );
+      renderSearchResults(filtered);
+    });
+
+    searchInput.addEventListener('focus', () => {
+      if (searchInput.value.trim() === '') {
+        renderSearchResults(localProducts);
+      } else {
+        searchResults.classList.remove('hidden');
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+        searchResults.classList.add('hidden');
+      }
+    });
+
+    function renderSearchResults(products) {
+      if (products.length === 0) {
+        searchResults.innerHTML = '<div class="p-3 text-neutral-500 text-xs text-center">No se encontraron productos.</div>';
+        searchResults.classList.remove('hidden');
+        return;
+      }
+      searchResults.innerHTML = products.map(p => `
+        <div onclick="window.selectProduct(${p.id}, '${escapeHtml(p.name)}')" class="p-3 hover:bg-neutral-850 cursor-pointer transition-colors text-xs flex justify-between items-center border-b border-neutral-800 last:border-0">
+          <div>
+            <span class="font-bold text-white block">${escapeHtml(p.name)}</span>
+            <span class="text-neutral-500 text-[10px] font-mono">${p.barCode || 'Sin código'}</span>
+          </div>
+          <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-neutral-850 text-neutral-400">Disp: ${p.totalStock} uds</span>
+        </div>
+      `).join('');
+      searchResults.classList.remove('hidden');
+    }
+
+    window.selectProduct = function(id, name) {
+      document.getElementById('productId').value = id;
+      selectedProductName = name;
+      searchInput.value = name;
+      searchResults.classList.add('hidden');
+      loadProductBatches();
+    };
+
+    function escapeHtml(text) {
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+  });
 </script>
 
 <%- include('../../partials/foot') %>

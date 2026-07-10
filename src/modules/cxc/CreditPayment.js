@@ -18,7 +18,8 @@ class CreditPayment extends Model {
       },
       turnId: {
         type: DataTypes.INTEGER,
-        allowNull: false
+        allowNull: true,
+        defaultValue: null
       },
       amountPaid: {
         type: DataTypes.DECIMAL(12, 2),

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <title><%= title %></title>
@@ -11,11 +12,13 @@
       line-height: 1.4;
       margin: 20px;
     }
+
     .header {
       border-bottom: 2px dashed #ccc;
       padding-bottom: 12px;
       margin-bottom: 20px;
     }
+
     .header h1 {
       font-size: 20px;
       margin: 0;
@@ -23,26 +26,31 @@
       letter-spacing: 0.5px;
       color: #111;
     }
+
     .header p {
       margin: 3px 0 0 0;
       color: #666;
       font-size: 10px;
       font-weight: bold;
     }
+
     .meta-table {
       width: 100%;
       margin-bottom: 20px;
       border-collapse: collapse;
     }
+
     .meta-table td {
       padding: 6px 10px;
       background: #f9f9f9;
       border: 1px solid #e0e0e0;
       width: 50%;
     }
+
     .meta-table td strong {
       color: #111;
     }
+
     .section-title {
       font-size: 12px;
       font-weight: bold;
@@ -53,11 +61,13 @@
       margin-bottom: 10px;
       text-transform: uppercase;
     }
+
     .kpi-grid {
       display: table;
       width: 100%;
       margin-bottom: 20px;
     }
+
     .kpi-card {
       display: table-cell;
       width: 25%;
@@ -66,9 +76,11 @@
       border: 1px solid #e0e0e0;
       text-align: center;
     }
+
     .kpi-card:not(:last-child) {
       border-right: none;
     }
+
     .kpi-title {
       font-size: 8px;
       font-weight: bold;
@@ -77,17 +89,20 @@
       display: block;
       margin-bottom: 4px;
     }
+
     .kpi-val {
       font-size: 16px;
       font-weight: bold;
       color: #000;
       font-family: monospace;
     }
+
     .data-table {
       width: 100%;
       border-collapse: collapse;
       margin-bottom: 15px;
     }
+
     .data-table th {
       background: #f5f5f5;
       font-weight: bold;
@@ -97,23 +112,29 @@
       border: 1px solid #e0e0e0;
       padding: 6px 8px;
     }
+
     .data-table td {
       border: 1px solid #e0e0e0;
       padding: 6px 8px;
       vertical-align: middle;
     }
+
     .text-right {
       text-align: right;
     }
+
     .text-center {
       text-align: center;
     }
+
     .font-bold {
       font-weight: bold;
     }
+
     .font-mono {
       font-family: monospace;
     }
+
     .alert-danger {
       color: #c53030;
       background: #fff5f5;
@@ -123,6 +144,7 @@
       font-size: 9px;
       font-weight: bold;
     }
+
     .alert-success {
       color: #2f855a;
       background: #f0fff4;
@@ -134,6 +156,7 @@
     }
   </style>
 </head>
+
 <body>
 
   <!-- Header -->
@@ -204,37 +227,37 @@
   <!-- Top Sellers & Daily Trend -->
   <div style="width: 100%; display: table; margin-top: 25px;">
     <div style="display: table-row;">
-      
+
       <!-- Top Sellers -->
       <div style="display: table-cell; width: 50%; padding-right: 15px; vertical-align: top;">
         <div class="section-title" style="margin-top: 0;">Productos Más Vendidos</div>
         <% if (topSellers.length === 0) { %>
-          <p style="color: #888; font-style: italic;">No hay registros de ventas en este periodo.</p>
+        <p style="color: #888; font-style: italic;">No hay registros de ventas en este periodo.</p>
         <% } else { %>
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Producto</th>
-                <th class="text-center">Cant.</th>
-                <th class="text-right">Ingresos</th>
-                <th class="text-right">Costo</th>
-                <th class="text-right">Ganancia</th>
-                <th class="text-right">Margen</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% topSellers.forEach(ts => { %>
-                <tr>
-                  <td class="font-bold"><%= ts.name %></td>
-                  <td class="text-center font-mono"><%= ts.totalQty %></td>
-                  <td class="text-right font-mono">$<%= parseFloat(ts.totalRevenue).toFixed(2) %></td>
-                  <td class="text-right font-mono">$<%= parseFloat(ts.totalCost || 0).toFixed(2) %></td>
-                  <td class="text-right font-mono" style="color: #10b981; font-weight: bold;">$<%= parseFloat(ts.totalProfit || 0).toFixed(2) %></td>
-                  <td class="text-right font-mono" style="color: #6366f1; font-weight: bold;"><%= parseFloat(ts.margin || 0).toFixed(1) %>%</td>
-                </tr>
-              <% }) %>
-            </tbody>
-          </table>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th class="text-center">Cant.</th>
+              <th class="text-right">Ingresos</th>
+              <th class="text-right">Costo</th>
+              <th class="text-right">Ganancia</th>
+              <th class="text-right">Margen</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% topSellers.forEach(ts => { %>
+            <tr>
+              <td class="font-bold"><%= ts.name %></td>
+              <td class="text-center font-mono"><%= ts.totalQty %></td>
+              <td class="text-right font-mono">$<%= parseFloat(ts.totalRevenue).toFixed(2) %></td>
+              <td class="text-right font-mono">$<%= parseFloat(ts.totalCost || 0).toFixed(2) %></td>
+              <td class="text-right font-mono" style="color: #10b981; font-weight: bold;">$<%= parseFloat(ts.totalProfit || 0).toFixed(2) %></td>
+              <td class="text-right font-mono" style="color: #6366f1; font-weight: bold;"><%= parseFloat(ts.margin || 0).toFixed(1) %>%</td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
         <% } %>
       </div>
 
@@ -242,24 +265,24 @@
       <div style="display: table-cell; width: 50%; padding-left: 15px; vertical-align: top;">
         <div class="section-title" style="margin-top: 0;">Tendencia de Ingresos Diarios</div>
         <% if (dailyTrend.length === 0) { %>
-          <p style="color: #888; font-style: italic;">No hay registros diarios en este periodo.</p>
+        <p style="color: #888; font-style: italic;">No hay registros diarios en este periodo.</p>
         <% } else { %>
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th class="text-right">Total Facturado por Día</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% dailyTrend.forEach(dt => { %>
-                <tr>
-                  <td class="font-mono"><%= new Date(dt.dateStr).toLocaleDateString('es-SV') %></td>
-                  <td class="text-right font-mono font-bold">$<%= parseFloat(dt.total).toFixed(2) %></td>
-                </tr>
-              <% }) %>
-            </tbody>
-          </table>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th class="text-right">Total Facturado por Día</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% dailyTrend.forEach(dt => { %>
+            <tr>
+              <td class="font-mono"><%= new Date(dt.dateStr).toLocaleDateString('es-SV') %></td>
+              <td class="text-right font-mono font-bold">$<%= parseFloat(dt.total).toFixed(2) %></td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
         <% } %>
       </div>
 
@@ -277,44 +300,95 @@
   </table>
 
   <% if (clientsWithDebtAlerts.length === 0) { %>
-    <p style="color: #888; font-style: italic;">No hay clientes con saldos deudores pendientes en esta sucursal.</p>
+  <p style="color: #888; font-style: italic;">No hay clientes con saldos deudores pendientes en esta sucursal.</p>
   <% } else { %>
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Cliente</th>
-          <th>Teléfono</th>
-          <th>Sucursal</th>
-          <th class="text-center">Plazo Límite</th>
-          <th class="text-right">Límite Crédito</th>
-          <th class="text-center">Antigüedad Mora</th>
-          <th class="text-right">Saldo Pendiente</th>
-          <th class="text-center">Estado Alerta</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% clientsWithDebtAlerts.forEach(c => { %>
-          <tr>
-            <td class="font-bold"><%= c.name %></td>
-            <td class="font-mono"><%= c.phone || 'N/A' %></td>
-            <td><%= c.branchName %></td>
-            <td class="text-center"><%= c.creditDays %> días</td>
-            <td class="text-right font-mono">$<%= parseFloat(c.creditLimit).toFixed(2) %></td>
-            <td class="text-center font-mono">
-              <%= c.oldestSaleDate ? new Date(c.oldestSaleDate).toLocaleDateString('es-SV') : 'N/A' %>
-            </td>
-            <td class="text-right font-mono font-bold">$<%= parseFloat(c.currentBalance).toFixed(2) %></td>
-            <td class="text-center">
-              <% if (c.isOverdue) { %>
-                <span class="alert-danger">Mora: <%= c.overdueDays %> días</span>
-              <% } else { %>
-                <span class="alert-success">Al Corriente</span>
-              <% } %>
-            </td>
-          </tr>
-        <% }) %>
-      </tbody>
-    </table>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Cliente</th>
+        <th>Teléfono</th>
+        <th>Sucursal</th>
+        <th class="text-center">Plazo Límite</th>
+        <th class="text-right">Límite Crédito</th>
+        <th class="text-center">Antigüedad Mora</th>
+        <th class="text-right">Saldo Pendiente</th>
+        <th class="text-center">Estado Alerta</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% clientsWithDebtAlerts.forEach(c => { %>
+      <tr>
+        <td class="font-bold"><%= c.name %></td>
+        <td class="font-mono"><%= c.phone || 'N/A' %></td>
+        <td><%= c.branchName %></td>
+        <td class="text-center"><%= c.creditDays %> días</td>
+        <td class="text-right font-mono">$<%= parseFloat(c.creditLimit).toFixed(2) %></td>
+        <td class="text-center font-mono">
+          <%= c.oldestSaleDate ? new Date(c.oldestSaleDate).toLocaleDateString('es-SV') : 'N/A' %>
+        </td>
+        <td class="text-right font-mono font-bold">$<%= parseFloat(c.currentBalance).toFixed(2) %></td>
+        <td class="text-center">
+          <% if (c.isOverdue) { %>
+          <span class="alert-danger">Mora: <%= c.overdueDays %> días</span>
+          <% } else { %>
+          <span class="alert-success">Al Corriente</span>
+          <% } %>
+        </td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  <% } %>
+
+  <!-- Accounts Payable (CxP) -->
+  <div class="section-title">Estado de Cuentas por Pagar (CxP)</div>
+  <table class="meta-table" style="margin-bottom: 12px;">
+    <tr>
+      <td style="width: 33.33%;"><strong>Deuda Vigente:</strong> $<%= totalSupplierVigente.toFixed(2) %></td>
+      <td style="width: 33.33%;"><strong>Deuda Vencida:</strong> $<%= totalSupplierOverdue.toFixed(2) %></td>
+      <td style="width: 33.33%;"><strong>Total de Deuda Activa:</strong> $<%= totalSupplierDebt.toFixed(2) %></td>
+    </tr>
+  </table>
+
+  <% if (supplierDebtDetails.length === 0) { %>
+  <p style="color: #888; font-style: italic;">No hay cuentas por pagar a proveedores pendientes.</p>
+  <% } else { %>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Proveedor</th>
+        <th>Factura No.</th>
+        <th>Sucursal</th>
+        <th class="text-center">Fecha Vencimiento</th>
+        <th class="text-right">Monto Total</th>
+        <th class="text-right">Abonado</th>
+        <th class="text-right">Saldo Pendiente</th>
+        <th class="text-center">Estado Alerta</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% supplierDebtDetails.forEach(p => { %>
+      <tr>
+        <td class="font-bold"><%= p.supplierName %></td>
+        <td class="font-mono"><%= p.invoiceNumber %></td>
+        <td><%= p.branchName %></td>
+        <td class="text-center font-mono">
+          <%= p.dueDate ? new Date(p.dueDate + 'T00:00:00').toLocaleDateString('es-SV') : '-' %>
+        </td>
+        <td class="text-right font-mono">$<%= parseFloat(p.totalAmount).toFixed(2) %></td>
+        <td class="text-right font-mono" style="color: #2f855a;">+$<%= parseFloat(p.amountPaid).toFixed(2) %></td>
+        <td class="text-right font-mono font-bold">$<%= p.pending.toFixed(2) %></td>
+        <td class="text-center">
+          <% if (p.isOverdue) { %>
+          <span class="alert-danger">Mora: <%= p.overdueDays %> días</span>
+          <% } else { %>
+          <span class="alert-success">Al Corriente</span>
+          <% } %>
+        </td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
   <% } %>
 
   <div style="margin-top: 40px; text-align: center; font-size: 9px; color: #888;">
@@ -322,4 +396,5 @@
   </div>
 
 </body>
+
 </html>

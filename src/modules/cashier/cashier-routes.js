@@ -24,4 +24,8 @@ router.get('/history/:id', checkPermission('reports.local_dashboard'), cashierCo
 // Force close other turns (Supervisors / Admins)
 router.post('/force-close/:id', checkPermission('cashier.force_close_turn'), cashierController.handleForceClose);
 
+// Reports X and Z endpoints
+router.get('/api/report-x', checkActiveTurn, cashierController.getReportXData);
+router.get('/api/report-z/:id', cashierController.getReportZData);
+
 module.exports = router;

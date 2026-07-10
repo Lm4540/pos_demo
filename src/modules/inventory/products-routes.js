@@ -8,6 +8,10 @@ const upload = require('../../core/middlewares/upload');
 // Catalog listing (Any authenticated user can view)
 router.get('/', authMiddleware, checkPermission('inventory.view'), productsController.listProducts);
 
+// APIs for product search and quick-create (e.g. from purchases screen)
+router.get('/api/search', authMiddleware, checkPermission('inventory.view'), productsController.searchProductsApi);
+router.post('/api/quick-create', authMiddleware, checkPermission('purchases.create'), upload.single('image'), productsController.createProduct);
+
 // Catalog modifications (Admin only)
 router.post('/batch-create', authMiddleware, checkPermission('admin'), productsController.batchCreateProducts);
 router.post('/', authMiddleware, checkPermission('admin'), upload.single('image'), productsController.createProduct);

@@ -27,6 +27,7 @@ const listUsers = async (req, res, next) => {
       'pos.sell_credit': 'Vender al Crédito',
       'pos.discount': 'Aplicar Descuento al Total',
       'pos.void_sale': 'Anular Ticket / Venta',
+      'pos.open_drawer': 'Abrir Cajón de Dinero (Manualmente)',
       'cxc.create_client': 'Registrar Clientes',
       'cxc.add_payment': 'Registrar Abonos a Créditos',
       'purchases.create': 'Registrar Compras (Abastecimiento)',
@@ -35,7 +36,7 @@ const listUsers = async (req, res, next) => {
       'reports.local_dashboard': 'Ver Dashboard (Reporte Local)',
       'reports.ticket_history': 'Historial de Tickets'
     };
-    
+
     return res.render('pages/users/index', {
       title: 'Usuarios',
       users,
@@ -74,6 +75,7 @@ const renderUserIndexWithError = async (res, errorMsg) => {
     'pos.sell_credit': 'Vender al Crédito',
     'pos.discount': 'Aplicar Descuento al Total',
     'pos.void_sale': 'Anular Ticket / Venta',
+    'pos.open_drawer': 'Abrir Cajón de Dinero (Manualmente)',
     'cxc.create_client': 'Registrar Clientes',
     'cxc.add_payment': 'Registrar Abonos a Créditos',
     'purchases.create': 'Registrar Compras (Abastecimiento)',
@@ -101,7 +103,7 @@ const createUser = async (req, res, next) => {
     }
 
     const { sequelize } = require('../../core/models');
-    
+
     // Validar de forma insensible a mayúsculas/minúsculas
     const existingUser = await User.findOne({
       where: sequelize.where(
@@ -156,7 +158,7 @@ const createUser = async (req, res, next) => {
 const updateUser = async (req, res, next) => {
   const { id } = req.params;
   const { branchId, roleId, username, password, fullName, status, permissions } = req.body;
-  
+
   try {
     const userToEdit = await User.findByPk(id);
     if (!userToEdit) {

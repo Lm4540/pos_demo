@@ -8,6 +8,7 @@ router.use(authMiddleware);
 router.use(checkPermission('purchases.create'));
 
 router.get('/', purchasesController.listPurchases);
+router.get('/api/available-turns', purchasesController.getAvailableTurns);
 router.get('/new', purchasesController.renderNewPurchase);
 router.post('/', purchasesController.createPurchase);
 router.get('/payments', purchasesController.renderSupplierPayments);

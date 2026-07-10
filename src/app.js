@@ -93,6 +93,13 @@ app.use('/inventory', inventoryRoutes);
 app.use('/categories', categoriesRoutes);
 app.use('/promotions', promotionsRoutes);
 
+app.get('/help', authMiddleware, (req, res) => {
+  return res.render('pages/help', {
+    title: 'Manual de Ayuda',
+    user: req.user
+  });
+});
+
 app.get('/dashboard', authMiddleware, async (req, res, next) => {
   try {
     const branchId = req.user.branchId;

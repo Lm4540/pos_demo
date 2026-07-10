@@ -523,6 +523,136 @@ const getBoxLastBalance = async (req, res, next) => {
   }
 };
 
+const calculateTurnMetrics = async (turn) => {
+  const { User, Branch, SaleReturn } = require('../../core/models');
+
+  const movements = await CashierMovement.findAll({
+    where: { turnId: turn.id },
+    order: [['createdAt', 'ASC']]
+  });
+
+  const sales = await Sale.findAll({
+    where: { turnId: turn.id },
+    order: [['createdAt', 'ASC']]
+  });
+
+  const creditPayments = await CreditPayment.findAll({
+    where: { turnId: turn.id },
+    include: [{ model: Client, as: 'client' }],
+    order: [['createdAt', 'ASC']]
+  });
+
+  const returns = await SaleReturn.findAll({
+    where: { turnId: turn.id },
+    order: [['createdAt', 'ASC']]
+  });
+
+  const totalDeposits = movements
+    .filter(m => m.type === 'deposit')
+    .reduce((sum, m) => sum + parseFloat(m.amount), 0);
+
+  const totalWithdrawals = movements
+    .filter(m => m.type === 'withdrawal')
+    .reduce((sum, m) => sum + parseFloat(m.amount), 0);
+
+  // Totales de ventas por método de pago
+  const cashSalesCount = sales.filter(s => s.paymentMethod === 'cash').length;
+  const totalCashSales = sales.reduce((sum, s) => {
+    const cashAmt = parseFloat(s.amountCash);
+    if (cashAmt === 0 && s.paymentMethod === 'cash') {
+      return sum + parseFloat(s.totalAmount);
+    }
+    return sum + cashAmt;
+  }, 0);
+
+  const creditSalesCount = sales.filter(s => s.paymentMethod === 'credit').length;
+  const totalCreditSales = sales.reduce((sum, s) => {
+    const creditAmt = parseFloat(s.amountCredit);
+    if (creditAmt === 0 && s.paymentMethod === 'credit') {
+      return sum + parseFloat(s.totalAmount);
+    }
+    return sum + creditAmt;
+  }, 0);
+
+  const cardSalesCount = sales.filter(s => s.paymentMethod === 'card').length;
+  const totalCardSales = sales.reduce((sum, s) => sum + parseFloat(s.amountCard), 0);
+
+  const totalCreditPayments = creditPayments.reduce((sum, p) => sum + parseFloat(p.amountPaid), 0);
+
+  const totalReturnsCount = returns.length;
+  const totalReturnsAmount = returns.reduce((sum, r) => sum + parseFloat(r.totalRefund), 0);
+
+  const expectedCash = parseFloat(turn.openingAmount) + totalDeposits - totalWithdrawals + totalCashSales + totalCreditPayments;
+
+  // Diferencia si está cerrada
+  const difference = turn.declaredAmount !== null ? parseFloat(turn.declaredAmount) - expectedCash : null;
+
+  // Cargar info de usuario y sucursal si no están
+  let userObj = turn.user;
+  if (!userObj) {
+    userObj = await User.findByPk(turn.userId);
+  }
+  let branchObj = turn.branch;
+  if (!branchObj) {
+    branchObj = await Branch.findByPk(turn.branchId);
+  }
+
+  return {
+    turnId: turn.id,
+    boxName: turn.boxName,
+    cashierName: userObj ? userObj.fullName : 'N/A',
+    branchName: branchObj ? branchObj.name : 'N/A',
+    status: turn.status,
+    openedAt: turn.openedAt,
+    closedAt: turn.closedAt,
+    openingAmount: parseFloat(turn.openingAmount),
+    closingAmount: turn.closingAmount !== null ? parseFloat(turn.closingAmount) : null,
+    declaredAmount: turn.declaredAmount !== null ? parseFloat(turn.declaredAmount) : null,
+    expectedCash,
+    difference,
+    metrics: {
+      cashSalesCount,
+      totalCashSales,
+      creditSalesCount,
+      totalCreditSales,
+      cardSalesCount,
+      totalCardSales,
+      totalDeposits,
+      totalWithdrawals,
+      totalCreditPayments,
+      totalReturnsCount,
+      totalReturnsAmount
+    }
+  };
+};
+
+const getReportXData = async (req, res, next) => {
+  try {
+    const activeTurn = req.activeTurn; // Guaranteed by checkActiveTurn middleware
+    const data = await calculateTurnMetrics(activeTurn);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const getReportZData = async (req, res, next) => {
+  const { id } = req.params;
+  try {
+    const turn = await CashierTurn.findByPk(id);
+    if (!turn) {
+      return res.status(404).json({ success: false, message: 'Turno no encontrado.' });
+    }
+    if (req.user.roleId !== 'admin' && turn.branchId !== req.user.branchId) {
+      return res.status(403).json({ success: false, message: 'No tienes permiso para ver este arqueo.' });
+    }
+    const data = await calculateTurnMetrics(turn);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   renderOpenTurn,
   handleOpenTurn,
@@ -532,5 +662,7 @@ module.exports = {
   handleForceClose,
   renderHistory,
   renderHistoryDetail,
-  getBoxLastBalance
+  getBoxLastBalance,
+  getReportXData,
+  getReportZData
 };

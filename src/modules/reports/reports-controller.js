@@ -193,6 +193,65 @@ const getReportData = async ({ startDate, endDate, branchId }, user) => {
     };
   });
 
+  // 6.4. CxP - Cuentas por Pagar (Proveedor)
+  const [cxpSummary] = await sequelize.query(
+    `SELECT SUM(totalAmount - amountPaid) as totalSupplierDebt
+     FROM purchases
+     WHERE paymentStatus = 'pending'
+       ${filterBranchId ? 'AND branchId = :filterBranchId' : ''}`,
+    {
+      replacements: { filterBranchId },
+      type: sequelize.QueryTypes.SELECT
+    }
+  );
+  const totalSupplierDebt = parseFloat(cxpSummary?.totalSupplierDebt) || 0.00;
+
+  const suppliersDebt = await sequelize.query(
+    `SELECT p.id, p.invoiceNumber, p.totalAmount, p.amountPaid, p.dueDate, s.name as supplierName, b.name as branchName
+     FROM purchases p
+     JOIN suppliers s ON p.supplierId = s.id
+     JOIN branches b ON p.branchId = b.id
+     WHERE p.paymentStatus = 'pending'
+       ${filterBranchId ? 'AND p.branchId = :filterBranchId' : ''}
+     ORDER BY (p.totalAmount - p.amountPaid) DESC`,
+    {
+      replacements: { filterBranchId },
+      type: sequelize.QueryTypes.SELECT
+    }
+  );
+
+  let totalSupplierOverdue = 0.00;
+  let totalSupplierVigente = 0.00;
+  const todayDateOnly = new Date();
+  todayDateOnly.setHours(0,0,0,0);
+
+  const supplierDebtDetails = suppliersDebt.map(p => {
+    const pending = parseFloat(p.totalAmount) - parseFloat(p.amountPaid);
+    let isOverdue = false;
+    let overdueDays = 0;
+    
+    if (p.dueDate) {
+      const dueDate = new Date(p.dueDate + 'T00:00:00');
+      const ageInDays = Math.floor((todayDateOnly - dueDate) / (1000 * 60 * 60 * 24));
+      if (ageInDays > 0) {
+        isOverdue = true;
+        overdueDays = ageInDays;
+        totalSupplierOverdue += pending;
+      } else {
+        totalSupplierVigente += pending;
+      }
+    } else {
+      totalSupplierVigente += pending;
+    }
+
+    return {
+      ...p,
+      pending,
+      isOverdue,
+      overdueDays
+    };
+  });
+
   return {
     startDate,
     endDate,
@@ -215,7 +274,11 @@ const getReportData = async ({ startDate, endDate, branchId }, user) => {
     totalCreditBalance,
     totalOverdue,
     totalVigente,
-    clientsWithDebtAlerts
+    clientsWithDebtAlerts,
+    totalSupplierDebt,
+    totalSupplierOverdue,
+    totalSupplierVigente,
+    supplierDebtDetails
   };
 };
 

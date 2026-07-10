@@ -1,0 +1,837 @@
+<%- include('../partials/head', { title: 'Manual de Ayuda' }) %>
+
+<style>
+  .guide-card img {
+    cursor: zoom-in;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+  }
+  .guide-card img:hover {
+    transform: scale(1.008);
+    opacity: 1 !important;
+  }
+</style>
+
+<div class="min-h-screen bg-neutral-950 flex flex-col">
+  <!-- Nav Bar -->
+  <nav class="bg-neutral-900 border-b border-neutral-800 px-6 py-4 flex items-center justify-between shadow-md">
+    <div class="flex items-center gap-3">
+      <a href="/dashboard" class="text-neutral-400 hover:text-white transition-colors">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+      </a>
+      <div>
+        <span class="text-xl font-bold text-white tracking-wide">Manual de Ayuda</span>
+        <span class="text-xs block text-neutral-400 font-medium">Guías de usuario y procedimientos del sistema</span>
+      </div>
+    </div>
+    <div class="flex items-center gap-3" id="printer-status-container"></div>
+  </nav>
+
+  <div class="flex-grow max-w-7xl w-full mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
+    <!-- Sidebar: Search & Categories (4/12 columns) -->
+    <aside class="lg:col-span-4 flex flex-col gap-6 h-fit lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto pr-1">
+      <!-- Search Input -->
+      <div class="bg-neutral-900 border border-neutral-800 p-5 rounded-2xl shadow-sm flex flex-col gap-3">
+        <label for="search-manual" class="block text-xs font-bold text-neutral-400 uppercase tracking-wider">Buscador del Manual</label>
+        <div class="relative">
+          <input 
+            type="text" 
+            id="search-manual" 
+            class="w-full pl-9 pr-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm transition-all" 
+            placeholder="Buscar guía o palabra clave..."
+            autocomplete="off">
+          <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-neutral-500">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+        </div>
+        <p class="text-[10px] text-neutral-500">Filtra dinámicamente el contenido del manual.</p>
+      </div>
+
+      <!-- Categories Tabs -->
+      <div class="bg-neutral-900 border border-neutral-800 p-5 rounded-2xl shadow-sm flex flex-col gap-2">
+        <span class="block text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2">Categorías</span>
+        <button onclick="filterCategory('all')" id="tab-all" class="tab-btn w-full text-left px-4 py-3 rounded-xl text-xs font-bold transition-all bg-blue-600 text-white shadow-md shadow-blue-500/10">
+          📂 Mostrar Todo
+        </button>
+        <button onclick="filterCategory('productos')" id="tab-productos" class="tab-btn w-full text-left px-4 py-3 rounded-xl text-xs font-bold text-neutral-400 hover:text-white hover:bg-neutral-800 border border-transparent transition-all">
+          📦 Productos e Inventario
+        </button>
+        <button onclick="filterCategory('compras')" id="tab-compras" class="tab-btn w-full text-left px-4 py-3 rounded-xl text-xs font-bold text-neutral-400 hover:text-white hover:bg-neutral-800 border border-transparent transition-all">
+          🚚 Compras y CXP
+        </button>
+        <button onclick="filterCategory('gastos')" id="tab-gastos" class="tab-btn w-full text-left px-4 py-3 rounded-xl text-xs font-bold text-neutral-400 hover:text-white hover:bg-neutral-800 border border-transparent transition-all">
+          💸 Gastos Operativos
+        </button>
+        <button onclick="filterCategory('clientes')" id="tab-clientes" class="tab-btn w-full text-left px-4 py-3 rounded-xl text-xs font-bold text-neutral-400 hover:text-white hover:bg-neutral-800 border border-transparent transition-all">
+          👥 Clientes y Créditos
+        </button>
+        <button onclick="filterCategory('caja')" id="tab-caja" class="tab-btn w-full text-left px-4 py-3 rounded-xl text-xs font-bold text-neutral-400 hover:text-white hover:bg-neutral-800 border border-transparent transition-all">
+          💰 Control de Caja
+        </button>
+        <button onclick="filterCategory('ventas')" id="tab-ventas" class="tab-btn w-full text-left px-4 py-3 rounded-xl text-xs font-bold text-neutral-400 hover:text-white hover:bg-neutral-800 border border-transparent transition-all">
+          🛒 Ventas y POS
+        </button>
+        <button onclick="filterCategory('auditorias')" id="tab-auditorias" class="tab-btn w-full text-left px-4 py-3 rounded-xl text-xs font-bold text-neutral-400 hover:text-white hover:bg-neutral-800 border border-transparent transition-all">
+          📊 Levantamiento y Auditoría
+        </button>
+        <button onclick="filterCategory('usuarios')" id="tab-usuarios" class="tab-btn w-full text-left px-4 py-3 rounded-xl text-xs font-bold text-neutral-400 hover:text-white hover:bg-neutral-800 border border-transparent transition-all">
+          🔑 Usuarios y Seguridad
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area: Guides (8/12 columns) -->
+    <main class="lg:col-span-8 space-y-8" id="guides-container">
+      
+      <!-- ==================== INVENTARIO ==================== -->
+      <section class="guide-card space-y-4 bg-neutral-900 border border-neutral-800 p-6 rounded-3xl shadow-sm" data-category="productos">
+        <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+          <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded bg-blue-950 text-blue-400 border border-blue-900/60">Productos e Inventario</span>
+          <span class="text-[10px] text-neutral-500 font-mono">ID: inv-crear</span>
+        </div>
+        <h2 class="guide-title text-2xl font-extrabold text-white">Cómo crear un producto</h2>
+        <div class="guide-content text-sm text-neutral-350 space-y-2">
+          <p>Para ingresar un nuevo artículo al stock de tu sucursal:</p>
+          <ol class="list-decimal list-inside space-y-1 text-xs">
+            <li>Dirígete a la sección <strong>Inventario</strong> > <strong>Productos</strong> en el menú principal.</li>
+            <li>Haz clic en el botón superior derecho <strong>Nuevo Producto</strong>.</li>
+            <li>En el formulario modal, ingresa el <strong>Nombre</strong> del artículo, su <strong>Código de Barras</strong> (puedes escanearlo con el lector láser) y define su <strong>Tipo</strong> como <em>Físico</em>.</li>
+            <li>Define los costos en **Precio Compra** y el de salida al público en **Precio Venta**.</li>
+            <li>Indica el **Stock Mínimo** (para alertas automáticas de reposición) y el **Stock Inicial** en la sucursal.</li>
+            <li>Presiona **Guardar Producto** para guardar el artículo.</li>
+          </ol>
+        </div>
+        <div class="mt-4 border border-neutral-800 rounded-2xl overflow-hidden bg-neutral-950/40">
+          <img src="/images/manual/crear_producto.png" alt="Pantalla Crear Producto" class="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity">
+        </div>
+      </section>
+
+      <section class="guide-card space-y-4 bg-neutral-900 border border-neutral-800 p-6 rounded-3xl shadow-sm" data-category="productos">
+        <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+          <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded bg-blue-950 text-blue-400 border border-blue-900/60">Productos e Inventario</span>
+          <span class="text-[10px] text-neutral-500 font-mono">ID: inv-editar</span>
+        </div>
+        <h2 class="guide-title text-2xl font-extrabold text-white">Cómo editar un producto</h2>
+        <div class="guide-content text-sm text-neutral-350 space-y-2">
+          <p>Para modificar la información base o los precios de un producto existente:</p>
+          <ol class="list-decimal list-inside space-y-1 text-xs">
+            <li>Busca el producto en la lista y haz clic en el botón **Editar** en el extremo derecho de la fila.</li>
+            <li>El sistema cargará un formulario modal con los datos actuales del artículo.</li>
+            <li>Modifica el campo necesario (como aumentar el precio de venta o corregir el nombre).</li>
+            <li>Presiona **Guardar Cambios** para guardar la actualización.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="guide-card space-y-4 bg-neutral-900 border border-neutral-800 p-6 rounded-3xl shadow-sm" data-category="productos">
+        <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+          <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded bg-blue-950 text-blue-400 border border-blue-900/60">Productos e Inventario</span>
+          <span class="text-[10px] text-neutral-500 font-mono">ID: inv-mermas</span>
+        </div>
+        <h2 class="guide-title text-2xl font-extrabold text-white">Cómo ajustar el stock por pérdidas o mermas</h2>
+        <div class="guide-content text-sm text-neutral-350 space-y-2">
+          <p>Si experimentas mermas físicas de inventario (artículos dañados, vencidos, robados, etc.) y requieres justificar la deducción:</p>
+          <ol class="list-decimal list-inside space-y-1 text-xs">
+            <li>En la lista de productos, localiza el artículo afectado y presiona el botón de **Ajuste** (icono de balanza de balancín).</li>
+            <li>En el modal, digita la **Cantidad a Deducir** y selecciona el **Motivo** (*Merma, Pérdida, Daño, Vencido, Consumo Interno u Otro*).</li>
+            <li>Escribe un comentario descriptivo en el campo de **Notas** para justificarlo legal/contablemente.</li>
+            <li>Presiona **Confirmar Ajuste** para restar de inmediato las unidades del stock teórico.</li>
+          </ol>
+        </div>
+        <div class="mt-4 border border-neutral-800 rounded-2xl overflow-hidden bg-neutral-950/40">
+          <img src="/images/manual/ajustar_stock.png" alt="Pantalla Ajustar Stock" class="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity">
+        </div>
+      </section>
+
+      <section class="guide-card space-y-4 bg-neutral-900 border border-neutral-800 p-6 rounded-3xl shadow-sm" data-category="productos">
+        <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+          <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded bg-blue-950 text-blue-400 border border-blue-900/60">Productos e Inventario</span>
+          <span class="text-[10px] text-neutral-500 font-mono">ID: inv-servicio</span>
+        </div>
+        <h2 class="guide-title text-2xl font-extrabold text-white">Cómo registrar un producto tipo servicio (sin stock)</h2>
+        <div class="guide-content text-sm text-neutral-350 space-y-2">
+          <p>Para aquellos productos intangibles que se cobran recurrentemente (ej. transporte, recargas, comisión):</p>
+          <ol class="list-decimal list-inside space-y-1 text-xs">
+            <li>Abre el formulario de **Nuevo Producto**.</li>
+            <li>En el campo **Tipo**, selecciona la opción **Servicio** del menú desplegable.</li>
+            <li>Los campos de stock inicial y mínimo desaparecerán, ya que el sistema considera su disponibilidad ilimitada.</li>
+            <li>Rellena el nombre y el precio de venta y guarda el artículo. Al facturarlo en el POS, el stock de la sucursal no se verá afectado.</li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- ==================== COMPRAS Y CXP ==================== -->
+      <section class="guide-card space-y-4 bg-neutral-900 border border-neutral-800 p-6 rounded-3xl shadow-sm" data-category="compras">
+        <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+          <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded bg-amber-950 text-amber-400 border border-amber-900/60">Compras y Cuentas por Pagar</span>
+          <span class="text-[10px] text-neutral-500 font-mono">ID: cxp-proveedor</span>
+        </div>
+        <h2 class="guide-title text-2xl font-extrabold text-white">Cómo registrar un proveedor</h2>
+        <div class="guide-content text-sm text-neutral-350 space-y-2">
+          <p>Antes de registrar compras, debes dar de alta al fabricante o distribuidor:</p>
+          <ol class="list-decimal list-inside space-y-1 text-xs">
+            <li>Dirígete a **Compras** > **Proveedores**.</li>
+            <li>Haz clic en el botón superior **Nuevo Proveedor**.</li>
+            <li>Ingresa el **Nombre de la Empresa**, el **Contacto**, el **Teléfono** y la **Dirección**.</li>
+            <li>Haz clic en **Guardar Proveedor** para registrarlo.</li>
+          </ol>
+        </div>
+        <div class="mt-4 border border-neutral-800 rounded-2xl overflow-hidden bg-neutral-950/40">
+          <img src="/images/manual/registrar_proveedor.png" alt="Pantalla Registrar Proveedor" class="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity">
+        </div>
+      </section>
+
+      <section class="guide-card space-y-4 bg-neutral-900 border border-neutral-800 p-6 rounded-3xl shadow-sm" data-category="compras">
+        <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+          <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded bg-amber-950 text-amber-400 border border-amber-900/60">Compras y Cuentas por Pagar</span>
+          <span class="text-[10px] text-neutral-500 font-mono">ID: cxp-compra</span>
+        </div>
+        <h2 class="guide-title text-2xl font-extrabold text-white">Cómo registrar una compra (Contado y Crédito)</h2>
+        <div class="guide-content text-sm text-neutral-350 space-y-2">
+          <p>Para ingresar nueva mercadería recibida a tu inventario:</p>
+          <ol class="list-decimal list-inside space-y-1 text-xs">
+            <li>Ve al menú principal **Compras** > **Nueva Compra**.</li>
+            <li>Selecciona el **Proveedor** y el **Turno de Caja** donde se imputará el egreso.</li>
+            <li>Define la modalidad en **Método de Pago**:
+              - **Contado (Efectivo)**: El monto se descontará directamente del saldo en efectivo de la caja del turno activo.
+              - **Crédito**: Creará automáticamente una deuda pendiente de pago con el proveedor.
+            </li>
+            <li>Busca los productos en la barra, define la cantidad, el precio de compra unitario, código de lote y fecha de vencimiento.</li>
+            <li>Presiona **Registrar Compra**. El stock del inventario incrementará inmediatamente.</li>
+          </ol>
+        </div>
+        <div class="mt-4 border border-neutral-800 rounded-2xl overflow-hidden bg-neutral-950/40">
+          <img src="/images/manual/registrar_compra.png" alt="Pantalla Registrar Compra" class="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity">
+        </div>
+      </section>
+
+      <section class="guide-card space-y-4 bg-neutral-900 border border-neutral-800 p-6 rounded-3xl shadow-sm" data-category="compras">
+        <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+          <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded bg-amber-950 text-amber-400 border border-amber-900/60">Compras y Cuentas por Pagar</span>
+          <span class="text-[10px] text-neutral-500 font-mono">ID: cxp-administrar</span>
+        </div>
+        <h2 class="guide-title text-2xl font-extrabold text-white">Cómo administrar las cuentas por pagar (CXP) y abonos</h2>
+        <div class="guide-content text-sm text-neutral-350 space-y-2">
+          <p>Para amortizar o liquidar saldos pendientes de facturas al crédito con distribuidores:</p>
+          <ol class="list-decimal list-inside space-y-1 text-xs">
+            <li>Accede a **Compras** > **Cuentas por Pagar**.</li>
+            <li>El panel listará las compras con saldo adeudado y el nombre del proveedor.</li>
+            <li>Haz clic en **Registrar Abono** en el registro correspondiente.</li>
+            <li>Digita el monto del pago y la **Forma de Pago**:
+              - **Efectivo**: Afecta directamente restando efectivo de la caja actual.
+              - **Transferencia**: Solo descuenta la deuda en libros contables (no altera la caja física).
+            </li>
+            <li>Confirma el abono para actualizar el saldo pendiente del proveedor.</li>
+          </ol>
+        </div>
+        <div class="mt-4 border border-neutral-800 rounded-2xl overflow-hidden bg-neutral-950/40">
+          <img src="/images/manual/cuentas_por_pagar.png" alt="Pantalla Cuentas por Pagar" class="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity">
+        </div>
+      </section>
+
+      <!-- ==================== GASTOS ==================== -->
+      <section class="guide-card space-y-4 bg-neutral-900 border border-neutral-800 p-6 rounded-3xl shadow-sm" data-category="gastos">
+        <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+          <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded bg-red-950 text-red-400 border border-red-900/60">Gastos Operativos</span>
+          <span class="text-[10px] text-neutral-500 font-mono">ID: gst-registrar</span>
+        </div>
+        <h2 class="guide-title text-2xl font-extrabold text-white">Cómo registrar un gasto operativo</h2>
+        <div class="guide-content text-sm text-neutral-350 space-y-2">
+          <p>Para reportar egresos no ligados a compras de stock (ej. luz, agua, bolsas, aseo):</p>
+          <ol class="list-decimal list-inside space-y-1 text-xs">
+            <li>Navega a **Gastos** > **Lista de Gastos**.</li>
+            <li>Presiona el botón superior derecho **Registrar Gasto**.</li>
+            <li>Introduce el monto, la categoría del egreso y una breve descripción explicativa.</li>
+            <li>Selecciona el **Método de Pago**:
+              - **Efectivo**: Se sustraerá el saldo en efectivo de la caja del turno en curso.
+              - **Transferencia**: Se registrará contablemente el egreso sin alterar el saldo de caja del cajero.
+            </li>
+            <li>Haz clic en **Guardar Gasto**.</li>
+          </ol>
+        </div>
+        <div class="mt-4 border border-neutral-800 rounded-2xl overflow-hidden bg-neutral-950/40">
+          <img src="/images/manual/registrar_gasto.png" alt="Pantalla Registrar Gasto" class="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity">
+        </div>
+      </section>
+
+      <!-- ==================== CLIENTES ==================== -->
+      <section class="guide-card space-y-4 bg-neutral-900 border border-neutral-800 p-6 rounded-3xl shadow-sm" data-category="clientes">
+        <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+          <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded bg-emerald-950 text-emerald-450 border border-emerald-900/60">Clientes y Créditos</span>
+          <span class="text-[10px] text-neutral-500 font-mono">ID: cxc-cliente</span>
+        </div>
+        <h2 class="guide-title text-2xl font-extrabold text-white">Cómo registrar un cliente y el límite de crédito</h2>
+        <div class="guide-content text-sm text-neutral-350 space-y-2">
+          <p>Para posibilitar ventas al fiado o crédito a tus compradores de confianza:</p>
+          <ol class="list-decimal list-inside space-y-1 text-xs">
+            <li>Ve a **Clientes** > **Listado de Clientes**.</li>
+            <li>Haz clic en **Nuevo Cliente**.</li>
+            <li>Completa el nombre, teléfono y dirección.</li>
+            <li>Establece el **Límite de Crédito** deseado (importe máximo de deuda que el cliente puede acumular). Un límite de `0.00` inhabilita las ventas al crédito para ese cliente.</li>
+            <li>Presiona **Guardar Cliente**.</li>
+          </ol>
+        </div>
+        <div class="mt-4 border border-neutral-800 rounded-2xl overflow-hidden bg-neutral-950/40">
+          <img src="/images/manual/registrar_cliente.png" alt="Pantalla Registrar Cliente" class="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity">
+        </div>
+      </section>
+
+      <!-- ==================== CAJA ==================== -->
+      <section class="guide-card space-y-4 bg-neutral-900 border border-neutral-800 p-6 rounded-3xl shadow-sm" data-category="caja">
+        <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+          <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded bg-teal-950 text-teal-400 border border-teal-900/60">Control de Caja</span>
+          <span class="text-[10px] text-neutral-500 font-mono">ID: box-apertura</span>
+        </div>
+        <h2 class="guide-title text-2xl font-extrabold text-white">Cómo abrir un turno de caja</h2>
+        <div class="guide-content text-sm text-neutral-350 space-y-2">
+          <p>Al iniciar operaciones en el día o cambiar de cajero:</p>
+          <ol class="list-decimal list-inside space-y-1 text-xs">
+            <li>Si no hay un turno de caja abierto para tu usuario, el sistema bloqueará el POS y te dirigirá a la pantalla de **Abrir Turno**.</li>
+            <li>Ingresa el **Monto Inicial** de efectivo (el cambio o "sencillo" disponible en la gaveta).</li>
+            <li>Haz clic en **Abrir Turno**. A partir de este momento, se autorizarán las ventas.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="guide-card space-y-4 bg-neutral-900 border border-neutral-800 p-6 rounded-3xl shadow-sm" data-category="caja">
+        <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+          <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded bg-teal-950 text-teal-400 border border-teal-900/60">Control de Caja</span>
+          <span class="text-[10px] text-neutral-500 font-mono">ID: box-movimientos</span>
+        </div>
+        <h2 class="guide-title text-2xl font-extrabold text-white">Cómo registrar una reposición o débito de saldo en caja</h2>
+        <div class="guide-content text-sm text-neutral-350 space-y-2">
+          <p>Para ingresar cambio extra (reposición) o retirar efectivo para resguardo o pagos menores (débito):</p>
+          <ol class="list-decimal list-inside space-y-1 text-xs">
+            <li>Accede a **Caja** > **Detalles de Turno**.</li>
+            <li>Selecciona la operación requerida en los botones de acción rápidos:
+              - **Ingresar Efectivo**: Para reportar ingresos de sencillo adicionales.
+              - **Retirar Efectivo**: Para declarar salida de efectivo (ej. remesas a banco o pago a un repartidor).
+            </li>
+            <li>Especifica el monto a mover y escribe el motivo obligatorio del movimiento.</li>
+            <li>Confirma la transacción para que el sistema actualice el efectivo teórico esperado al cierre.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="guide-card space-y-4 bg-neutral-900 border border-neutral-800 p-6 rounded-3xl shadow-sm" data-category="caja">
+        <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+          <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded bg-teal-950 text-teal-400 border border-teal-900/60">Control de Caja</span>
+          <span class="text-[10px] text-neutral-500 font-mono">ID: box-cierre</span>
+        </div>
+        <h2 class="guide-title text-2xl font-extrabold text-white">Cómo cerrar el turno de caja</h2>
+        <div class="guide-content text-sm text-neutral-350 space-y-2">
+          <p>Al final del turno de trabajo o del día para auditar y resguardar los ingresos:</p>
+          <ol class="list-decimal list-inside space-y-1 text-xs">
+            <li>Ve a **Caja** > **Detalles de Turno**.</li>
+            <li>Presiona el botón rojo **Cerrar Turno**.</li>
+            <li>Realiza el conteo físico detallado del dinero en la gaveta y digítalo en el campo **Efectivo Físico en Caja**.</li>
+            <li>El sistema comparará este valor contra el saldo teórico esperado (Saldo inicial + ventas en efectivo + ingresos - retiros/gastos) y calculará la diferencia mostrando si hay *Cuadre*, *Faltante* o *Sobrante*.</li>
+            <li>Haz clic en **Confirmar Cierre de Turno** para bloquear el turno y registrar el arqueo en el historial.</li>
+          </ol>
+        </div>
+        <div class="mt-4 border border-neutral-800 rounded-2xl overflow-hidden bg-neutral-950/40">
+          <img src="/images/manual/detalle_caja.png" alt="Pantalla Detalle Caja" class="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity">
+        </div>
+      </section>
+
+      <!-- ==================== VENTAS ==================== -->
+      <section class="guide-card space-y-4 bg-neutral-900 border border-neutral-800 p-6 rounded-3xl shadow-sm" data-category="ventas">
+        <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+          <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded bg-violet-950 text-violet-400 border border-violet-900/60">Ventas y POS</span>
+          <span class="text-[10px] text-neutral-500 font-mono">ID: pos-carrito</span>
+        </div>
+        <h2 class="guide-title text-2xl font-extrabold text-white">Como añadir un producto o servicio al carrito</h2>
+        <div class="guide-content text-sm text-neutral-350 space-y-2">
+          <p>Dependiendo de la pantalla del terminal de ventas en tu sucursal, puedes utilizar dos interfaces:</p>
+          
+          <h4 class="font-bold text-white mt-2">1. Interfaz POS Tradicional (Escritorio):</h4>
+          <ul class="list-disc list-inside space-y-1 text-xs pl-2">
+            <li><strong>Lector de código de barras</strong>: Asegúrate de tener el foco en el campo de escaneo y pasa el código de barras por el lector. Se agregará una unidad de inmediato al carrito.</li>
+            <li><strong>Predictivo de texto</strong>: Comienza a escribir el nombre del artículo en el campo **Buscador de Artículos** y selecciona la coincidencia sugerida.</li>
+          </ul>
+
+          <h4 class="font-bold text-white mt-2">2. Interfaz POS Touch (Pantalla Táctil):</h4>
+          <ul class="list-disc list-inside space-y-1 text-xs pl-2">
+            <li><strong>Panel de Botones</strong>: Toca las tarjetas de productos frecuentes que aparecen en el panel derecho de categorías.</li>
+            <li><strong>Filtro de Servicios</strong>: Haz clic en la pestaña **Servicios** para ver y presionar directamente sobre los servicios dados de alta (como comisiones o fletes).</li>
+          </ul>
+        </div>
+        <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="border border-neutral-800 rounded-xl overflow-hidden bg-neutral-950/40">
+            <img src="/images/manual/sales_pos.png" alt="POS Tradicional" class="w-full h-auto object-cover opacity-90">
+            <div class="p-2 text-center text-[10px] text-neutral-500">POS Tradicional</div>
+          </div>
+          <div class="border border-neutral-800 rounded-xl overflow-hidden bg-neutral-950/40">
+            <img src="/images/manual/sales_pos_touch.png" alt="POS Touch" class="w-full h-auto object-cover opacity-90">
+            <div class="p-2 text-center text-[10px] text-neutral-500">POS Touch</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="guide-card space-y-4 bg-neutral-900 border border-neutral-800 p-6 rounded-3xl shadow-sm" data-category="ventas">
+        <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+          <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded bg-violet-950 text-violet-400 border border-violet-900/60">Ventas y POS</span>
+          <span class="text-[10px] text-neutral-500 font-mono">ID: pos-editar-item</span>
+        </div>
+        <h2 class="guide-title text-2xl font-extrabold text-white">Cómo editar un servicio o producto en el carrito</h2>
+        <div class="guide-content text-sm text-neutral-350 space-y-2">
+          <p>Si requieres modificar la cantidad, cambiar el precio al vuelo (en servicios) o agregar una especificación personalizada en el ticket:</p>
+          <ol class="list-decimal list-inside space-y-1 text-xs">
+            <li>Con el artículo en el carrito, haz clic en el botón de lápiz o toca el renglón del artículo directamente.</li>
+            <li>En la pequeña ventana modal, podrás redefinir:
+              - **Cantidad**: Ajusta las unidades a vender.
+              - **Precio de Venta**: Reescribe el valor unitario de cobro (útil para servicios personalizados).
+              - **Nota/Descripción**: Texto libre que se imprimirá bajo el producto en el comprobante del cliente.
+            </li>
+            <li>Presiona **Aceptar** para actualizar la grilla del carrito.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="guide-card space-y-4 bg-neutral-900 border border-neutral-800 p-6 rounded-3xl shadow-sm" data-category="ventas">
+        <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+          <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded bg-violet-950 text-violet-400 border border-violet-900/60">Ventas y POS</span>
+          <span class="text-[10px] text-neutral-500 font-mono">ID: pos-cobrar-efectivo</span>
+        </div>
+        <h2 class="guide-title text-2xl font-extrabold text-white">Cobro en efectivo y uso de Billetes Rápidos (POS Touch)</h2>
+        <div class="guide-content text-sm text-neutral-350 space-y-2">
+          <p>Para agilizar el cobro y dar vueltos exactos en la pantalla Touch:</p>
+          <ol class="list-decimal list-inside space-y-1 text-xs">
+            <li>Presiona el botón de **Efectivo** para abrir el módulo de cobro rápido.</li>
+            <li>En el teclado flotante, verás los botones de billetes rápidos en dólares ($1, $5, $10, $20).</li>
+            <li>Toca los billetes para sumarlos rápidamente al campo **Efectivo Recibido** según el dinero entregado por el cliente.</li>
+            <li>El sistema calculará de forma instantánea el vuelto en el apartado **Cambio**.</li>
+            <li>Presiona **Completar Venta** para imprimir el ticket en la ticketera térmica local y abrir automáticamente la gaveta del dinero.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="guide-card space-y-4 bg-neutral-900 border border-neutral-800 p-6 rounded-3xl shadow-sm" data-category="ventas">
+        <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+          <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded bg-violet-950 text-violet-400 border border-violet-900/60">Ventas y POS</span>
+          <span class="text-[10px] text-neutral-500 font-mono">ID: pos-cobrar-credito</span>
+        </div>
+        <h2 class="guide-title text-2xl font-extrabold text-white">Cómo cobrar al crédito (CXC)</h2>
+        <div class="guide-content text-sm text-neutral-350 space-y-2">
+          <p>Para cargar una venta a la cuenta de crédito de un comprador previamente registrado:</p>
+          <ol class="list-decimal list-inside space-y-1 text-xs">
+            <li>Haz clic en el botón de **Seleccionar Cliente** y búscalo por nombre.</li>
+            <li>Selecciona el método de pago **Crédito** en el POS.</li>
+            <li>El sistema calculará el total y validará contra el límite de crédito disponible del cliente seleccionado.</li>
+            <li>Si el crédito es autorizado, confirma el cobro. La deuda se registrará en el saldo pendiente del cliente para su posterior abono.</li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- ==================== AUDITORIA ==================== -->
+      <section class="guide-card space-y-4 bg-neutral-900 border border-neutral-800 p-6 rounded-3xl shadow-sm" data-category="auditorias">
+        <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+          <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded bg-emerald-950 text-emerald-450 border border-emerald-900/60">Levantamiento y Auditoría</span>
+          <span class="text-[10px] text-neutral-500 font-mono">ID: aud-fisico</span>
+        </div>
+        <h2 class="guide-title text-2xl font-extrabold text-white">Levantamiento Físico de Inventario por zonas</h2>
+        <div class="guide-content text-sm text-neutral-350 space-y-2">
+          <p>Para auditar las existencias reales en los estantes sin entorpecer la facturación:</p>
+          <ol class="list-decimal list-inside space-y-1 text-xs">
+            <li>Navega a **Inventario** > **Auditorías**.</li>
+            <li>Haz clic en **Nueva Auditoría de Inventario**.</li>
+            <li>Define la **Zona/Pasillo** (ej. "Abarrotes Pasillo 2") y asigna el **Responsable** del conteo.</li>
+            <li>Busca y añade los productos de esa zona al listado de auditoría e introduce el total contado físicamente.</li>
+            <li>El sistema registrará los recuentos parciales. Al guardar la auditoría, emitirá un reporte detallado con las diferencias encontradas (sobrantes y faltantes) para que el supervisor aplique los ajustes.</li>
+          </ol>
+        </div>
+        <div class="mt-4 border border-neutral-800 rounded-2xl overflow-hidden bg-neutral-950/40">
+          <img src="/images/manual/inventario_auditorias.png" alt="Pantalla Auditorías de Inventario" class="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity">
+        </div>
+      </section>
+
+      <!-- ==================== TRASLADOS DE INVENTARIO ==================== -->
+      <section class="guide-card space-y-4 bg-neutral-900 border border-neutral-800 p-6 rounded-3xl shadow-sm" data-category="productos">
+        <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+          <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded bg-blue-950 text-blue-400 border border-blue-900/60">Productos e Inventario</span>
+          <span class="text-[10px] text-neutral-500 font-mono">ID: inv-traslados</span>
+        </div>
+        <h2 class="guide-title text-2xl font-extrabold text-white">Traslados de Inventario entre Sucursales</h2>
+        <div class="guide-content text-sm text-neutral-350 space-y-2">
+          <p>Para mover mercancía de forma controlada hacia otra sucursal de la empresa:</p>
+          <ol class="list-decimal list-inside space-y-1 text-xs">
+            <li>Dirígete a <strong>Inventario</strong> > <strong>Traslados</strong> (o entra a `/transfers`).</li>
+            <li>Haz clic en el botón superior derecho <strong>Nuevo Traslado</strong>.</li>
+            <li>Selecciona la **Sucursal de Destino**, añade los artículos correspondientes indicando las cantidades y presiona <strong>Registrar Traslado</strong> (quedará en estado *Pendiente*).</li>
+            <li>Al llegar el camión a la sucursal de destino, el encargado de la misma debe entrar a la sección de Traslados, hacer clic en **Recibir**, verificar las cantidades físicas e ingresar los productos al almacén.</li>
+          </ol>
+        </div>
+        <div class="mt-4 border border-neutral-800 rounded-2xl overflow-hidden bg-neutral-950/40">
+          <img src="/images/manual/verificacion_traslados.png" alt="Pantalla Traslados de Inventario" class="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity">
+        </div>
+      </section>
+
+      <section class="guide-card space-y-4 bg-neutral-900 border border-neutral-800 p-6 rounded-3xl shadow-sm" data-category="productos">
+        <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+          <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded bg-blue-950 text-blue-400 border border-blue-900/60">Productos e Inventario</span>
+          <span class="text-[10px] text-neutral-500 font-mono">ID: inv-kardex</span>
+        </div>
+        <h2 class="guide-title text-2xl font-extrabold text-white">Reporte de Stock Completo y Consulta de Kárdex</h2>
+        <div class="guide-content text-sm text-neutral-350 space-y-2">
+          <p>Para realizar consultas masivas de stock y auditar la trazabilidad de un producto específico:</p>
+          <ol class="list-decimal list-inside space-y-1 text-xs">
+            <li>Ve a **Reportes** > **Reporte de Stock Completo** (o entra a `/reports/stock`) para ver el stock actual consolidado de todos los artículos por sucursal.</li>
+            <li>Para auditar las transacciones individuales de un artículo, ve a la lista de [Productos](/products), localiza el producto y presiona el botón de **Kárdex**.</li>
+            <li>El Kárdex listará cronológicamente cada entrada, salida, venta o traslado que haya afectado el inventario del producto, detallando usuario, fecha, cantidad y saldo resultante.</li>
+          </ol>
+        </div>
+        <div class="mt-4 border border-neutral-800 rounded-2xl overflow-hidden bg-neutral-950/40">
+          <img src="/images/manual/reportes_stock.png" alt="Pantalla Reportes de Stock" class="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity">
+        </div>
+      </section>
+
+      <!-- ==================== PROMOCIONES ==================== -->
+      <section class="guide-card space-y-4 bg-neutral-900 border border-neutral-800 p-6 rounded-3xl shadow-sm" data-category="ventas">
+        <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+          <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded bg-violet-950 text-violet-400 border border-violet-900/60">Ventas y POS</span>
+          <span class="text-[10px] text-neutral-500 font-mono">ID: pos-promociones</span>
+        </div>
+        <h2 class="guide-title text-2xl font-extrabold text-white">Configuración de Promociones y Descuentos</h2>
+        <div class="guide-content text-sm text-neutral-350 space-y-2">
+          <p>Para automatizar incentivos de compra y ofertas especiales en el POS:</p>
+          <ol class="list-decimal list-inside space-y-1 text-xs">
+            <li>Dirígete al apartado **Promociones** en el menú principal (o entra a `/promotions`).</li>
+            <li>Haz clic en **Nueva Promoción**.</li>
+            <li>Define las condiciones:
+              - **Tipo**: *Porcentaje de descuento*, *Precio fijo rebajado* u *Oferta de volumen* (ej. 3x2, Paga 2 lleva 3).
+              - **Aplicabilidad**: Aplícalo a un producto individual o a una categoría completa de artículos.
+              - **Vigencia**: Fechas de inicio y finalización automáticas.
+            </li>
+            <li>Guarda la promoción. Al facturar dichos artículos en el carrito del POS, el descuento se aplicará automáticamente si se cumplen las condiciones configuradas.</li>
+          </ol>
+        </div>
+        <div class="mt-4 border border-neutral-800 rounded-2xl overflow-hidden bg-neutral-950/40">
+          <img src="/images/manual/promociones.png" alt="Pantalla Promociones" class="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity">
+        </div>
+      </section>
+
+      <section class="guide-card space-y-4 bg-neutral-900 border border-neutral-800 p-6 rounded-3xl shadow-sm" data-category="ventas">
+        <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+          <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded bg-violet-950 text-violet-400 border border-violet-900/60">Ventas y POS</span>
+          <span class="text-[10px] text-neutral-500 font-mono">ID: pos-customer-display</span>
+        </div>
+        <h2 class="guide-title text-2xl font-extrabold text-white">Configuración de la Pantalla del Cliente</h2>
+        <div class="guide-content text-sm text-neutral-350 space-y-2">
+          <p>Para proyectar la compra en tiempo real en una pantalla secundaria o monitor orientado hacia el cliente:</p>
+          <ol class="list-decimal list-inside space-y-1 text-xs">
+            <li>En la interfaz del POS Touch, haz clic en el icono de pantalla en el header superior derecho (**Pantalla Cliente**).</li>
+            <li>El sistema abrirá una ventana emergente. Arrastra esta ventana hacia el monitor secundario del cliente y ponla en pantalla completa (tecla F11).</li>
+            <li>La pantalla del cliente se actualizará dinámicamente cada vez que agregues, edites o vacíes el carrito en tu terminal de cobro, mostrando además promociones vigentes y mensajes personalizados.</li>
+          </ol>
+        </div>
+        <div class="mt-4 border border-neutral-800 rounded-2xl overflow-hidden bg-neutral-950/40">
+          <img src="/images/manual/pantalla_cliente.png" alt="Pantalla del Cliente" class="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity">
+        </div>
+      </section>
+
+      <!-- ==================== USUARIOS Y SEGURIDAD ==================== -->
+      <section class="guide-card space-y-4 bg-neutral-900 border border-neutral-800 p-6 rounded-3xl shadow-sm" data-category="usuarios">
+        <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+          <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded bg-neutral-950 border border-neutral-850 text-neutral-300">Usuarios y Seguridad</span>
+          <span class="text-[10px] text-neutral-500 font-mono">ID: usr-gestion</span>
+        </div>
+        <h2 class="guide-title text-2xl font-extrabold text-white">Gestión de Usuarios y Control de Accesos</h2>
+        <div class="guide-content text-sm text-neutral-350 space-y-2">
+          <p>Para controlar los cajeros y supervisores que tienen acceso al sistema:</p>
+          <ol class="list-decimal list-inside space-y-1 text-xs">
+            <li>Dirígete a la sección de **Usuarios** en el menú principal (o entra a `/users`).</li>
+            <li>Haz clic en **Nuevo Usuario** para registrar personal, definiendo su contraseña y su **Rol** (*Administrador, Supervisor o Cajero*).</li>
+            <li>**Excepciones de Permiso (Overrides)**: En la misma ficha de creación o edición, puedes forzar permisos individuales para el usuario (*Heredar, Permitir o Denegar*), independientemente de la matriz base del rol.</li>
+            <li>**Bloqueos**: Si requieres desautorizar temporalmente el acceso de un cajero, cambia su estado de *Activo* a *Bloqueado* o *Inactivo*.</li>
+          </ol>
+        </div>
+        <div class="mt-4 border border-neutral-800 rounded-2xl overflow-hidden bg-neutral-950/40">
+          <img src="/images/manual/gestion_usuarios.png" alt="Pantalla Gestión de Usuarios" class="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity">
+        </div>
+      </section>
+
+      <section class="guide-card space-y-4 bg-neutral-900 border border-neutral-800 p-6 rounded-3xl shadow-sm" data-category="usuarios">
+        <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+          <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded bg-neutral-950 border border-neutral-850 text-neutral-300">Usuarios y Seguridad</span>
+          <span class="text-[10px] text-neutral-500 font-mono">ID: usr-auditoria</span>
+        </div>
+        <h2 class="guide-title text-2xl font-extrabold text-white">Bitácora de Auditoría de Acciones</h2>
+        <div class="guide-content text-sm text-neutral-350 space-y-2">
+          <p>Para supervisar las acciones críticas efectuadas en el sistema por el personal de la tienda:</p>
+          <ol class="list-decimal list-inside space-y-1 text-xs">
+            <li>Navega a **Usuarios** y entra en la pestaña **Auditoría del Sistema** (o accede a `/users/audit`).</li>
+            <li>El sistema listará cronológicamente cada acción relevante efectuada (ej. *anulaciones de venta, cambios en los permisos base, bloqueos de usuarios*).</li>
+            <li>Puedes filtrar los registros por **Usuario**, **Sucursal**, **Acción específica** y **Rango de Fechas** para analizar incidentes o descuadres.</li>
+          </ol>
+        </div>
+        <div class="mt-4 border border-neutral-800 rounded-2xl overflow-hidden bg-neutral-950/40">
+          <img src="/images/manual/auditoria_sistema.png" alt="Pantalla Auditoría de Sistema" class="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity">
+        </div>
+      </section>
+
+      <!-- ==================== CUENTAS POR COBRAR (CXC) ==================== -->
+      <section class="guide-card space-y-4 bg-neutral-900 border border-neutral-800 p-6 rounded-3xl shadow-sm" data-category="clientes">
+        <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+          <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded bg-emerald-950 text-emerald-455 border border-emerald-900/60">Clientes y Créditos</span>
+          <span class="text-[10px] text-neutral-500 font-mono">ID: cxc-cuentas</span>
+        </div>
+        <h2 class="guide-title text-2xl font-extrabold text-white">Cómo administrar las cuentas por cobrar (CXC) y abonos de clientes</h2>
+        <div class="guide-content text-sm text-neutral-350 space-y-2">
+          <p>Para controlar los saldos pendientes de los clientes que compran al crédito y registrar sus pagos o abonos:</p>
+          <ol class="list-decimal list-inside space-y-1 text-xs">
+            <li>Ve a <strong>Clientes</strong> > <strong>Listado de Clientes</strong> (o accede a `/clients`).</li>
+            <li>En la fila de cada cliente, verás su saldo actual pendiente de pago.</li>
+            <li>Haz clic en el enlace <strong>Estado de Cuenta</strong> (o accede a `/clients/:id/statement`) para ver el desglose detallado de compras al crédito, abonos registrados e historial de transacciones.</li>
+            <li>Para registrar un abono de un cliente:
+              - En el listado de clientes, haz clic en el botón <strong>Abonar</strong>.
+              - Escribe el **Monto del Abono** y la **Forma de Pago** (*Efectivo* o *Transferencia*).
+              - Si seleccionas **Efectivo**, este monto incrementará automáticamente el efectivo físico esperado en el turno de caja activo.
+            </li>
+          </ol>
+        </div>
+        <div class="mt-4 border border-neutral-800 rounded-2xl overflow-hidden bg-neutral-950/40">
+          <img src="/images/manual/cxc_abonos.png" alt="Administración de cuentas por cobrar y abonos" class="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity">
+        </div>
+      </section>
+
+      <!-- ==================== PRODUCTOS POR LOTE ==================== -->
+      <section class="guide-card space-y-4 bg-neutral-900 border border-neutral-800 p-6 rounded-3xl shadow-sm" data-category="productos">
+        <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+          <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded bg-blue-950 text-blue-400 border border-blue-900/60">Productos e Inventario</span>
+          <span class="text-[10px] text-neutral-500 font-mono">ID: inv-lotes</span>
+        </div>
+        <h2 class="guide-title text-2xl font-extrabold text-white">Ingreso de Productos por Lote y Fecha de Vencimiento</h2>
+        <div class="guide-content text-sm text-neutral-350 space-y-2">
+          <p>Para productos que requieren control riguroso de caducidad (ej. alimentos, medicamentos, químicos):</p>
+          <ol class="list-decimal list-inside space-y-1 text-xs">
+            <li>Al registrar una compra en <strong>Compras</strong> > <strong>Nueva Compra</strong>, o al realizar un **Levantamiento Inicial de Inventario**:</li>
+            <li>Selecciona el producto y rellena los datos correspondientes en el formulario de la lista.</li>
+            <li>Completa obligatoriamente el campo **Lote** (código alfanumérico identificador del lote de fabricación del proveedor) y la **Fecha de Vencimiento**.</li>
+            <li>El sistema agrupará las existencias del producto en la base de datos por lote. Al venderse, se descontará primero el lote con la fecha de vencimiento más próxima.</li>
+          </ol>
+        </div>
+        <div class="mt-4 border border-neutral-800 rounded-2xl overflow-hidden bg-neutral-950/40">
+          <img src="/images/manual/crear_lotes.png" alt="Ingreso de productos por lote y vencimiento" class="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity">
+        </div>
+      </section>
+
+      <!-- ==================== PERMISOS DE USUARIO ==================== -->
+      <section class="guide-card space-y-4 bg-neutral-900 border border-neutral-800 p-6 rounded-3xl shadow-sm" data-category="usuarios">
+        <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+          <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded bg-neutral-950 border border-neutral-850 text-neutral-300">Usuarios y Seguridad</span>
+          <span class="text-[10px] text-neutral-500 font-mono">ID: usr-permisos</span>
+        </div>
+        <h2 class="guide-title text-2xl font-extrabold text-white">Administración de Permisos y Matriz por Rol</h2>
+        <div class="guide-content text-sm text-neutral-350 space-y-2">
+          <p>Para gestionar de forma masiva los permisos asignados a cada rol del sistema:</p>
+          <ol class="list-decimal list-inside space-y-1 text-xs">
+            <li>Navega a la sección de **Usuarios** en el menú principal.</li>
+            <li>Haz clic en la pestaña **Matriz de Permisos por Rol**.</li>
+            <li>Se desplegará una tabla con todos los permisos del sistema (ej. *abrir cajón de dinero, anular ventas, gestionar catálogo, ver reportes*) cruzados por cada rol (*Administrador, Supervisor, Cajero*).</li>
+            <li>Marca o desmarca los permisos que deseas autorizar de forma global para cada rol y haz clic en el botón inferior **Guardar Matriz de Permisos**. Todos los usuarios del rol modificado heredarán de inmediato el cambio.</li>
+          </ol>
+        </div>
+        <div class="mt-4 border border-neutral-800 rounded-2xl overflow-hidden bg-neutral-950/40">
+          <img src="/images/manual/permisos_rol.png" alt="Matriz de administración de permisos por rol" class="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity">
+        </div>
+      </section>
+
+      <!-- ==================== REIMPRIMIR TICKET ==================== -->
+      <section class="guide-card space-y-4 bg-neutral-900 border border-neutral-800 p-6 rounded-3xl shadow-sm" data-category="ventas">
+        <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+          <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded bg-violet-950 text-violet-400 border border-violet-900/60">Ventas y POS</span>
+          <span class="text-[10px] text-neutral-500 font-mono">ID: pos-reimprimir</span>
+        </div>
+        <h2 class="guide-title text-2xl font-extrabold text-white">Cómo reimprimir un ticket de venta emitido</h2>
+        <div class="guide-content text-sm text-neutral-350 space-y-2">
+          <p>Si el cliente solicita una copia de su comprobante o hubo una falla en la impresora térmica durante la venta:</p>
+          <ol class="list-decimal list-inside space-y-1 text-xs">
+            <li>Ve a la barra de herramientas del POS y presiona el botón **Historial** o navega directamente a **Ventas** > **Historial de Ventas** (o accede a `/sales/history`).</li>
+            <li>Busca la transacción en la lista usando los filtros de fecha o el número de ticket.</li>
+            <li>Haz clic en el botón <strong>Reimprimir</strong> (icono de impresora) de la venta correspondiente.</li>
+            <li>El sistema enviará de inmediato el ticket de venta a la ticketera térmica por WebSocket, imprimiéndose al instante de manera silenciosa (sin mostrar popups ni abrir cuadros de diálogo del navegador).</li>
+          </ol>
+        </div>
+        <div class="mt-4 border border-neutral-800 rounded-2xl overflow-hidden bg-neutral-950/40">
+          <img src="/images/manual/reimprimir_ticket.png" alt="Cómo reimprimir un ticket de venta" class="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity">
+        </div>
+      </section>
+
+      <!-- ==================== ALERTAS DE STOCK ==================== -->
+      <section class="guide-card space-y-4 bg-neutral-900 border border-neutral-800 p-6 rounded-3xl shadow-sm" data-category="productos">
+        <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+          <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded bg-blue-950 text-blue-400 border border-blue-900/60">Productos e Inventario</span>
+          <span class="text-[10px] text-neutral-500 font-mono">ID: inv-alertas</span>
+        </div>
+        <h2 class="guide-title text-2xl font-extrabold text-white">Alertas de Stock Crítico y Lotes Próximos a Vencer</h2>
+        <div class="guide-content text-sm text-neutral-350 space-y-2">
+          <p>El sistema cuenta con un panel inteligente de notificaciones de inventario en el Dashboard principal para prevenir quiebres de stock y pérdidas de producto:</p>
+          <ul class="list-disc list-inside space-y-2 text-xs">
+            <li><strong>Alerta de Stock Crítico (Agotándose)</strong>: Muestra aquellos artículos físicos cuya suma total en la sucursal actual ha caído por debajo o igual al **Stock Mínimo** de seguridad establecido en su ficha técnica.</li>
+            <li><strong>Alerta de Expiración Próxima (Menos de 30 días)</strong>: Analiza los lotes activos en el almacén de la sucursal e identifica aquellos productos con una fecha de caducidad menor a 30 días de la fecha actual. Los lotes críticos de menos de 15 días aparecerán con animación de pulso roja de alta prioridad.</li>
+          </ul>
+        </div>
+        <div class="mt-4 border border-neutral-800 rounded-2xl overflow-hidden bg-neutral-950/40">
+          <img src="/images/manual/alertas_dashboard.png" alt="Alertas de stock y lotes próximos a vencer" class="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity">
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- Lightbox Image Modal -->
+<div id="image-lightbox" class="fixed inset-0 bg-neutral-950/90 z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300 p-4">
+  <button id="lightbox-close" class="absolute top-4 right-4 text-white hover:text-neutral-300 text-4xl font-bold transition-colors cursor-pointer select-none focus:outline-none" aria-label="Cerrar modal">&times;</button>
+  <div class="max-w-5xl max-h-[90vh] w-full flex items-center justify-center scale-95 transition-transform duration-300" id="lightbox-content">
+    <img id="lightbox-image" src="" alt="Vista ampliada" class="max-w-full max-h-[85vh] rounded-xl object-contain shadow-2xl border border-neutral-800">
+  </div>
+</div>
+
+<script src="/js/escpos-printer.js"></script>
+<script>
+  // Initialize printer client helper
+  const printerClient = new WebPOSPrinterLocalServer('wss://localhost:4567');
+  printerClient.connect();
+
+  let activeCategory = 'all';
+
+  function filterCategory(category) {
+    activeCategory = category;
+    
+    // Update active tab styling
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.className = "tab-btn w-full text-left px-4 py-3 rounded-xl text-xs font-bold transition-all text-neutral-400 hover:text-white hover:bg-neutral-800 border border-transparent";
+    });
+
+    const activeTabBtn = document.getElementById(`tab-${category}`);
+    if (activeTabBtn) {
+      activeTabBtn.className = "tab-btn w-full text-left px-4 py-3 rounded-xl text-xs font-bold transition-all bg-blue-600 text-white shadow-md shadow-blue-500/10";
+    }
+
+    applyFilters();
+  }
+
+  function applyFilters() {
+    const searchQuery = document.getElementById('search-manual').value.toLowerCase().trim();
+    const normalizedQuery = removeAccents(searchQuery);
+
+    document.querySelectorAll('.guide-card').forEach(card => {
+      const cardCategory = card.getAttribute('data-category');
+      const titleEl = card.querySelector('.guide-title');
+      const contentEl = card.querySelector('.guide-content');
+      
+      const originalTitle = titleEl.textContent || '';
+      const originalContent = contentEl.textContent || '';
+
+      const normalizedTitle = removeAccents(originalTitle.toLowerCase());
+      const normalizedContent = removeAccents(originalContent.toLowerCase());
+
+      const matchesCategory = (activeCategory === 'all' || cardCategory === activeCategory);
+      const matchesSearch = (!searchQuery || normalizedTitle.includes(normalizedQuery) || normalizedContent.includes(normalizedQuery));
+
+      if (matchesCategory && matchesSearch) {
+        card.classList.remove('hidden');
+        // Simple highlighting inside titles and descriptions if searched
+        if (searchQuery) {
+          highlightText(titleEl, searchQuery);
+          highlightText(contentEl, searchQuery);
+        } else {
+          // Restore original values
+          titleEl.innerHTML = originalTitle;
+          contentEl.innerHTML = contentEl.innerHTML.replace(/<mark class="bg-yellow-500\/30 text-yellow-250 py-0.5 px-1 rounded">/g, '').replace(/<\/mark>/g, '');
+        }
+      } else {
+        card.classList.add('hidden');
+      }
+    });
+  }
+
+  function removeAccents(str) {
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  }
+
+  function highlightText(element, query) {
+    const innerHTML = element.innerHTML;
+    // We regex match the query ignoring html tags to prevent layout breakages
+    const textNodes = [];
+    
+    function getTextNodes(node) {
+      if (node.nodeType === 3) {
+        textNodes.push(node);
+      } else {
+        for (let i = 0; i < node.childNodes.length; i++) {
+          getTextNodes(node.childNodes[i]);
+        }
+      }
+    }
+    getTextNodes(element);
+
+    textNodes.forEach(node => {
+      const parent = node.parentNode;
+      if (parent.tagName === 'MARK' || parent.tagName === 'SCRIPT' || parent.tagName === 'STYLE') return;
+
+      const text = node.textContent;
+      const normalizedText = removeAccents(text.toLowerCase());
+      const queryIdx = normalizedText.indexOf(removeAccents(query.toLowerCase()));
+
+      if (queryIdx > -1) {
+        const matches = text.substr(queryIdx, query.length);
+        const replacement = `<mark class="bg-yellow-500/35 text-yellow-100 py-0.5 rounded px-0.5">${matches}</mark>`;
+        
+        const wrapper = document.createElement('span');
+        wrapper.innerHTML = text.replace(new RegExp(matches, 'i'), replacement);
+        parent.replaceChild(wrapper, node);
+      }
+    });
+  }
+
+  // Bind live search
+  document.getElementById('search-manual').addEventListener('input', applyFilters);
+
+  // Lightbox Modal logic
+  const lightbox = document.getElementById('image-lightbox');
+  const lightboxImg = document.getElementById('lightbox-image');
+  const lightboxContent = document.getElementById('lightbox-content');
+  const lightboxClose = document.getElementById('lightbox-close');
+
+  document.querySelectorAll('.guide-card img').forEach(img => {
+    img.addEventListener('click', () => {
+      lightboxImg.src = img.src;
+      lightboxImg.alt = img.alt;
+      lightbox.classList.remove('pointer-events-none', 'opacity-0');
+      lightbox.classList.add('opacity-100');
+      setTimeout(() => {
+        lightboxContent.classList.remove('scale-95');
+        lightboxContent.classList.add('scale-100');
+      }, 50);
+    });
+  });
+
+  function closeLightbox() {
+    lightboxContent.classList.remove('scale-100');
+    lightboxContent.classList.add('scale-95');
+    setTimeout(() => {
+      lightbox.classList.remove('opacity-100');
+      lightbox.classList.add('opacity-0', 'pointer-events-none');
+    }, 200);
+  }
+
+  lightboxClose.addEventListener('click', closeLightbox);
+  lightbox.addEventListener('click', (e) => {
+    if (e.target === lightbox || e.target === lightboxContent) {
+      closeLightbox();
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !lightbox.classList.contains('pointer-events-none')) {
+      closeLightbox();
+    }
+  });
+</script>
+
+<%- include('../partials/foot') %>

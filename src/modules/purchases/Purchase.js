@@ -43,6 +43,21 @@ class Purchase extends Model {
         type: DataTypes.DATEONLY,
         allowNull: true,
         defaultValue: null
+      },
+      paymentSource: {
+        type: DataTypes.ENUM('cashier', 'external'),
+        allowNull: true,
+        defaultValue: null
+      },
+      turnId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: null
+      },
+      transactionRef: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+        defaultValue: null
       }
     }, {
       sequelize,
@@ -56,6 +71,7 @@ class Purchase extends Model {
   static associate(models) {
     this.belongsTo(models.Branch, { foreignKey: 'branchId', as: 'branch' });
     this.belongsTo(models.Supplier, { foreignKey: 'supplierId', as: 'supplier' });
+    this.belongsTo(models.CashierTurn, { foreignKey: 'turnId', as: 'turn' });
     this.hasMany(models.PurchaseDetail, { foreignKey: 'purchaseId', as: 'details' });
     this.hasMany(models.SupplierPayment, { foreignKey: 'purchaseId', as: 'payments' });
   }

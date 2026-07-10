@@ -24,6 +24,7 @@ const loadRolePermissions = () => {
           'pos.sell_credit',
           'pos.discount',
           'pos.void_sale',
+          'pos.open_drawer',
           'cxc.create_client',
           'cxc.add_payment',
           'purchases.create',

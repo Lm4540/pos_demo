@@ -360,6 +360,77 @@
       <% } %>
     </div>
 
+    <!-- Módulo de Cuentas por Pagar (CxP) en Reportes -->
+    <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-neutral-800 pb-4 gap-4">
+        <div>
+          <h3 class="text-md font-bold text-white">Estado General de Cuentas por Pagar (Proveedores)</h3>
+          <p class="text-xs text-neutral-500 mt-0.5">Control de deudas pendientes a proveedores y plazos de vencimiento</p>
+        </div>
+        <div class="flex gap-4">
+          <div class="bg-neutral-950 border border-neutral-850 px-4 py-2 rounded-xl text-center">
+            <span class="block text-[9px] font-bold text-neutral-500 uppercase tracking-wider">Deuda Vigente</span>
+            <span class="text-sm font-bold text-white font-mono">$<%= totalSupplierVigente.toFixed(2) %></span>
+          </div>
+          <div class="bg-neutral-950 border border-neutral-850 px-4 py-2 rounded-xl text-center">
+            <span class="block text-[9px] font-bold text-neutral-500 uppercase tracking-wider">Deuda Vencida</span>
+            <span class="text-sm font-bold <%= totalSupplierOverdue > 0 ? 'text-red-400 animate-pulse' : 'text-neutral-400' %> font-mono">$<%= totalSupplierOverdue.toFixed(2) %></span>
+          </div>
+          <div class="bg-neutral-950 border border-neutral-850 px-4 py-2 rounded-xl text-center">
+            <span class="block text-[9px] font-bold text-neutral-500 uppercase tracking-wider font-bold">Total Pendiente</span>
+            <span class="text-sm font-bold text-red-400 font-mono">$<%= totalSupplierDebt.toFixed(2) %></span>
+          </div>
+        </div>
+      </div>
+
+      <% if (supplierDebtDetails.length === 0) { %>
+        <p class="text-xs text-neutral-500 py-6 text-center">No hay cuentas por pagar a proveedores pendientes.</p>
+      <% } else { %>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-neutral-800 text-left text-xs text-neutral-300">
+            <thead>
+              <tr class="text-neutral-500 font-semibold uppercase tracking-wider text-[10px] border-b border-neutral-800 pb-2">
+                <th class="py-2.5 px-3">Proveedor</th>
+                <th class="py-2.5 px-3">Factura No.</th>
+                <th class="py-2.5 px-3">Sucursal</th>
+                <th class="py-2.5 px-3 text-center">Fecha Vencimiento</th>
+                <th class="py-2.5 px-3 text-right">Monto Total</th>
+                <th class="py-2.5 px-3 text-right">Abonado</th>
+                <th class="py-2.5 px-3 text-right">Saldo Pendiente</th>
+                <th class="py-2.5 px-3 text-right">Estado Alerta</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-neutral-800">
+              <% supplierDebtDetails.forEach(p => { %>
+                <tr class="hover:bg-neutral-950/25">
+                  <td class="py-3 px-3 font-bold text-white"><%= p.supplierName %></td>
+                  <td class="py-3 px-3 font-mono text-neutral-400"><%= p.invoiceNumber %></td>
+                  <td class="py-3 px-3 text-neutral-450"><%= p.branchName %></td>
+                  <td class="py-3 px-3 text-center font-mono text-neutral-500">
+                    <%= p.dueDate ? new Date(p.dueDate + 'T00:00:00').toLocaleDateString('es-SV') : '-' %>
+                  </td>
+                  <td class="py-3 px-3 text-right font-mono text-neutral-400">$<%= parseFloat(p.totalAmount).toFixed(2) %></td>
+                  <td class="py-3 px-3 text-right font-mono text-emerald-500">+$<%= parseFloat(p.amountPaid).toFixed(2) %></td>
+                  <td class="py-3 px-3 text-right font-mono font-bold text-neutral-200">$<%= p.pending.toFixed(2) %></td>
+                  <td class="py-3 px-3 text-right">
+                    <% if (p.isOverdue) { %>
+                      <span class="px-2 py-0.5 text-[9px] font-bold uppercase rounded bg-red-950/60 text-red-400 border border-red-900/60">
+                        ⚠️ Mora: <%= p.overdueDays %> días
+                      </span>
+                    <% } else { %>
+                      <span class="px-2 py-0.5 text-[9px] font-bold uppercase rounded bg-emerald-950/60 text-emerald-400 border border-emerald-900/60">
+                        Al Corriente
+                      </span>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+
   </main>
 </div>
 

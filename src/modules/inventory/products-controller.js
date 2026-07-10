@@ -585,6 +585,30 @@ const batchCreateProducts = async (req, res, next) => {
   }
 };
 
+const searchProductsApi = async (req, res, next) => {
+  const { q } = req.query;
+  const { Op } = require('sequelize');
+  try {
+    const query = q ? q.trim().toLowerCase() : '';
+    const whereClause = query !== '' ? {
+      [Op.or]: [
+        sequelize.where(sequelize.fn('LOWER', sequelize.col('Product.name')), 'LIKE', `%${query}%`),
+        sequelize.where(sequelize.fn('LOWER', sequelize.col('Product.barCode')), 'LIKE', `%${query}%`)
+      ]
+    } : {};
+
+    const products = await Product.findAll({
+      where: whereClause,
+      limit: 20,
+      order: [['name', 'ASC']]
+    });
+
+    return res.json({ success: true, products });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   listProducts,
   createProduct,
@@ -595,5 +619,6 @@ module.exports = {
   renderKardex,
   renderServiceMovements,
   updateBranchSettings,
-  batchCreateProducts
+  batchCreateProducts,
+  searchProductsApi
 };

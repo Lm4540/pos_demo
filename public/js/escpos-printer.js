@@ -250,13 +250,63 @@ class WebPOSPrinterLocalServer {
             this.serverUrl = serverUrl;
             this.ws = null;
             this.manuallyClosed = false;
+            this.status = 'disconnected'; // 'connected', 'connecting', 'disconnected'
+            this.container = null;
+
+            // Set up automatic DOM binding
+            if (document.readyState === 'loading') {
+                  document.addEventListener('DOMContentLoaded', () => this.setupUIIndicator());
+            } else {
+                  this.setupUIIndicator();
+            }
       }
 
       setServerUrl(url) {
             this.serverUrl = url;
       }
 
+      setStatus(newStatus) {
+            this.status = newStatus;
+            console.log(`Estado de impresora: ${newStatus}`);
+            // Dispatch a window event so that other elements can listen to it if needed
+            window.dispatchEvent(new CustomEvent('printer-status-changed', {
+                  detail: { status: newStatus }
+            }));
+      }
+
+      async checkHealth() {
+            // Reemplazar protocolo ws/wss por http/https
+            const httpUrl = this.serverUrl.replace(/^ws(s)?:\/\//, 'http$1://');
+            try {
+                  const controller = new AbortController();
+                  const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 segundos timeout
+                  const response = await fetch(httpUrl, { signal: controller.signal });
+                  clearTimeout(timeoutId);
+                  if (response.ok) {
+                        const data = await response.json();
+                        if (data.status === 'online') {
+                              return true;
+                        }
+                  }
+            } catch (e) {
+                  console.warn('Error al verificar el estado de la impresora por HTTP:', e);
+            }
+            return false;
+      }
+
+      async checkAndConnect() {
+            this.setStatus('connecting');
+            const isAlive = await this.checkHealth();
+            if (!isAlive) {
+                  this.setStatus('disconnected');
+                  return false;
+            }
+            return this.connect();
+      }
+
       async connect() {
+            this.manuallyClosed = false;
+            this.setStatus('connecting');
             return new Promise((resolve) => {
                   try {
                         console.log(`Intentando conectar a ${this.serverUrl}...`);
@@ -264,26 +314,33 @@ class WebPOSPrinterLocalServer {
                         
                         this.ws.onopen = () => {
                               console.log('Conectado al servidor de impresión local (WebSocket)');
+                              this.setStatus('connected');
                               resolve(true);
                         };
                         
-                        this.ws.onerror = (err) => {
+                        this.ws.onerror = async (err) => {
                               console.error('Error de conexión WebSocket:', err);
                               if (this.serverUrl.startsWith('wss://') && !this.manuallyClosed) {
                                     const fallbackUrl = this.serverUrl.replace('wss://', 'ws://');
                                     console.log(`Intentando conectar a fallback: ${fallbackUrl}`);
                                     this.serverUrl = fallbackUrl;
-                                    this.connect().then(resolve);
+                                    const res = await this.connect();
+                                    resolve(res);
                               } else {
+                                    this.setStatus('disconnected');
                                     resolve(false);
                               }
                         };
                         
                         this.ws.onclose = () => {
                               console.log('Conexión con servidor de impresión cerrada');
+                              if (!this.manuallyClosed && this.status !== 'connecting') {
+                                    this.setStatus('disconnected');
+                              }
                         };
                   } catch (error) {
                         console.error('Error al instanciar WebSocket:', error);
+                        this.setStatus('disconnected');
                         resolve(false);
                   }
             });
@@ -294,7 +351,82 @@ class WebPOSPrinterLocalServer {
             if (this.ws) {
                   this.ws.close();
             }
+            this.setStatus('disconnected');
             return true;
+      }
+
+      setupUIIndicator() {
+            this.container = document.getElementById('printer-status-container');
+            if (!this.container) return;
+
+            // Render current status
+            this.updateUI();
+
+            // Listen for status changes
+            window.addEventListener('printer-status-changed', () => {
+                  this.updateUI();
+            });
+      }
+
+      updateUI() {
+            if (!this.container) return;
+            
+            let badgeHtml = '';
+            let actionHtml = '';
+
+            if (this.status === 'connected') {
+                  badgeHtml = `
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-950 text-emerald-400 border border-emerald-900/60 shadow-sm transition-all duration-300">
+                              <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                              Impresora en línea
+                        </span>
+                  `;
+            } else if (this.status === 'connecting') {
+                  badgeHtml = `
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-950 text-amber-400 border border-amber-900/60 shadow-sm transition-all duration-300">
+                              <span class="h-2 w-2 rounded-full bg-amber-400 animate-bounce"></span>
+                              Conectando...
+                        </span>
+                  `;
+            } else { // disconnected
+                  badgeHtml = `
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-950 text-red-400 border border-red-900/60 shadow-sm transition-all duration-300">
+                              <span class="h-2 w-2 rounded-full bg-red-500"></span>
+                              Impresora desconectada
+                        </span>
+                  `;
+                  actionHtml = `
+                        <button id="btn-printer-retry" type="button" class="px-3 py-1 text-[11px] font-bold bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-all hover:scale-102 flex items-center gap-1 shadow-md shadow-blue-650/20 active:scale-95 cursor-pointer">
+                              <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18" />
+                              </svg>
+                              Probar conexión
+                        </button>
+                  `;
+            }
+
+            this.container.innerHTML = `
+                  <div class="flex items-center gap-2">
+                        ${badgeHtml}
+                        ${actionHtml}
+                  </div>
+            `;
+
+            // Bind click handler for retry button
+            const retryBtn = this.container.querySelector('#btn-printer-retry');
+            if (retryBtn) {
+                  retryBtn.addEventListener('click', async () => {
+                        retryBtn.disabled = true;
+                        retryBtn.innerHTML = `
+                              <svg class="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              Probando...
+                        `;
+                        await this.checkAndConnect();
+                  });
+            }
       }
 
       /**
@@ -387,6 +519,15 @@ class WebPOSPrinterLocalServer {
                    .newLineN(4)
                    .cut();
 
+            return this.sendCommands(builder.build());
+      }
+
+      /**
+       * Abre el cajón de dinero enviando el comando ESC/POS.
+       */
+      async openCashDrawer() {
+            const builder = new ESCPOSBuilder();
+            builder.initialize().cashDrawer();
             return this.sendCommands(builder.build());
       }
 }

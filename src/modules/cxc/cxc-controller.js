@@ -1,6 +1,34 @@
-const { Client, CreditPayment, Sale, CashierMovement, Branch } = require('../../core/models');
+const { Client, CreditPayment, Sale, CashierMovement, CashierTurn, Branch, User } = require('../../core/models');
 const { logAction } = require('../../core/services/auditService');
 const { sequelize } = require('../../core/models');
+
+/**
+ * Helper: Calculate the current available cash balance for a given cashier turn.
+ */
+const calculateTurnBalance = async (turn, transaction = null) => {
+  const queryOpts = transaction ? { where: { turnId: turn.id }, transaction } : { where: { turnId: turn.id } };
+
+  const movements = await CashierMovement.findAll(queryOpts);
+  const sales = await Sale.findAll(queryOpts);
+
+  const totalDeposits = movements
+    .filter(m => m.type === 'deposit')
+    .reduce((sum, m) => sum + parseFloat(m.amount), 0);
+
+  const totalWithdrawals = movements
+    .filter(m => m.type === 'withdrawal')
+    .reduce((sum, m) => sum + parseFloat(m.amount), 0);
+
+  const totalCashSales = sales.reduce((sum, s) => {
+    const cashAmt = parseFloat(s.amountCash);
+    if (cashAmt === 0 && s.paymentMethod === 'cash') {
+      return sum + parseFloat(s.totalAmount);
+    }
+    return sum + cashAmt;
+  }, 0);
+
+  return parseFloat(turn.openingAmount) + totalDeposits - totalWithdrawals + totalCashSales;
+};
 
 const renderStatement = async (req, res, next) => {
   const { id } = req.params;
@@ -79,10 +107,53 @@ const renderStatement = async (req, res, next) => {
   }
 };
 
+/**
+ * API endpoint: Returns all open cashier turns in the user's branch with their current balance.
+ * Used by the payment modal to let the user select which cash register receives the cash deposit.
+ */
+const getAvailableTurns = async (req, res, next) => {
+  try {
+    const branchId = req.user.branchId;
+
+    const openTurns = await CashierTurn.findAll({
+      where: {
+        branchId,
+        status: 'open'
+      },
+      include: [{ model: User, as: 'user', attributes: ['id', 'fullName', 'username'] }],
+      order: [['openedAt', 'ASC']]
+    });
+
+    const turnsWithBalance = [];
+
+    for (const turn of openTurns) {
+      const balance = await calculateTurnBalance(turn);
+      turnsWithBalance.push({
+        id: turn.id,
+        boxName: turn.boxName,
+        userId: turn.userId,
+        userName: turn.user ? turn.user.fullName : 'Desconocido',
+        balance: parseFloat(balance.toFixed(2)),
+        isOwn: turn.userId === req.user.id
+      });
+    }
+
+    // Sort: own turn first, then by balance descending
+    turnsWithBalance.sort((a, b) => {
+      if (a.isOwn && !b.isOwn) return -1;
+      if (!a.isOwn && b.isOwn) return 1;
+      return b.balance - a.balance;
+    });
+
+    return res.json({ success: true, turns: turnsWithBalance });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 const registerPayment = async (req, res, next) => {
   const { id } = req.params;
-  const { amountPaid } = req.body;
-  const activeTurn = req.activeTurn;
+  const { amountPaid, paymentMethod, turnId } = req.body;
 
   try {
     const client = await Client.findByPk(id);
@@ -107,6 +178,19 @@ const registerPayment = async (req, res, next) => {
       });
     }
 
+    // Validate payment method
+    const isCash = paymentMethod === 'cash';
+    const isBankDeposit = paymentMethod === 'bank_deposit';
+
+    if (!isCash && !isBankDeposit) {
+      return res.status(400).json({ success: false, message: 'Método de pago no válido. Seleccione Efectivo o Depósito Bancario.' });
+    }
+
+    // If cash, turnId is required
+    if (isCash && !turnId) {
+      return res.status(400).json({ success: false, message: 'Debe seleccionar una caja para ingresar el efectivo.' });
+    }
+
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const rand = Math.floor(1000 + Math.random() * 9000);
     const receiptNumber = `REC-${dateStr}-${rand}`;
@@ -114,22 +198,48 @@ const registerPayment = async (req, res, next) => {
     const transaction = await sequelize.transaction();
 
     try {
+      let selectedTurn = null;
+      let cajaLabel = 'Depósito bancario (sin caja)';
+
+      if (isCash) {
+        // Validate selected turn
+        selectedTurn = await CashierTurn.findOne({
+          where: {
+            id: parseInt(turnId),
+            branchId: req.user.branchId,
+            status: 'open'
+          },
+          include: [{ model: User, as: 'user', attributes: ['id', 'fullName'] }],
+          transaction
+        });
+
+        if (!selectedTurn) {
+          await transaction.rollback();
+          return res.status(400).json({ success: false, message: 'La caja seleccionada no existe, no está abierta, o no pertenece a esta sucursal.' });
+        }
+
+        cajaLabel = `${selectedTurn.boxName} (${selectedTurn.user ? selectedTurn.user.fullName : ''})`;
+      }
+
       const payment = await CreditPayment.create({
         receiptNumber,
         clientId: client.id,
-        turnId: activeTurn.id,
+        turnId: selectedTurn ? selectedTurn.id : null,
         amountPaid: parsedAmount
       }, { transaction });
 
       client.currentBalance = currentBalance - parsedAmount;
       await client.save({ transaction });
 
-      await CashierMovement.create({
-        turnId: activeTurn.id,
-        type: 'deposit',
-        amount: parsedAmount,
-        reason: `Abono de Cliente: ${client.name} (Recibo ${receiptNumber})`
-      }, { transaction });
+      // Only create cashier deposit if payment is cash
+      if (isCash && selectedTurn) {
+        await CashierMovement.create({
+          turnId: selectedTurn.id,
+          type: 'deposit',
+          amount: parsedAmount,
+          reason: `Abono de Cliente: ${client.name} (Recibo ${receiptNumber})`
+        }, { transaction });
+      }
 
       await transaction.commit();
 
@@ -137,13 +247,22 @@ const registerPayment = async (req, res, next) => {
         userId: req.user.id,
         branchId: req.user.branchId,
         action: 'cxc.payment_registered',
-        details: { paymentId: payment.id, receiptNumber, clientId: client.id, amountPaid: parsedAmount },
+        details: {
+          paymentId: payment.id,
+          receiptNumber,
+          clientId: client.id,
+          amountPaid: parsedAmount,
+          paymentMethod: isCash ? 'cash' : 'bank_deposit',
+          turnId: selectedTurn ? selectedTurn.id : null,
+          cajaLabel
+        },
         ipAddress: req.ip
       });
 
+      const methodLabel = isCash ? `en efectivo (${cajaLabel})` : 'por depósito bancario';
       return res.json({
         success: true,
-        message: `Abono de $${parsedAmount.toFixed(2)} registrado correctamente.`,
+        message: `Abono de $${parsedAmount.toFixed(2)} registrado correctamente ${methodLabel}.`,
         receiptNumber
       });
     } catch (error) {
@@ -157,5 +276,6 @@ const registerPayment = async (req, res, next) => {
 
 module.exports = {
   renderStatement,
-  registerPayment
+  registerPayment,
+  getAvailableTurns
 };

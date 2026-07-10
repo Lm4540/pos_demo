@@ -32,7 +32,7 @@
             <select id="supplierId" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
               <option value="">Seleccione un proveedor...</option>
               <% suppliers.forEach(s => { %>
-                <option value="<%= s.id %>"><%= s.name %></option>
+              <option value="<%= s.id %>"><%= s.name %></option>
               <% }) %>
             </select>
           </div>
@@ -49,6 +49,50 @@
               <input type="date" id="dueDate" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
             </div>
           </div>
+
+          <!-- Cash Payment Details (caja vs deposit) -->
+          <div id="cash-details-container" class="space-y-4 pt-2">
+            <div class="border-t border-neutral-800 pt-3">
+              <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-2">Método de Pago (Contado)</label>
+              <div class="grid grid-cols-2 gap-3">
+                <label id="source-cashier-label" class="flex items-center gap-2 px-3 py-2 bg-neutral-950 border-2 border-blue-500 rounded-xl cursor-pointer transition-all">
+                  <input type="radio" name="paymentSource" value="cashier" checked onchange="togglePaymentSource()" class="text-blue-600 focus:ring-blue-500 border-neutral-800 bg-neutral-900">
+                  <div>
+                    <span class="text-xs font-semibold text-white">💵 Caja Chica</span>
+                  </div>
+                </label>
+                <label id="source-external-label" class="flex items-center gap-2 px-3 py-2 bg-neutral-950 border-2 border-neutral-800 rounded-xl cursor-pointer transition-all">
+                  <input type="radio" name="paymentSource" value="external" onchange="togglePaymentSource()" class="text-blue-600 focus:ring-blue-500 border-neutral-800 bg-neutral-900">
+                  <div>
+                    <span class="text-xs font-semibold text-white">🏦 Banco / Depósito</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <!-- Cashier box selection -->
+            <div id="purchase-caja-section" class="space-y-2">
+              <label for="purchase-turnId" class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider">Caja Chica de Retiro *</label>
+              <div id="purchase-turn-loading" class="flex items-center gap-2 text-neutral-500 text-sm">
+                <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Cargando cajas...</span>
+              </div>
+              <select id="purchase-turnId" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm hidden">
+              </select>
+              <div id="purchase-turn-no-options" class="hidden bg-amber-950/30 border border-amber-800/40 text-amber-300 text-xs rounded-xl px-4 py-3">
+                <span>No hay cajas abiertas. Registre el pago como banco o abra caja primero.</span>
+              </div>
+            </div>
+
+            <!-- External bank voucher -->
+            <div id="purchase-bank-section" class="hidden space-y-1">
+              <label for="purchase-transactionRef" class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider">No. Autorización / Voucher *</label>
+              <input type="text" id="purchase-transactionRef" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" placeholder="VOUCHER-12345">
+            </div>
+          </div>
         </div>
       </div>
 
@@ -58,12 +102,24 @@
         <div class="space-y-4">
           <div>
             <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Seleccionar Producto *</label>
-            <select id="productId" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
-              <option value="">Seleccione un producto...</option>
-              <% products.forEach(p => { %>
-                <option value="<%= p.id %>" data-barcode="<%= p.barCode || '' %>"><%= p.name %> <%= p.barCode ? '(' + p.barCode + ')' : '' %></option>
-              <% }) %>
-            </select>
+            <div class="relative">
+              <div class="flex gap-2">
+                <div class="relative flex-grow">
+                  <input type="text" id="productSearchInput" autocomplete="off" placeholder="Buscar por nombre o código..." class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                  <!-- Search Results Dropdown -->
+                  <div id="productSearchResults" class="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto bg-neutral-900 border border-neutral-800 rounded-xl shadow-xl z-50 hidden divide-y divide-neutral-850">
+                  </div>
+                </div>
+                <button type="button" onclick="openQuickProductModal()" class="px-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-blue-500/10 flex items-center gap-1 cursor-pointer whitespace-nowrap" title="Crear Nuevo Producto">
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span>Nuevo</span>
+                </button>
+              </div>
+              <input type="hidden" id="productId">
+              <input type="hidden" id="selectedProductBarcode">
+            </div>
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
@@ -101,7 +157,7 @@
       <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm flex flex-col h-full justify-between">
         <div>
           <h2 class="text-lg font-bold text-white mb-4">Detalle de Artículos a Ingresar</h2>
-          
+
           <div class="overflow-x-auto min-h-60">
             <table class="min-w-full divide-y divide-neutral-800 text-left text-sm text-neutral-300">
               <thead>
@@ -141,10 +197,11 @@
 <script>
   let items = [];
 
+  let selectedProductName = '';
+
   function addItem() {
-    const prodSelect = document.getElementById('productId');
-    const productId = prodSelect.value;
-    const productName = prodSelect.options[prodSelect.selectedIndex].text;
+    const productId = document.getElementById('productId').value;
+    const productName = selectedProductName;
     const batchCode = document.getElementById('batchCode').value.trim();
     const expirationDate = document.getElementById('expirationDate').value;
     const qtyInput = document.getElementById('quantity');
@@ -170,7 +227,10 @@
     });
 
     // Reset item inputs but keep default/helpers if any
-    prodSelect.value = '';
+    document.getElementById('productId').value = '';
+    document.getElementById('productSearchInput').value = '';
+    document.getElementById('selectedProductBarcode').value = '';
+    selectedProductName = '';
     document.getElementById('batchCode').value = '';
     document.getElementById('expirationDate').value = '';
     qtyInput.value = '';
@@ -188,7 +248,7 @@
   function renderItems() {
     const body = document.getElementById('items-list-body');
     const totalSpan = document.getElementById('invoice-total');
-    
+
     if (items.length === 0) {
       body.innerHTML = `
         <tr>
@@ -226,19 +286,104 @@
 
   function toggleDueDate() {
     const method = document.getElementById('paymentMethod').value;
-    const container = document.getElementById('due-date-container');
+    const dueDateContainer = document.getElementById('due-date-container');
+    const cashDetailsContainer = document.getElementById('cash-details-container');
+
     if (method === 'credit') {
-      container.classList.remove('hidden');
+      dueDateContainer.classList.remove('hidden');
+      cashDetailsContainer.classList.add('hidden');
     } else {
-      container.classList.add('hidden');
+      dueDateContainer.classList.add('hidden');
+      cashDetailsContainer.classList.remove('hidden');
     }
   }
+
+  function togglePaymentSource() {
+    const paymentSource = document.querySelector('input[name="paymentSource"]:checked').value;
+    const cajaSection = document.getElementById('purchase-caja-section');
+    const bankSection = document.getElementById('purchase-bank-section');
+    const cashierLabel = document.getElementById('source-cashier-label');
+    const externalLabel = document.getElementById('source-external-label');
+    const saveBtn = document.getElementById('btn-save-purchase');
+
+    if (paymentSource === 'cashier') {
+      cajaSection.classList.remove('hidden');
+      bankSection.classList.add('hidden');
+      cashierLabel.className = "flex items-center gap-2 px-3 py-2 bg-neutral-950 border-2 border-blue-500 rounded-xl cursor-pointer transition-all";
+      externalLabel.className = "flex items-center gap-2 px-3 py-2 bg-neutral-950 border-2 border-neutral-800 rounded-xl cursor-pointer transition-all";
+
+      // If cashier selected and no boxes available, disable save button
+      const turnSelect = document.getElementById('purchase-turnId');
+      if (turnSelect.classList.contains('hidden')) {
+        saveBtn.disabled = true;
+      } else {
+        saveBtn.disabled = false;
+      }
+    } else {
+      cajaSection.classList.add('hidden');
+      bankSection.classList.remove('hidden');
+      cashierLabel.className = "flex items-center gap-2 px-3 py-2 bg-neutral-950 border-2 border-neutral-800 rounded-xl cursor-pointer transition-all";
+      externalLabel.className = "flex items-center gap-2 px-3 py-2 bg-neutral-950 border-2 border-blue-500 rounded-xl cursor-pointer transition-all";
+      saveBtn.disabled = false;
+    }
+  }
+
+  async function loadPurchaseTurns() {
+    const turnSelect = document.getElementById('purchase-turnId');
+    const turnLoading = document.getElementById('purchase-turn-loading');
+    const turnNoOptions = document.getElementById('purchase-turn-no-options');
+    const saveBtn = document.getElementById('btn-save-purchase');
+
+    turnSelect.classList.add('hidden');
+    turnNoOptions.classList.add('hidden');
+    turnLoading.classList.remove('hidden');
+    turnSelect.innerHTML = '';
+
+    try {
+      const resp = await fetch('/purchases/api/available-turns');
+      const result = await resp.json();
+
+      if (result.success && result.turns.length > 0) {
+        result.turns.forEach(turn => {
+          const opt = document.createElement('option');
+          opt.value = turn.id;
+          const ownLabel = turn.isOwn ? ' ★ Mi caja' : '';
+          opt.textContent = `${turn.boxName} - ${turn.userName} ($${turn.balance.toFixed(2)})${ownLabel}`;
+          turnSelect.appendChild(opt);
+        });
+        turnLoading.classList.add('hidden');
+        turnSelect.classList.remove('hidden');
+        saveBtn.disabled = false;
+      } else {
+        turnLoading.classList.add('hidden');
+        turnNoOptions.classList.remove('hidden');
+        // If cashier is selected method, disable save
+        const paymentSource = document.querySelector('input[name="paymentSource"]:checked').value;
+        if (paymentSource === 'cashier') {
+          saveBtn.disabled = true;
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      turnLoading.classList.add('hidden');
+      turnNoOptions.classList.remove('hidden');
+    }
+  }
+
+  // Load turns on page ready
+  window.addEventListener('DOMContentLoaded', () => {
+    loadPurchaseTurns();
+  });
 
   async function submitPurchase() {
     const invoiceNumber = document.getElementById('invoiceNumber').value.trim();
     const supplierId = document.getElementById('supplierId').value;
     const paymentMethod = document.getElementById('paymentMethod').value;
     const dueDate = document.getElementById('dueDate').value;
+
+    const paymentSource = paymentMethod === 'cash' ? document.querySelector('input[name="paymentSource"]:checked').value : null;
+    const turnId = paymentMethod === 'cash' && paymentSource === 'cashier' ? document.getElementById('purchase-turnId').value : null;
+    const transactionRef = paymentMethod === 'cash' && paymentSource === 'external' ? document.getElementById('purchase-transactionRef').value.trim() : null;
 
     if (invoiceNumber === '' || !supplierId) {
       showToast('Por favor ingrese el número de factura y seleccione el proveedor.', 'warning');
@@ -248,6 +393,17 @@
     if (paymentMethod === 'credit' && !dueDate) {
       showToast('Debe ingresar la fecha de vencimiento para la compra al crédito.', 'warning');
       return;
+    }
+
+    if (paymentMethod === 'cash') {
+      if (paymentSource === 'cashier' && !turnId) {
+        showToast('Debe seleccionar una caja activa para efectuar el pago en efectivo.', 'warning');
+        return;
+      }
+      if (paymentSource === 'external' && transactionRef === '') {
+        showToast('Debe ingresar el número de autorización o Voucher del pago bancario.', 'warning');
+        return;
+      }
     }
 
     if (items.length === 0) {
@@ -262,13 +418,18 @@
     try {
       const resp = await fetch('/purchases', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          invoiceNumber, 
-          supplierId, 
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          invoiceNumber,
+          supplierId,
           items,
           paymentMethod,
-          dueDate: paymentMethod === 'credit' ? dueDate : null
+          dueDate: paymentMethod === 'credit' ? dueDate : null,
+          paymentSource,
+          turnId,
+          transactionRef
         })
       });
 
@@ -290,6 +451,201 @@
       saveBtn.innerText = 'Procesar Factura y Stock';
     }
   }
+
+  // Autocomplete, Search & Modal logic wrapped in DOMContentLoaded
+  window.addEventListener('DOMContentLoaded', () => {
+    let searchTimeout = null;
+    const searchInput = document.getElementById('productSearchInput');
+    const searchResults = document.getElementById('productSearchResults');
+    const hiddenProductId = document.getElementById('productId');
+    const hiddenBarcode = document.getElementById('selectedProductBarcode');
+    const quickProductForm = document.getElementById('quick-product-form');
+
+    searchInput.addEventListener('focus', () => {
+      if (searchInput.value.trim() === '') {
+        performSearch('');
+      } else {
+        searchResults.classList.remove('hidden');
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+        searchResults.classList.add('hidden');
+      }
+    });
+
+    searchInput.addEventListener('input', () => {
+      clearTimeout(searchTimeout);
+      const query = searchInput.value.trim();
+      searchTimeout = setTimeout(() => {
+        performSearch(query);
+      }, 200);
+    });
+
+    async function performSearch(query) {
+      try {
+        const resp = await fetch(`/products/api/search?q=${encodeURIComponent(query)}`);
+        const data = await resp.json();
+        if (data.success) {
+          renderSearchResults(data.products);
+        }
+      } catch (err) {
+        console.error('Error searching products:', err);
+      }
+    }
+
+    function renderSearchResults(products) {
+      if (products.length === 0) {
+        searchResults.innerHTML = '<div class="p-3 text-neutral-500 text-xs text-center">No se encontraron productos.</div>';
+        searchResults.classList.remove('hidden');
+        return;
+      }
+
+      searchResults.innerHTML = products.map(p => `
+        <div onclick="window.selectProduct(${p.id}, '${escapeHtml(p.name)}', '${p.barCode || ''}')" class="p-3 hover:bg-neutral-850 cursor-pointer transition-colors text-xs flex justify-between items-center border-b border-neutral-800 last:border-0">
+          <div>
+            <span class="font-bold text-white block">${escapeHtml(p.name)}</span>
+            <span class="text-neutral-500 text-[10px] font-mono">${p.barCode || 'Sin código de barra'}</span>
+          </div>
+          <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-neutral-850 text-neutral-400 capitalize">${p.type === 'service' ? 'Servicio' : 'Físico'}</span>
+        </div>
+      `).join('');
+      searchResults.classList.remove('hidden');
+    }
+
+    window.selectProduct = function(id, name, barcode) {
+      hiddenProductId.value = id;
+      selectedProductName = name;
+      searchInput.value = name;
+      hiddenBarcode.value = barcode;
+      searchResults.classList.add('hidden');
+      document.getElementById('batchCode').focus();
+    };
+
+    function escapeHtml(text) {
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    quickProductForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('quick-prod-name').value.trim();
+      const barCode = document.getElementById('quick-prod-barcode').value.trim();
+      const categoryId = document.getElementById('quick-prod-categoryId').value;
+      const type = document.getElementById('quick-prod-type').value;
+      const isFrequent = document.getElementById('quick-prod-isFrequent').checked ? 'true' : 'false';
+
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.innerText = 'Guardando...';
+
+      try {
+        const resp = await fetch('/products/api/quick-create', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            name,
+            barCode,
+            categoryId,
+            type,
+            isFrequent
+          })
+        });
+
+        const result = await resp.json();
+        if (resp.ok && result.success) {
+          showToast(result.message, 'success');
+          closeQuickProductModal();
+          // Select newly created product
+          window.selectProduct(result.product.id, result.product.name, result.product.barCode);
+        } else {
+          showToast(result.message || 'Error al crear el producto.', 'error');
+          submitBtn.disabled = false;
+          submitBtn.innerText = 'Guardar Producto';
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Error de red al intentar crear el producto.', 'error');
+        submitBtn.disabled = false;
+        submitBtn.innerText = 'Guardar Producto';
+      }
+    });
+  });
+
+  // Modal helper functions (exposed globally for inline onclick attributes)
+  window.openQuickProductModal = function() {
+    document.getElementById('quick-product-modal').classList.remove('hidden');
+    document.getElementById('quick-prod-name').focus();
+  };
+
+  window.closeQuickProductModal = function() {
+    document.getElementById('quick-product-modal').classList.add('hidden');
+    document.getElementById('quick-product-form').reset();
+  };
 </script>
+
+<!-- Quick Product Modal -->
+<div id="quick-product-modal" class="fixed inset-0 bg-neutral-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+  <div class="bg-neutral-900 border border-neutral-800 w-full max-w-md p-6 rounded-2xl shadow-2xl relative max-h-[90vh] flex flex-col">
+    <div class="flex justify-between items-center pb-3 border-b border-neutral-800 mb-4">
+      <h2 class="text-lg font-bold text-white">Crear Producto Rápido</h2>
+      <button type="button" onclick="closeQuickProductModal()" class="text-neutral-500 hover:text-white cursor-pointer transition-colors">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <form id="quick-product-form" class="space-y-4 overflow-y-auto flex-grow pr-1">
+      <div>
+        <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Nombre del Producto *</label>
+        <input type="text" id="quick-prod-name" name="name" required class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" placeholder="Ej. Coca Cola 1.5L">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Código de Barras</label>
+        <input type="text" id="quick-prod-barcode" name="barCode" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" placeholder="Ej. 7501055300074">
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Categoría</label>
+          <select id="quick-prod-categoryId" name="categoryId" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+            <option value="">Sin Categoría</option>
+            <% categories.forEach(c => { %>
+            <option value="<%= c.id %>"><%= c.name %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Tipo de Producto</label>
+          <select id="quick-prod-type" name="type" class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+            <option value="physical">Físico</option>
+            <option value="service">Servicio</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 py-2">
+        <input type="checkbox" id="quick-prod-isFrequent" name="isFrequent" value="true" class="h-4 w-4 rounded border-neutral-800 bg-neutral-950 text-blue-600 focus:ring-blue-500 cursor-pointer">
+        <label for="quick-prod-isFrequent" class="text-xs font-semibold text-neutral-400 uppercase tracking-wider cursor-pointer select-none">¿Producto Frecuente?</label>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-3 border-t border-neutral-800">
+        <button type="button" onclick="closeQuickProductModal()" class="px-4 py-2.5 text-sm font-semibold text-neutral-400 bg-neutral-800 hover:bg-neutral-750 rounded-xl transition-all cursor-pointer">
+          Cancelar
+        </button>
+        <button type="submit" class="px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-xl transition-all cursor-pointer shadow-md shadow-blue-500/10">
+          Guardar Producto
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
 
 <%- include('../../partials/foot') %>

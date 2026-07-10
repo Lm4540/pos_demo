@@ -60,7 +60,7 @@ const renderPOS = async (req, res, next) => {
         let remainingBalance = parseFloat(client.currentBalance);
         let oldestUnpaid = null;
         let runningSum = 0;
-        
+
         for (const sale of clientSales) {
           runningSum += parseFloat(sale.totalAmount);
           oldestUnpaid = sale;
@@ -386,7 +386,7 @@ const createSale = async (req, res, next) => {
         });
 
         const itemPrice = item.unitPrice ? parseFloat(item.unitPrice) : (branchProduct ? parseFloat(branchProduct.salePrice) : 0);
-        
+
         if (itemPrice <= 0) {
           throw new Error(`El servicio "${product.name}" debe tener un precio válido.`);
         }
@@ -451,7 +451,7 @@ const createSale = async (req, res, next) => {
 
         let remainingToExhaust = quantity;
         const itemPrice = parseFloat(branchProduct.salePrice);
-        
+
         // Evaluate applicable promotion
         let promo = promotions.find(p => p.productId === product.id);
         if (!promo && product.categoryId) {
@@ -486,7 +486,7 @@ const createSale = async (req, res, next) => {
 
         for (const batch of batches) {
           const toTake = Math.min(remainingToExhaust, batch.currentQuantity);
-          
+
           batch.currentQuantity -= toTake;
           await batch.save({ transaction });
 
@@ -559,7 +559,7 @@ const createSale = async (req, res, next) => {
       if (!clientId) {
         throw new Error('Debe especificar un cliente para ventas con saldo al crédito.');
       }
-      client = await Client.findByPk(clientId, { 
+      client = await Client.findByPk(clientId, {
         transaction,
         lock: transaction.LOCK.UPDATE
       });
@@ -706,9 +706,9 @@ const voidSale = async (req, res, next) => {
     for (const detail of sale.details) {
       if (detail.batchId) {
         // Revert ProductBatch
-        const batch = await ProductBatch.findByPk(detail.batchId, { 
+        const batch = await ProductBatch.findByPk(detail.batchId, {
           transaction,
-          lock: transaction.LOCK.UPDATE 
+          lock: transaction.LOCK.UPDATE
         });
         if (batch) {
           batch.currentQuantity += detail.quantity;
@@ -747,9 +747,9 @@ const voidSale = async (req, res, next) => {
 
     // 2. Revert Client credit balance if applicable
     if (sale.clientId && (parseFloat(sale.amountCredit) > 0 || sale.paymentMethod === 'credit')) {
-      const client = await Client.findByPk(sale.clientId, { 
+      const client = await Client.findByPk(sale.clientId, {
         transaction,
-        lock: transaction.LOCK.UPDATE 
+        lock: transaction.LOCK.UPDATE
       });
       if (client) {
         const revertAmount = parseFloat(sale.amountCredit) > 0 ? parseFloat(sale.amountCredit) : parseFloat(sale.totalAmount);

@@ -242,12 +242,58 @@
         <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Monto a Abonar ($ USD) *</label>
         <input type="number" step="0.01" min="0.01" id="payment-amount" name="amountPaid" required class="w-full px-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm font-mono" placeholder="0.00">
       </div>
+
+      <!-- Payment Method Selector -->
+      <div class="border-t border-neutral-800 pt-4">
+        <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-2">Método de Pago *</label>
+        <div class="grid grid-cols-2 gap-3">
+          <label id="method-cash-label" class="flex items-center gap-2 px-4 py-3 bg-neutral-950 border-2 border-blue-500 rounded-xl cursor-pointer transition-all">
+            <input type="radio" name="paymentMethod" value="cash" id="method-cash" checked class="text-blue-600 focus:ring-blue-500 border-neutral-800 bg-neutral-900">
+            <div>
+              <span class="text-sm font-semibold text-white">💵 Efectivo</span>
+              <span class="text-[10px] text-neutral-500 block">Ingresa a caja</span>
+            </div>
+          </label>
+          <label id="method-bank-label" class="flex items-center gap-2 px-4 py-3 bg-neutral-950 border-2 border-neutral-800 rounded-xl cursor-pointer transition-all">
+            <input type="radio" name="paymentMethod" value="bank_deposit" id="method-bank" class="text-blue-600 focus:ring-blue-500 border-neutral-800 bg-neutral-900">
+            <div>
+              <span class="text-sm font-semibold text-white">🏦 Depósito</span>
+              <span class="text-[10px] text-neutral-500 block">Transferencia bancaria</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Turn Selector (only visible for cash) -->
+      <div id="payment-turn-section">
+        <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Ingresar Efectivo a Caja *</label>
+        <div id="payment-turn-loading" class="flex items-center gap-2 text-neutral-500 text-sm py-2">
+          <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Cargando cajas disponibles...
+        </div>
+        <select id="payment-turnId" name="turnId" class="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-2.5 text-white text-sm focus:border-blue-500 focus:outline-none transition-all hidden">
+        </select>
+        <div id="payment-turn-no-options" class="hidden bg-red-950/30 border border-red-800/40 text-red-300 text-xs rounded-xl px-4 py-3 mt-1">
+          <div class="flex items-center gap-2">
+            <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.268 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            <span>No hay cajas abiertas. Abra un turno de caja para recibir pagos en efectivo.</span>
+          </div>
+        </div>
+        <p id="payment-turn-hint" class="text-[11px] text-neutral-500 mt-1.5 hidden">
+          Saldo en caja: <span id="payment-turn-balance" class="font-mono font-semibold text-emerald-400">$0.00</span>
+        </p>
+      </div>
       
       <div class="flex justify-end gap-3 pt-2">
         <button type="button" onclick="closePaymentModal()" class="px-4 py-2 text-sm font-semibold text-neutral-400 bg-neutral-800 hover:bg-neutral-750 rounded-xl transition-all cursor-pointer">
           Cancelar
         </button>
-        <button type="submit" class="px-5 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-xl transition-all cursor-pointer shadow-md shadow-blue-500/10">
+        <button type="submit" id="payment-submit-btn" class="px-5 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-xl transition-all cursor-pointer shadow-md shadow-blue-500/10">
           Registrar Abono
         </button>
       </div>
@@ -288,8 +334,15 @@
     const amountInput = document.getElementById('payment-amount');
     amountInput.value = '';
     amountInput.max = parseFloat(client.currentBalance);
+
+    // Reset to cash method
+    document.getElementById('method-cash').checked = true;
+    updatePaymentMethodUI();
     
     document.getElementById('payment-modal').classList.remove('hidden');
+
+    // Load available turns for cash option
+    loadPaymentTurns();
   }
 
   function closePaymentModal() {
@@ -297,12 +350,115 @@
     currentClientId = null;
   }
 
+  // Payment method radio toggle UI
+  const methodCash = document.getElementById('method-cash');
+  const methodBank = document.getElementById('method-bank');
+  const methodCashLabel = document.getElementById('method-cash-label');
+  const methodBankLabel = document.getElementById('method-bank-label');
+  const paymentTurnSection = document.getElementById('payment-turn-section');
+  const paymentTurnSelect = document.getElementById('payment-turnId');
+  const paymentTurnLoading = document.getElementById('payment-turn-loading');
+  const paymentTurnNoOptions = document.getElementById('payment-turn-no-options');
+  const paymentTurnHint = document.getElementById('payment-turn-hint');
+  const paymentTurnBalance = document.getElementById('payment-turn-balance');
+  const paymentSubmitBtn = document.getElementById('payment-submit-btn');
+
+  function updatePaymentMethodUI() {
+    if (methodCash.checked) {
+      methodCashLabel.classList.remove('border-neutral-800');
+      methodCashLabel.classList.add('border-blue-500');
+      methodBankLabel.classList.remove('border-blue-500');
+      methodBankLabel.classList.add('border-neutral-800');
+      paymentTurnSection.classList.remove('hidden');
+    } else {
+      methodBankLabel.classList.remove('border-neutral-800');
+      methodBankLabel.classList.add('border-blue-500');
+      methodCashLabel.classList.remove('border-blue-500');
+      methodCashLabel.classList.add('border-neutral-800');
+      paymentTurnSection.classList.add('hidden');
+      paymentSubmitBtn.disabled = false;
+    }
+  }
+
+  methodCash.addEventListener('change', () => {
+    updatePaymentMethodUI();
+    loadPaymentTurns();
+  });
+  methodBank.addEventListener('change', updatePaymentMethodUI);
+
+  let paymentTurnsLoaded = false;
+
+  async function loadPaymentTurns() {
+    paymentTurnSelect.classList.add('hidden');
+    paymentTurnNoOptions.classList.add('hidden');
+    paymentTurnHint.classList.add('hidden');
+    paymentTurnLoading.classList.remove('hidden');
+    paymentTurnSelect.innerHTML = '';
+
+    try {
+      const resp = await fetch('/clients/payment/available-turns', {
+        headers: { 'Accept': 'application/json' }
+      });
+      const result = await resp.json();
+
+      if (result.success && result.turns.length > 0) {
+        result.turns.forEach(turn => {
+          const opt = document.createElement('option');
+          opt.value = turn.id;
+          const ownLabel = turn.isOwn ? ' ★ Mi caja' : '';
+          opt.textContent = `${turn.boxName} - ${turn.userName} (Saldo: $${turn.balance.toFixed(2)})${ownLabel}`;
+          opt.dataset.balance = turn.balance;
+          paymentTurnSelect.appendChild(opt);
+        });
+
+        paymentTurnLoading.classList.add('hidden');
+        paymentTurnSelect.classList.remove('hidden');
+        paymentSubmitBtn.disabled = false;
+        paymentTurnsLoaded = true;
+        updatePaymentTurnHint();
+      } else {
+        paymentTurnLoading.classList.add('hidden');
+        paymentTurnNoOptions.classList.remove('hidden');
+        paymentSubmitBtn.disabled = true;
+        paymentTurnsLoaded = false;
+      }
+    } catch (err) {
+      console.error('Error loading turns:', err);
+      paymentTurnLoading.classList.add('hidden');
+      paymentTurnNoOptions.classList.remove('hidden');
+      paymentTurnNoOptions.querySelector('span').textContent = 'Error al cargar las cajas disponibles.';
+      paymentSubmitBtn.disabled = true;
+      paymentTurnsLoaded = false;
+    }
+  }
+
+  function updatePaymentTurnHint() {
+    const selectedOption = paymentTurnSelect.options[paymentTurnSelect.selectedIndex];
+    if (selectedOption && selectedOption.dataset.balance !== undefined) {
+      const balance = parseFloat(selectedOption.dataset.balance);
+      paymentTurnBalance.textContent = `$${balance.toFixed(2)}`;
+      paymentTurnHint.classList.remove('hidden');
+      if (balance <= 0) {
+        paymentTurnBalance.className = 'font-mono font-semibold text-red-400';
+      } else {
+        paymentTurnBalance.className = 'font-mono font-semibold text-emerald-400';
+      }
+    } else {
+      paymentTurnHint.classList.add('hidden');
+    }
+  }
+
+  paymentTurnSelect.addEventListener('change', updatePaymentTurnHint);
+
   document.getElementById('payment-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!currentClientId) return;
 
     const amountPaid = document.getElementById('payment-amount').value;
-    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+    const turnId = paymentMethod === 'cash' ? paymentTurnSelect.value : null;
+
+    const submitBtn = paymentSubmitBtn;
     submitBtn.disabled = true;
     submitBtn.innerText = 'Procesando...';
 
@@ -310,7 +466,7 @@
       const resp = await fetch(`/clients/${currentClientId}/payment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amountPaid })
+        body: JSON.stringify({ amountPaid, paymentMethod, turnId })
       });
 
       const resData = await resp.json();
@@ -322,16 +478,9 @@
           window.location.reload();
         }, 1000);
       } else {
-        if (resp.status === 403 && resData.redirectUrl) {
-          showToast(resData.message + ' Redirigiendo a apertura de caja...', 'warning');
-          setTimeout(() => {
-            window.location.href = resData.redirectUrl;
-          }, 2000);
-        } else {
-          showToast(resData.message || 'Error al registrar el abono.', 'error');
-          submitBtn.disabled = false;
-          submitBtn.innerText = 'Registrar Abono';
-        }
+        showToast(resData.message || 'Error al registrar el abono.', 'error');
+        submitBtn.disabled = false;
+        submitBtn.innerText = 'Registrar Abono';
       }
     } catch (err) {
       console.error(err);

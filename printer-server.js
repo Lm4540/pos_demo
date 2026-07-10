@@ -7,7 +7,7 @@ const { exec } = require('child_process');
 
 const PORT = 4567;
 // AHORA ESTE ARGUMENTO DEBE SER EL NOMBRE COMPARTIDO DE LA IMPRESORA
-const PRINTER_SHARE_NAME = process.argv[2]; 
+const PRINTER_SHARE_NAME = process.argv[2];
 
 if (!PRINTER_SHARE_NAME) {
     console.error("ERROR: El nombre COMPARTIDO de la impresora es requerido.");
@@ -20,17 +20,34 @@ const pfxPath = path.join(process.env.USERPROFILE || process.env.HOME, 'Desktop'
 
 let server;
 let isHttps = false;
+const requestHandler = (req, res) => {
+    // Configurar cabeceras CORS por si consultas desde el navegador
+    res.setHeader('Access-Control-Allow-Origin', '*');
+
+    if (req.method === 'GET' && req.url === '/') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+            status: 'online',
+            message: 'Servidor de impresión local activo',
+            printer: PRINTER_SHARE_NAME,
+            timestamp: new Date().toISOString()
+        }));
+    } else {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('Not Found');
+    }
+};
 
 try {
     if (fs.existsSync(pfxPath)) {
         server = https.createServer({
             pfx: fs.readFileSync(pfxPath),
             passphrase: '123456'
-        });
+        }, requestHandler);
         isHttps = true;
     } else {
         console.warn(`WARNING: Certificado PFX no encontrado en ${pfxPath}. Iniciando servidor en modo HTTP/WS (sin cifrado).`);
-        server = http.createServer();
+        server = http.createServer(requestHandler);
     }
 } catch (e) {
     console.warn(`WARNING: Error al cargar certificado PFX (${e.message}). Iniciando servidor en modo HTTP/WS (sin cifrado).`);
@@ -41,12 +58,12 @@ const wss = new WebSocket.Server({ server });
 
 wss.on('connection', (ws) => {
     console.log('Cliente POS conectado.');
-    
+
     ws.on('message', (message) => {
         try {
             const base64Data = message.toString().trim();
             const escposCommands = Buffer.from(base64Data, 'base64');
-            
+
             // 1. Crear un archivo binario temporal
             const tempFilePath = path.join(__dirname, `ticket_${Date.now()}_${Math.floor(Math.random() * 1000)}.bin`);
             fs.writeFileSync(tempFilePath, escposCommands);
