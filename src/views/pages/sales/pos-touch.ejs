@@ -822,6 +822,8 @@
         return;
       }
       existing.quantity += 1;
+      showToast(`Agregado: ${bp.name} (Cant: 1)`, 'success');
+      playScanSound();
     } else {
       if (type !== 'service' && stock <= 0) {
         showToast('Producto agotado.', 'warning');
@@ -837,6 +839,8 @@
         type,
         customDescription: null
       });
+      showToast(`Agregado: ${bp.name} (Cant: 1)`, 'success');
+      playScanSound();
     }
     renderCart();
 
@@ -1422,8 +1426,7 @@
       if (results && results.length > 0) {
         const bp = results[0];
         addToCart(bp.id, bp.name, bp.salePrice, bp.totalStock, bp.categoryId, bp.type);
-        showToast(`Agregado: ${bp.name} (Cant: 1)`, 'success');
-        playScanSound();
+
       } else {
         showToast(`Código de barras "${code}" no encontrado o sin existencias.`, 'error');
       }
@@ -1512,7 +1515,6 @@
       const resData = await resp.json();
       if (resData.success) {
         showToast('Venta procesada.', 'success');
-        buildPrintTicket(resData.ticketNumber, resData.saleId, splitCash, splitCard, splitCredit, cardTransactionRef);
 
         window.lastCompletedSaleData = {
           ticketNumber: resData.ticketNumber,
@@ -1539,6 +1541,10 @@
         });
 
         clearCart();
+        if (cobraBtn) {
+          cobraBtn.disabled = false;
+          cobraBtn.innerText = 'COBRAR';
+        }
 
         const isPrintEnabled = document.getElementById('print-ticket-switch')?.checked;
         if (isPrintEnabled) {
@@ -1564,98 +1570,7 @@
     }
   }
 
-  function buildPrintTicket(ticketNumber, saleId, cashPaid, cardPaid, creditPaid, cardRef) {
-    const container = document.getElementById('printable-ticket');
-    const date = new Date().toLocaleString('es-SV');
-    const totals = getCartTotals();
-    const clientSelect = document.getElementById('client-id-select');
-    const clientName = clientSelect.value ? clientSelect.options[clientSelect.selectedIndex].text.trim() : 'Consumidor Final';
 
-    let paymentLabel = 'Efectivo';
-    if (paymentMethod === 'card') paymentLabel = 'Tarjeta';
-    if (paymentMethod === 'credit') paymentLabel = 'Crédito';
-    if (paymentMethod === 'split') {
-      paymentLabel = `Dividido:<br>- Efec: $${cashPaid.toFixed(2)}<br>- Tarj: $${cardPaid.toFixed(2)}<br>- Créd: $${creditPaid.toFixed(2)}`;
-    }
-
-    container.innerHTML = `
-      <div style="text-align: center; margin-bottom: 10px;">
-        <strong style="font-size: 12px;">RG SIMPLE POS</strong><br>
-        <span>Sucursal El Salvador</span><br>
-        <span>Ticket #: ${ticketNumber}</span><br>
-        <span>Fecha: ${date}</span>
-      </div>
-      <div style="border-bottom: 1px dashed #000; margin-bottom: 8px;"></div>
-      <table style="width: 100%; border-collapse: collapse; margin-bottom: 8px;">
-        <thead>
-          <tr style="border-b: 1px solid #000;">
-            <th style="text-align: left;">Art</th>
-            <th style="text-align: center;">Cant</th>
-            <th style="text-align: right;">Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${cart.map(item => {
-            const price = parseFloat(item.price);
-            let promo = promotions.find(p => p.productId === item.productId);
-            if (!promo && item.categoryId) {
-              promo = promotions.find(p => p.categoryId === item.categoryId);
-            }
-            let discount = 0;
-            if (promo) {
-              if (promo.type === 'percentage') {
-                discount = price * (parseFloat(promo.value) / 100) * item.quantity;
-              } else if (promo.type === 'fixed_price') {
-                const promoPrice = parseFloat(promo.value);
-                if (promoPrice < price) discount = (price - promoPrice) * item.quantity;
-              } else if (promo.type === 'bulk') {
-                if (item.quantity >= promo.buyQty) {
-                  const groups = Math.floor(item.quantity / promo.buyQty);
-                  discount = groups * (promo.buyQty - promo.payQty) * price;
-                }
-              }
-            }
-            return ` <
-      tr >
-      <
-      td > $ {
-        item.customDescription || item.name
-      } < /td> <
-    td style = "text-align: center;" > $ {
-      item.quantity
-    } < /td> <
-    td style = "text-align: right;" > $$ {
-      ((price * item.quantity) - discount).toFixed(2)
-    } < /td> < /
-    tr >
-      `;
-          }).join('')}
-        </tbody>
-      </table>
-      <div style="border-bottom: 1px dashed #000; margin-bottom: 8px;"></div>
-      <div style="display: flex; justify-content: space-between; font-weight: bold;">
-        <span>Total:</span>
-        <span>$${totals.net.toFixed(2)}</span>
-      </div>
-      <div style="margin-top: 8px;">
-        <span>Método: ${paymentLabel}</span><br>
-        <span>Cliente: ${clientName}</span><br>
-        <span>Cajero: ${window.currentUserFullName}</span>
-      </div>
-      <div style="text-align: center; margin-top: 15px;">
-        <span>¡Gracias por su compra!</span>
-      </div>
-    `;
-  }
-
-  function printTicket() {
-    window.print();
-  }
-
-  function closeTicketModal() {
-    document.getElementById('ticket-modal').classList.add('hidden');
-    // window.location.reload();
-  }
 
   async function handlePOSPrinting(ticketNumber, saleId, cashPaid, cardPaid, creditPaid, cardRef) {
     const isPrintEnabled = document.getElementById('print-ticket-switch')?.checked;
