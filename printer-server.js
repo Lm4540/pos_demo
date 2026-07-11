@@ -7,7 +7,7 @@ const { exec } = require('child_process');
 
 const PORT = 4567;
 // AHORA ESTE ARGUMENTO DEBE SER EL NOMBRE COMPARTIDO DE LA IMPRESORA
-const PRINTER_SHARE_NAME = process.argv[2];
+const PRINTER_SHARE_NAME = "LR2000";
 
 if (!PRINTER_SHARE_NAME) {
     console.error("ERROR: El nombre COMPARTIDO de la impresora es requerido.");
