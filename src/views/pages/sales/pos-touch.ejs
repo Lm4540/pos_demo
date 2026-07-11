@@ -822,7 +822,7 @@
         return;
       }
       existing.quantity += 1;
-      showToast(`Agregado: ${bp.name} (Cant: 1)`, 'success');
+      // showToast(`Agregado: ${name} (Cant: 1)`, 'success');
       playScanSound();
     } else {
       if (type !== 'service' && stock <= 0) {
@@ -839,7 +839,7 @@
         type,
         customDescription: null
       });
-      showToast(`Agregado: ${bp.name} (Cant: 1)`, 'success');
+      // showToast(`Agregado: ${name} (Cant: 1)`, 'success');
       playScanSound();
     }
     renderCart();
@@ -1540,20 +1540,26 @@
           }
         });
 
-        clearCart();
-        if (cobraBtn) {
-          cobraBtn.disabled = false;
-          cobraBtn.innerText = 'COBRAR';
-        }
-
-        const isPrintEnabled = document.getElementById('print-ticket-switch')?.checked;
-        if (isPrintEnabled) {
-          setTimeout(() => {
+        setTimeout(() => {
             window.location.reload();
           }, 1200);
-        } else {
-          document.getElementById('ticket-modal').classList.remove('hidden');
-        }
+
+
+        // clearCart();
+        // clearCashReceived();
+        // if (cobraBtn) {
+        //   cobraBtn.disabled = false;
+        //   cobraBtn.innerText = 'COBRAR';
+        // }
+
+        // const isPrintEnabled = document.getElementById('print-ticket-switch')?.checked;
+        // if (isPrintEnabled) {
+        //   setTimeout(() => {
+        //     window.location.reload();
+        //   }, 1200);
+        // } else {
+        //   document.getElementById('ticket-modal').classList.remove('hidden');
+        // }
       } else {
         showToast('Error: ' + resData.message, 'error');
         if (cobraBtn) {
