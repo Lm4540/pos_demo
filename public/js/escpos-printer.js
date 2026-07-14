@@ -535,3 +535,26 @@ class WebPOSPrinterLocalServer {
 // Exportar las clases para que puedan ser usadas en otros archivos JS
 window.ESCPOSBuilder = ESCPOSBuilder;
 window.WebPOSPrinterLocalServer = WebPOSPrinterLocalServer;
+
+window.loadImageData = function(url, targetWidth = 200) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.src = url;
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const targetHeight = Math.round((img.height * targetWidth) / img.width);
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, targetWidth, targetHeight);
+      ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+      const imgData = ctx.getImageData(0, 0, targetWidth, targetHeight);
+      resolve(imgData);
+    };
+    img.onerror = (err) => {
+      reject(err);
+    };
+  });
+};

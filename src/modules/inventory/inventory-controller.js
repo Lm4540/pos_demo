@@ -5,6 +5,7 @@ const {
   User, 
   Product, 
   BranchProduct, 
+  ProductBatch, 
   AuditLog, 
   sequelize 
 } = require('../../core/models');
@@ -284,6 +285,33 @@ async function handleFinalizeAudit(req, res) {
             salePrice: item.salePrice || 0.00,
             minStock: 0
           }, { transaction });
+        }
+
+        // Si el producto es físico, la cantidad contada es mayor a cero y no tiene lotes,
+        // generamos un lote aleatorio con vencimiento en 15 días para poder vender el excedente.
+        const product = await Product.findByPk(item.productId, { transaction });
+        if (product && product.type === 'physical' && counted > 0) {
+          const batchCount = await ProductBatch.count({
+            where: { branchId: audit.branchId, productId: item.productId },
+            transaction
+          });
+
+          if (batchCount === 0) {
+            const randomBatchCode = 'LOTE-AUD-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+            const expDate = new Date();
+            expDate.setDate(expDate.getDate() + 15);
+            const expirationDate = expDate.toISOString().split('T')[0];
+
+            await ProductBatch.create({
+              branchId: audit.branchId,
+              productId: item.productId,
+              batchCode: randomBatchCode,
+              expirationDate,
+              initialQuantity: counted,
+              currentQuantity: counted,
+              unitCost: bp ? bp.averageCost : (item.averageCost || 0.00)
+            }, { transaction });
+          }
         }
 
         // 4. Log to Kardex if discrepancy exists

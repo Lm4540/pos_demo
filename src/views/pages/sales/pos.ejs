@@ -1174,13 +1174,15 @@
       totalDiscount += discount;
 
       const isService = item.type === 'service';
-      const displayName = item.customDescription || item.name;
+      const displayName = item.name;
+      const customDescHtml = item.customDescription ? `<span class="text-[10px] text-neutral-400 italic block mt-0.5">* ${item.customDescription}</span>` : '';
       const cartIdx = cart.indexOf(item);
 
       return `
       <div class="flex items-center justify-between p-3 bg-neutral-950 border border-neutral-800 rounded-xl hover:border-neutral-750 transition-colors">
         <div class="flex-grow max-w-[50%]">
           <span class="text-xs font-bold text-white block truncate">${displayName}</span>
+          ${customDescHtml}
           <span class="text-[10px] text-neutral-500">$${price.toFixed(2)} c/u</span>
           ${isService ? '<span class="text-[9px] font-bold text-violet-400 block">✦ Servicio</span>' : ''}
           ${promoText}
@@ -1871,10 +1873,11 @@
               }
             }
             const net = (price * i.quantity) - discount;
-            const displayName = i.customDescription || i.name;
+            const displayName = i.name;
+            const descHtml = i.customDescription ? `<br><small style="color:gray;font-style:italic;margin-left:8px;">* ${i.customDescription}</small>` : '';
             return `
               <tr>
-                <td style="padding: 3px 0;">${displayName}${discount > 0 ? ' <small style="color:gray;">(desc)</small>' : ''}${i.type === 'service' ? ' <small style="color:#8b5cf6;">✦</small>' : ''}</td>
+                <td style="padding: 3px 0;">${displayName}${descHtml}${discount > 0 ? ' <small style="color:gray;">(desc)</small>' : ''}${i.type === 'service' ? ' <small style="color:#8b5cf6;">✦</small>' : ''}</td>
                 <td style="text-align: center;">${i.quantity}</td>
                 <td style="text-align: right;">$${net.toFixed(2)}</td>
               </tr>
@@ -1921,21 +1924,24 @@
     }
 
     try {
+      const logoImgData = await window.loadImageData('/images/logo.png').catch(() => null);
       const builder = new ESCPOSBuilder();
       builder.initialize().cashDrawer().setFont('A');
 
       // ── Encabezado ──
       builder.align('center');
+      if (logoImgData) {
+        builder.image(logoImgData).newLine();
+      }
       builder.bold(true).doubleHeightWidth(true);
-      builder.text('<%= user.branch ? user.branch.name : "RG SIMPLE POS" %>');
-      builder.newLine();
-      builder.doubleHeightWidth(false).bold(false);
-      builder.text('NIT: 0000-000000-000-0');
-      builder.newLine();
-      builder.text('Dir: Calle Principal #123');
-      builder.newLine();
-      builder.text('Tel: 2222-2222');
-      builder.newLine();
+      builder.text('TIENDA EL KINDER').newLine();
+      builder.doubleHeightWidth(false);
+      builder.text('HACIENDA SAN CARLOS, CASA SAN CARLOS,').newLine();
+      builder.text('CANTON EL SUNCITA, ACAJUTLA.').newLine();
+      builder.text('TELÉFONO: 6314 0051').newLine();
+      builder.text('PROPIETARIO').newLine();
+      builder.text('ANTONIO CAMPOS').newLine();
+      builder.bold(false);
       builder.text(sep).newLine();
 
       // ── Info del ticket ──
@@ -1976,8 +1982,11 @@
           }
         }
         const net = (price * i.quantity) - discount;
-        builder.itemLine(i.customDescription || i.name, i.quantity, price, net);
+        builder.itemLine(i.name, i.quantity, price, net);
         builder.newLine();
+        if (i.customDescription) {
+          builder.text(`  * ${i.customDescription}`).newLine();
+        }
         if (discount > 0) {
           builder.text(`  Desc: -$${discount.toFixed(2)}`).newLine();
         }
@@ -2029,6 +2038,17 @@
       builder.align('center');
       builder.text('¡Gracias por su compra!').newLine();
       builder.text('Conserve este ticket').newLine();
+      builder.newLine();
+      builder.align('center');
+      builder.text('El Señor te bendiga y te guarde;').newLine();
+      builder.text('el Señor haga resplandecer su rostro').newLine();
+      builder.text('sobre ti, y tenga misericordia;').newLine();
+      builder.text('el Señor alce sobre ti su rostro,').newLine();
+      builder.text('y ponga en ti paz.').newLine();
+      builder.newLine();
+      builder.align('right').bold(true);
+      builder.text('Números 6:24-26').newLine();
+      builder.bold(false);
       builder.newLineN(4);
       builder.cut(false);
 

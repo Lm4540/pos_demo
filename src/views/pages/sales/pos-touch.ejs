@@ -867,6 +867,30 @@
     renderCart();
   }
 
+  function updateQtyDirect(productId, val, idx) {
+    const item = idx !== undefined ? cart[idx] : cart.find(i => i.productId === productId);
+    if (!item) return;
+
+    let qty = parseInt(val);
+    if (isNaN(qty) || qty < 0) {
+      qty = 1;
+    }
+
+    if (qty === 0) {
+      if (idx !== undefined) {
+        cart.splice(idx, 1);
+      } else {
+        cart = cart.filter(i => i.productId !== productId);
+      }
+    } else if (item.type !== 'service' && qty > item.stock) {
+      showToast(`Stock insuficiente. Solo quedan ${item.stock} unidades de este artículo.`, 'warning');
+      item.quantity = item.stock;
+    } else {
+      item.quantity = qty;
+    }
+    renderCart();
+  }
+
   function removeCartItem(productId) {
     cart = cart.filter(i => i.productId !== productId);
     renderCart();
@@ -987,20 +1011,22 @@
       totalDiscount += discount;
 
       const isService = item.type === 'service';
-      const displayName = item.customDescription || item.name;
+      const displayName = item.name;
+      const customDescHtml = item.customDescription ? `<span class="text-[10px] text-neutral-400 italic block mt-0.5">* ${item.customDescription}</span>` : '';
 
       return `
         <div class="flex items-center justify-between p-3 bg-neutral-950 border border-neutral-850 rounded-2xl">
           <div class="flex-grow max-w-[50%]">
             <span class="text-xs font-bold text-white block truncate">${displayName}</span>
+            ${customDescHtml}
             <span class="text-[10px] text-neutral-500">$${price.toFixed(2)} ${isService ? '✦ Servicio' : ''}</span>
             ${isService ? `<div class="flex gap-2 mt-1"><button onclick="editServiceDescription(${item.productId}, ${idx})" class="text-[9px] font-bold text-blue-400 hover:underline cursor-pointer">✏️ Desc.</button><button onclick="editServicePrice(${item.productId}, ${idx})" class="text-[9px] font-bold text-amber-400 hover:underline cursor-pointer">💲 Precio</button></div>` : ''}
             ${promoText}
           </div>
           <div class="flex items-center gap-2">
-            <button onclick="updateQty(${item.productId}, -1, ${idx})" class="h-8 w-8 rounded-xl bg-neutral-850 hover:bg-neutral-800 flex items-center justify-center text-white text-xs cursor-pointer font-bold">-</button>
-            <span class="w-6 text-center text-xs font-bold text-white">${item.quantity}</span>
-            <button onclick="updateQty(${item.productId}, 1, ${idx})" class="h-8 w-8 rounded-xl bg-neutral-850 hover:bg-neutral-800 flex items-center justify-center text-white text-xs cursor-pointer font-bold">+</button>
+            <button onclick="updateQty(${item.productId}, -1, ${idx})" class="h-8 w-8 rounded-xl bg-neutral-855 hover:bg-neutral-800 flex items-center justify-center text-white text-xs cursor-pointer font-bold">-</button>
+            <input type="number" min="0" ${!isService ? `max="${item.stock}"` : ''} value="${item.quantity}" onchange="updateQtyDirect(${item.productId}, this.value, ${idx})" class="w-12 text-center bg-neutral-900 border border-neutral-800 text-white text-xs rounded font-bold py-1 focus:outline-none focus:ring-1 focus:ring-blue-500">
+            <button onclick="updateQty(${item.productId}, 1, ${idx})" class="h-8 w-8 rounded-xl bg-neutral-855 hover:bg-neutral-800 flex items-center justify-center text-white text-xs cursor-pointer font-bold">+</button>
             <button onclick="removeCartItem(${item.productId})" class="h-8 w-8 ml-2 text-red-500 hover:text-red-400 text-sm flex items-center justify-center cursor-pointer font-bold">✕</button>
           </div>
           <span class="text-xs font-bold text-white w-14 text-right font-mono">$${itemNet.toFixed(2)}</span>
@@ -1594,15 +1620,24 @@
     }
 
     try {
+      const logoImgData = await window.loadImageData('/images/logo.png').catch(() => null);
       const builder = new ESCPOSBuilder();
       builder.initialize().cashDrawer().setFont('A');
 
       // ── Encabezado ──
       builder.align('center');
+      if (logoImgData) {
+        builder.image(logoImgData).newLine();
+      }
       builder.bold(true).doubleHeightWidth(true);
-      builder.text('<%= user.branch ? user.branch.name : "RG SIMPLE POS" %>');
-      builder.newLine();
+      builder.text('TIENDA EL KINDER').newLine();
       builder.doubleHeightWidth(false);
+      builder.text('HACIENDA SAN CARLOS, CASA SAN CARLOS,').newLine();
+      builder.text('CANTON EL SUNCITA, ACAJUTLA.').newLine();
+      builder.text('TELÉFONO: 6314 0051').newLine();
+      builder.text('PROPIETARIO').newLine();
+      builder.text('ANTONIO CAMPOS').newLine();
+      builder.bold(false);
       builder.text(sep).newLine();
 
       // ── Info del ticket ──
@@ -1642,8 +1677,11 @@
           }
         }
         const net = (price * item.quantity) - discount;
-        builder.itemLine(item.customDescription || item.name, item.quantity, price, net);
+        builder.itemLine(item.name, item.quantity, price, net);
         builder.newLine();
+        if (item.customDescription) {
+          builder.text(`  * ${item.customDescription}`).newLine();
+        }
         if (discount > 0) {
           builder.text(`  Desc: -$${discount.toFixed(2)}`).newLine();
         }
@@ -1695,8 +1733,19 @@
       builder.align('center');
       builder.doubleHeightWidth(true);
       builder.text('Gracias por su compra').newLine();
-      builder.newLineN(4);
       builder.doubleHeightWidth(false);
+      builder.newLine();
+      builder.align('center');
+      builder.text('El Señor te bendiga y te guarde;').newLine();
+      builder.text('el Señor haga resplandecer su rostro').newLine();
+      builder.text('sobre ti, y tenga misericordia;').newLine();
+      builder.text('el Señor alce sobre ti su rostro,').newLine();
+      builder.text('y ponga en ti paz.').newLine();
+      builder.newLine();
+      builder.align('right').bold(true);
+      builder.text('Números 6:24-26').newLine();
+      builder.bold(false);
+      builder.newLineN(4);
       builder.cut(false);
 
       await printerClient.sendCommands(builder.build());

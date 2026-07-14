@@ -284,7 +284,7 @@ app.use(async (err, req, res, next) => {
   } else {
     res.status(500).json({
       success: false,
-      message: 'Ha ocurrido un error interno en el servidor.',
+      message: 'Ha ocurrido un error interno en el servidor: '+err.message,
       error: err.message,
       errorLogId: errorLogId
     });

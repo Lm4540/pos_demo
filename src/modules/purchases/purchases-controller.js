@@ -63,7 +63,9 @@ const renderNewPurchase = async (req, res, next) => {
       suppliers,
       products,
       categories,
-      error: null
+      error: null,
+      maxPx: process.env.IMG_MAX_PX || 1200,
+      quality: process.env.IMG_QUALITY || 0.8
     });
   } catch (error) {
     return next(error);

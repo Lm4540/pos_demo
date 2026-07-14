@@ -1077,18 +1077,35 @@
           for (const item of items) {
             if (item.type.indexOf('image') === 0) {
               const blob = item.getAsFile();
-              const reader = new FileReader();
-              reader.onload = function(event) {
-                const base64Data = event.target.result;
+              const img = new Image();
+              img.src = URL.createObjectURL(blob);
+              img.onload = function() {
+                // Calculate square crop (1:1 / 4:4 aspect ratio)
+                const minSide = Math.min(img.width, img.height);
+                const sx = (img.width - minSide) / 2;
+                const sy = (img.height - minSide) / 2;
+                
+                // Define optimized size
+                const size = Math.min(minSide, (typeof maxPx !== 'undefined' ? maxPx : 600));
+                
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, size, size);
+                
+                // Convert to compressed jpeg base64
+                const base64Data = canvas.toDataURL('image/jpeg', 0.85);
                 document.getElementById(base64HiddenId).value = base64Data;
                 document.getElementById(urlHiddenId).value = '';
 
                 const preview = document.getElementById(previewImgId);
                 preview.src = base64Data;
                 document.getElementById(previewContainerId).classList.remove('hidden');
-                input.value = '[Imagen del portapapeles pegada]';
+                input.value = '[Imagen del portapapeles optimizada 4:4]';
+                
+                URL.revokeObjectURL(img.src);
               };
-              reader.readAsDataURL(blob);
               e.preventDefault();
               break;
             }

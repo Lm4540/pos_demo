@@ -87,15 +87,23 @@
 
     const sep = '----------------------------------------';
     try {
+      const logoImgData = await window.loadImageData('/images/logo.png').catch(() => null);
       const builder = new ESCPOSBuilder();
       builder.initialize().setFont('A');
 
       // ── Encabezado ──
       builder.align('center');
+      if (logoImgData) {
+        builder.image(logoImgData).newLine();
+      }
       builder.bold(true).doubleHeightWidth(true);
-      builder.text('Mini Super EL KINDER');
-      builder.newLine();
+      builder.text('TIENDA EL KINDER').newLine();
       builder.doubleHeightWidth(false);
+      builder.text('HACIENDA SAN CARLOS, CASA SAN CARLOS,').newLine();
+      builder.text('CANTON EL SUNCITA, ACAJUTLA.').newLine();
+      builder.text('TELÉFONO: 6314 0051').newLine();
+      builder.text('PROPIETARIO').newLine();
+      builder.text('ANTONIO CAMPOS').newLine();
       builder.bold(true);
       builder.text('** DUPLICADO REIMPRESO **').newLine();
       builder.bold(false);
@@ -122,7 +130,7 @@
         const qty = parseInt(d.quantity, 10);
         const price = parseFloat(d.unitPrice);
         const net = qty * price;
-        const name = d.product ? d.product.name : 'Artículo';
+        const name = d.customDescription || (d.product ? d.product.name : 'Artículo');
         builder.itemLine(name, qty, price, net);
         builder.newLine();
       });
@@ -148,6 +156,17 @@
       builder.newLine();
       builder.align('center');
       builder.text('¡Gracias por su compra!').newLine();
+      builder.newLine();
+      builder.align('center');
+      builder.text('El Señor te bendiga y te guarde;').newLine();
+      builder.text('el Señor haga resplandecer su rostro').newLine();
+      builder.text('sobre ti, y tenga misericordia;').newLine();
+      builder.text('el Señor alce sobre ti su rostro,').newLine();
+      builder.text('y ponga en ti paz.').newLine();
+      builder.newLine();
+      builder.align('right').bold(true);
+      builder.text('Números 6:24-26').newLine();
+      builder.bold(false);
       builder.newLineN(4);
       builder.cut(false);
 
