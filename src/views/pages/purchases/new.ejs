@@ -671,10 +671,44 @@
 
         const result = await resp.json();
         if (resp.ok && result.success) {
-          showToast(result.message, 'success');
+          showToast(result.message || 'Producto guardado con éxito.', 'success');
           closeQuickProductModal();
           // Select newly created product
           window.selectProduct(result.product.id, result.product.name, result.product.barCode);
+        } else if (result.canReactivate && result.deletedProduct) {
+          submitBtn.disabled = false;
+          submitBtn.innerText = 'Guardar Producto';
+          showConfirm(
+            `El código de barras "${result.deletedProduct.barCode}" pertenece al producto eliminado <strong>"${result.deletedProduct.name}"</strong>.<br><br>¿Deseas <strong>REACTIVAR</strong> este producto?`,
+            async () => {
+              submitBtn.disabled = true;
+              submitBtn.innerText = 'Reactivando...';
+              formData.set('reactivate', 'true');
+              formData.set('reactivateId', result.deletedProduct.id);
+              try {
+                const r2 = await fetch('/products/api/quick-create', {
+                  method: 'POST',
+                  headers: { 'Accept': 'application/json' },
+                  body: formData
+                });
+                const res2 = await r2.json();
+                if (res2.success) {
+                  showToast(res2.message || 'Producto reactivado con éxito.', 'success');
+                  closeQuickProductModal();
+                  window.selectProduct(res2.product.id, res2.product.name, res2.product.barCode);
+                } else {
+                  showToast('Error: ' + res2.message, 'error');
+                  submitBtn.disabled = false;
+                  submitBtn.innerText = 'Guardar Producto';
+                }
+              } catch(e) {
+                console.error(e);
+                showToast('Error al reactivar el producto.', 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerText = 'Guardar Producto';
+              }
+            }
+          );
         } else {
           showToast(result.message || 'Error al crear el producto.', 'error');
           submitBtn.disabled = false;

@@ -1,8 +1,64 @@
+// Tabla de mapeo para Code Page 850 (Multilingual Latin I - Español)
+const CP850_MAP = {
+      'á': 0xA0, 'é': 0x82, 'í': 0xA1, 'ó': 0xA2, 'ú': 0xA3,
+      'Á': 0xB5, 'É': 0x90, 'Í': 0xD6, 'Ó': 0xE0, 'Ú': 0xE9,
+      'ñ': 0xA4, 'Ñ': 0xA5,
+      'ü': 0x81, 'Ü': 0x9A,
+      '¿': 0xA8, '¡': 0xAD,
+      'º': 0xA7, 'ª': 0xA6,
+      'à': 0x85, 'è': 0x8A, 'ì': 0x8D, 'ò': 0x95, 'ù': 0x97,
+      'À': 0xB7, 'È': 0xD4, 'Ì': 0xD8, 'Ò': 0xE3, 'Ù': 0xEB,
+      'ä': 0x84, 'ë': 0x89, 'ï': 0x8B, 'ö': 0x94,
+      'Ä': 0x8E, 'Ë': 0xEB, 'Ï': 0xD7, 'Ö': 0x99,
+      'ç': 0x87, 'Ç': 0x80,
+      '€': 0xEE
+};
+
 class ESCPOSBuilder {
       constructor() {
             this.buffer = [];
             this.currentFont = 'A'; 
             this.lineLength = 40;  
+            this.codePage = 2; // CP850 por defecto
+      }
+
+      /**
+       * Convierte una cadena de texto a bytes según la tabla de caracteres CP850 (Español).
+       * Mantiene tildes (á, é, í, ó, ú, Á, É, Í, Ó, Ú), Ñ, ñ, ¿, ¡, ü, etc.
+       */
+      encodeText(data) {
+            if (data === null || data === undefined) return new Uint8Array(0);
+            const str = String(data);
+            const bytes = [];
+            for (let i = 0; i < str.length; i++) {
+                  const char = str[i];
+                  const code = char.charCodeAt(0);
+
+                  if (code < 128) {
+                        bytes.push(code);
+                  } else if (CP850_MAP[char] !== undefined) {
+                        bytes.push(CP850_MAP[char]);
+                  } else {
+                        // Descomponer acentos si no está explícitamente mapeado
+                        const normalized = char.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                        if (normalized.length === 1 && normalized.charCodeAt(0) < 128) {
+                              bytes.push(normalized.charCodeAt(0));
+                        } else {
+                              bytes.push(0x3F); // '?'
+                        }
+                  }
+            }
+            return new Uint8Array(bytes);
+      }
+
+      /**
+       * Selecciona la codificación de la impresora.
+       * @param {number} page - 2 para CP850 (Multilingual Latin I).
+       */
+      setCodePage(page = 2) {
+            this.codePage = page;
+            this.buffer.push(0x1B, 0x74, page);
+            return this;
       }
 
       /**
@@ -25,8 +81,8 @@ class ESCPOSBuilder {
       }
 
       initialize() { 
-            this.buffer.push(0x1B, 0x40); 
-            this.buffer.push(0x1B, 0x74, 2); // Establecer codificación de caracteres a UTF-8
+            this.buffer.push(0x1B, 0x40); // ESC @ (Restablecer impresora)
+            this.setCodePage(2); // ESC t 2 (Establecer codificación de caracteres a CP850)
             return this;
       }
 
@@ -37,9 +93,9 @@ class ESCPOSBuilder {
       }
 
       text(data) {
-            const encoder = new TextEncoder();
-            const encodedData = encoder.encode(data);
-            this.buffer.push(...Array.from(encodedData)); return this;
+            const encodedData = this.encodeText(data);
+            this.buffer.push(...Array.from(encodedData));
+            return this;
       }
 
       newLine() { this.buffer.push(0x0A); return this; }
@@ -536,21 +592,25 @@ class WebPOSPrinterLocalServer {
 window.ESCPOSBuilder = ESCPOSBuilder;
 window.WebPOSPrinterLocalServer = WebPOSPrinterLocalServer;
 
-window.loadImageData = function(url, targetWidth = 200) {
+window.loadImageData = function(url, targetWidth = 384) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.src = url;
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      const targetHeight = Math.round((img.height * targetWidth) / img.width);
-      canvas.width = targetWidth;
+      let width = targetWidth;
+      if (width === 'auto' || width === null || width === undefined || width <= 0) {
+        width = img.width || 384;
+      }
+      const targetHeight = Math.round((img.height * width) / img.width);
+      canvas.width = width;
       canvas.height = targetHeight;
       const ctx = canvas.getContext('2d');
       ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(0, 0, targetWidth, targetHeight);
-      ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
-      const imgData = ctx.getImageData(0, 0, targetWidth, targetHeight);
+      ctx.fillRect(0, 0, width, targetHeight);
+      ctx.drawImage(img, 0, 0, width, targetHeight);
+      const imgData = ctx.getImageData(0, 0, width, targetHeight);
       resolve(imgData);
     };
     img.onerror = (err) => {

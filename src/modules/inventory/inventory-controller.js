@@ -452,7 +452,7 @@ const renderInitialLoad = async (req, res, next) => {
 };
 
 const quickCreateProduct = async (req, res, next) => {
-  const { name, barCode, categoryId, type } = req.body;
+  const { name, barCode, categoryId, type, reactivate, reactivateId } = req.body;
   let imagePath = null;
   const fs = require('fs');
 
@@ -468,16 +468,77 @@ const quickCreateProduct = async (req, res, next) => {
       throw new Error('El nombre del producto es obligatorio.');
     }
 
-    if (barCode && barCode.trim() !== '') {
-      const existing = await Product.findOne({ where: { barCode: barCode.trim() }, transaction });
+    const trimmedCode = barCode && barCode.trim() !== '' ? barCode.trim() : null;
+
+    // Reactivate request
+    if (reactivate === 'true' || reactivate === true) {
+      let targetProduct = null;
+      if (reactivateId) {
+        targetProduct = await Product.findByPk(reactivateId, { paranoid: false, transaction });
+      } else if (trimmedCode) {
+        targetProduct = await Product.findOne({ where: { barCode: trimmedCode }, paranoid: false, transaction });
+      }
+
+      if (targetProduct && targetProduct.deletedAt !== null) {
+        await targetProduct.restore({ transaction });
+        const updatePayload = {
+          name: name.trim(),
+          barCode: trimmedCode,
+          type: type || 'physical',
+          categoryId: categoryId ? parseInt(categoryId, 10) : null
+        };
+        if (imagePath) updatePayload.imagePath = imagePath;
+        await targetProduct.update(updatePayload, { transaction });
+
+        const allBranches = await Branch.findAll({ transaction });
+        for (const b of allBranches) {
+          const bp = await BranchProduct.findOne({ where: { productId: targetProduct.id, branchId: b.id }, transaction });
+          if (!bp) {
+            await BranchProduct.create({
+              productId: targetProduct.id,
+              branchId: b.id,
+              totalStock: 0,
+              averageCost: 0.00,
+              salePrice: 0.00,
+              minStock: 0
+            }, { transaction });
+          }
+        }
+
+        await transaction.commit();
+        return res.json({ success: true, message: `Producto "${targetProduct.name}" reactivado con éxito.`, product: targetProduct });
+      }
+    }
+
+    if (trimmedCode) {
+      const existing = await Product.findOne({ where: { barCode: trimmedCode }, paranoid: false, transaction });
       if (existing) {
-        throw new Error('El código de barras ya está registrado.');
+        await transaction.rollback();
+        if (req.file) { try { fs.unlinkSync(req.file.path); } catch(e) {} }
+
+        if (existing.deletedAt !== null) {
+          return res.status(409).json({
+            success: false,
+            canReactivate: true,
+            deletedProduct: {
+              id: existing.id,
+              name: existing.name,
+              barCode: existing.barCode
+            },
+            message: `El código de barras "${trimmedCode}" pertenece al producto eliminado "${existing.name}". ¿Deseas reactivarlo?`
+          });
+        } else {
+          return res.status(400).json({
+            success: false,
+            message: `El código de barras "${trimmedCode}" ya está registrado en el producto activo "${existing.name}".`
+          });
+        }
       }
     }
 
     const product = await Product.create({
       name: name.trim(),
-      barCode: barCode && barCode.trim() !== '' ? barCode.trim() : null,
+      barCode: trimmedCode,
       type: type || 'physical',
       categoryId: categoryId ? parseInt(categoryId, 10) : null,
       imagePath
@@ -496,7 +557,6 @@ const quickCreateProduct = async (req, res, next) => {
     }
 
     await transaction.commit();
-
     return res.json({ success: true, product });
   } catch (error) {
     await transaction.rollback();

@@ -163,6 +163,44 @@
         </div>
       </section>
 
+      <section class="guide-card space-y-4 bg-neutral-900 border border-neutral-800 p-6 rounded-3xl shadow-sm" data-category="productos">
+        <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+          <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded bg-blue-950 text-blue-400 border border-blue-900/60">Productos e Inventario</span>
+          <span class="text-[10px] text-neutral-500 font-mono">ID: inv-eliminar</span>
+        </div>
+        <h2 class="guide-title text-2xl font-extrabold text-white">Eliminación segura de productos y restricciones</h2>
+        <div class="guide-content text-sm text-neutral-350 space-y-2">
+          <p>El sistema protege la integridad contable y de inventario mediante validaciones de eliminación:</p>
+          <ul class="list-disc list-inside space-y-1 text-xs">
+            <li><strong>Restricción por Existencias:</strong> Si un producto posee existencias mayores a cero en cualquier sucursal o lote activo, el sistema impedirá su eliminación hasta que realices un ajuste de stock a cero.</li>
+            <li><strong>Restricción por Historial:</strong> Si el producto registra ventas, compras, traslados entre sucursales o auditorías pasadas, no se podrá eliminar directamente para no corromper reportes de Kardex ni facturación.</li>
+            <li>Si el producto no tiene existencias ni registros vinculados, presionar <strong>Eliminar</strong> realizará un <em>Soft-Delete</em> (borrado lógico seguro).</li>
+          </ul>
+        </div>
+        <div class="mt-4 border border-neutral-800 rounded-2xl overflow-hidden bg-neutral-950/40">
+          <img src="/images/manual/eliminacion_bloqueada.png" alt="Alerta de restricción al eliminar producto con existencias" class="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity">
+        </div>
+      </section>
+
+      <section class="guide-card space-y-4 bg-neutral-900 border border-neutral-800 p-6 rounded-3xl shadow-sm" data-category="productos">
+        <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+          <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded bg-blue-950 text-blue-400 border border-blue-900/60">Productos e Inventario</span>
+          <span class="text-[10px] text-neutral-500 font-mono">ID: inv-reactivar</span>
+        </div>
+        <h2 class="guide-title text-2xl font-extrabold text-white">Reactivación de productos eliminados previamente</h2>
+        <div class="guide-content text-sm text-neutral-350 space-y-2">
+          <p>Si un usuario eliminó un producto por error y posteriormente intenta volver a crearlo usando el mismo código de barras:</p>
+          <ol class="list-decimal list-inside space-y-1 text-xs">
+            <li>Al ingresar el código de barras en el formulario de <strong>Nuevo Producto</strong> (o creación rápida en compras), el sistema detectará automáticamente si pertenecía a un registro eliminado previamente.</li>
+            <li>Se mostrará una ventana emergente de confirmación notificando: <em>"El código de barras pertenece al producto eliminado X. ¿Deseas REACTIVAR este producto?"</em>.</li>
+            <li>Haz clic en <strong>Aceptar / Reactivar</strong>. El sistema restaurará de inmediato el registro anterior conservando su historial y actualizará sus datos con los nuevos valores ingresados.</li>
+          </ol>
+        </div>
+        <div class="mt-4 border border-neutral-800 rounded-2xl overflow-hidden bg-neutral-950/40">
+          <img src="/images/manual/reactivar_producto.png" alt="Modal de Reactivación de Producto Eliminado" class="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity">
+        </div>
+      </section>
+
       <!-- ==================== COMPRAS Y CXP ==================== -->
       <section class="guide-card space-y-4 bg-neutral-900 border border-neutral-800 p-6 rounded-3xl shadow-sm" data-category="compras">
         <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
@@ -636,6 +674,27 @@
         </div>
         <div class="mt-4 border border-neutral-800 rounded-2xl overflow-hidden bg-neutral-950/40">
           <img src="/images/manual/permisos_rol.png" alt="Matriz de administración de permisos por rol" class="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity">
+        </div>
+      </section>
+
+      <section class="guide-card space-y-4 bg-neutral-900 border border-neutral-800 p-6 rounded-3xl shadow-sm" data-category="usuarios">
+        <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+          <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded bg-neutral-950 border border-neutral-850 text-neutral-300">Usuarios y Seguridad</span>
+          <span class="text-[10px] text-neutral-500 font-mono">ID: sys-errores</span>
+        </div>
+        <h2 class="guide-title text-2xl font-extrabold text-white">Monitoreo de Errores del Sistema y Diagnóstico Remoto</h2>
+        <div class="guide-content text-sm text-neutral-350 space-y-2">
+          <p>Para revisar de forma remota las excepciones y fallas producidas en el servidor o cliente sin conectarse a la base de datos:</p>
+          <ol class="list-decimal list-inside space-y-1 text-xs">
+            <li>Navega al **Dashboard** y haz clic en la tarjeta **Registro de Errores** (o accede a `/errors`).</li>
+            <li>En la tabla principal observarás todos los registros ordenados del más reciente al más antiguo, con su **Método** (<i>POST, GET, CLIENT_JS, PROMISE</i>), **Ruta**, **Mensaje de Excepción**, **Usuario** y **Sucursal**.</li>
+            <li>Haz clic en **Ver Detalles** en cualquier fila para inspeccionar el modal de diagnóstico. Podrás ver la traza completa de código (<strong>Stack Trace</strong>) formateada y el payload JSON (encabezados, parámetros y cuerpo de la petición).</li>
+            <li>Utiliza el botón <strong>Copiar Stack Trace</strong> para enviarlo a soporte o presiona <strong>Eliminar Registro</strong> (o <strong>Limpiar Todos los Errores</strong>) para borrar de forma permanente los registros ya resueltos.</li>
+          </ol>
+        </div>
+        <div class="mt-4 border border-neutral-800 rounded-2xl overflow-hidden bg-neutral-950/40 grid grid-cols-1 gap-2">
+          <img src="/images/manual/registro_errores.png" alt="Tabla de Registro de Errores del Sistema" class="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity">
+          <img src="/images/manual/detalle_error_stack.png" alt="Modal de Diagnóstico y Stack Trace del Error" class="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity mt-2">
         </div>
       </section>
 

@@ -621,6 +621,41 @@
 
             btn.disabled = false;
             btn.innerText = 'Registrar Producto';
+            setTimeout(() => window.location.reload(), 600);
+          } else if (data.canReactivate && data.deletedProduct) {
+            btn.disabled = false;
+            btn.innerText = 'Registrar Producto';
+            showConfirm(
+              `El código de barras "${data.deletedProduct.barCode}" pertenece al producto eliminado <strong>"${data.deletedProduct.name}"</strong>.<br><br>¿Deseas <strong>REACTIVAR</strong> este producto y actualizar sus datos con la información ingresada?`,
+              async () => {
+                btn.disabled = true;
+                btn.innerText = 'Reactivando...';
+                formData.set('reactivate', 'true');
+                formData.set('reactivateId', data.deletedProduct.id);
+                try {
+                  const reactivateRes = await fetch('/products', {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json' },
+                    body: formData
+                  });
+                  const reactivateData = await reactivateRes.json();
+                  if (reactivateData.success) {
+                    showToast(reactivateData.message || 'Producto reactivado con éxito.', 'success');
+                    closeCreateModal();
+                    setTimeout(() => window.location.reload(), 600);
+                  } else {
+                    showToast('Error: ' + reactivateData.message, 'error');
+                    btn.disabled = false;
+                    btn.innerText = 'Registrar Producto';
+                  }
+                } catch (rErr) {
+                  console.error(rErr);
+                  showToast('Error al reactivar el producto.', 'error');
+                  btn.disabled = false;
+                  btn.innerText = 'Registrar Producto';
+                }
+              }
+            );
           } else {
             showToast('Error: ' + data.message, 'error');
             btn.disabled = false;

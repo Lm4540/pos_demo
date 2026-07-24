@@ -1,0 +1,394 @@
+<%- include('../../partials/head', { title: 'Registro de Errores' }) %>
+
+<div class="min-h-screen bg-neutral-950 flex flex-col">
+  <!-- Nav Bar -->
+  <nav class="bg-neutral-900 border-b border-neutral-800 px-6 py-4 flex items-center justify-between shadow-md">
+    <div class="flex items-center gap-3">
+      <a href="/dashboard" class="text-neutral-400 hover:text-white transition-colors">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+      </a>
+      <div>
+        <span class="text-xl font-bold text-white tracking-wide">Registro de Errores</span>
+        <span class="text-xs block text-neutral-400 font-medium">Monitoreo remoto de excepciones y diagnóstico de fallas</span>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <span class="px-3 py-1 bg-red-950/60 border border-red-900/80 text-red-400 font-mono text-xs font-bold rounded-xl">
+        <%= errorLogs.length %> Registro(s)
+      </span>
+      <% if (errorLogs.length > 0) { %>
+      <button onclick="clearAllLogs()" class="bg-red-950/40 border border-red-900/60 hover:bg-red-900 text-red-300 hover:text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+        <span>Limpiar Todos los Errores</span>
+      </button>
+      <% } %>
+    </div>
+  </nav>
+
+  <main class="flex-grow p-6 max-w-7xl w-full mx-auto space-y-6">
+    <!-- Filter and Search Bar -->
+    <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+        <!-- Search Input -->
+        <div class="relative w-full sm:w-80">
+          <input type="text" id="search-input" onkeyup="filterErrorLogs()" class="w-full pl-9 pr-3 py-2 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm transition-all" placeholder="Buscar por mensaje, ruta o ID...">
+          <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-neutral-500">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+        </div>
+
+        <!-- Filter by Method -->
+        <select id="method-filter" onchange="filterErrorLogs()" class="w-full sm:w-48 px-3 py-2 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm transition-all">
+          <option value="ALL">Todos los métodos</option>
+          <option value="CLIENT_JS">CLIENT_JS (Navegador)</option>
+          <option value="CLIENT_PROMISE">CLIENT_PROMISE</option>
+          <option value="POST">POST (Servidor)</option>
+          <option value="GET">GET (Servidor)</option>
+          <option value="DELETE">DELETE / PUT</option>
+        </select>
+      </div>
+
+      <span class="text-xs text-neutral-500 text-right">
+        Mostrando <span id="visible-count" class="font-bold text-white"><%= errorLogs.length %></span> de <%= errorLogs.length %> registros
+      </span>
+    </div>
+
+    <!-- Error Logs Table -->
+    <div class="bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden shadow-sm">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse" id="errors-table">
+          <thead>
+            <tr class="bg-neutral-950 border-b border-neutral-800 text-[11px] font-bold text-neutral-400 uppercase tracking-wider">
+              <th class="py-3.5 px-4 w-16">ID</th>
+              <th class="py-3.5 px-4 w-40">Fecha y Hora</th>
+              <th class="py-3.5 px-4 w-32">Método</th>
+              <th class="py-3.5 px-4 w-52">Ruta</th>
+              <th class="py-3.5 px-4">Mensaje de Error</th>
+              <th class="py-3.5 px-4 w-40">Usuario / Sucursal</th>
+              <th class="py-3.5 px-4 w-36 text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-neutral-800 text-xs">
+            <% if (errorLogs.length === 0) { %>
+            <tr>
+              <td colspan="7" class="py-12 text-center text-neutral-500">
+                <svg class="h-10 w-10 mx-auto text-neutral-600 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>¡No hay registros de errores acumulados! El sistema se encuentra funcionando sin fallas.</span>
+              </td>
+            </tr>
+            <% } %>
+
+            <% errorLogs.forEach(log => { %>
+            <tr class="error-row hover:bg-neutral-950/60 transition-colors" data-id="<%= log.id %>" data-method="<%= log.method %>" data-search="<%= `${log.id} ${log.route} ${log.method} ${log.errorMessage}`.toLowerCase() %>">
+              <td class="py-3.5 px-4 font-mono font-bold text-neutral-400">#<%= log.id %></td>
+              <td class="py-3.5 px-4 text-neutral-300 font-mono text-[11px]">
+                <%= new Date(log.createdAt).toLocaleString('es-SV') %>
+              </td>
+              <td class="py-3.5 px-4">
+                <% if (log.method === 'CLIENT_JS') { %>
+                <span class="inline-block px-2 py-0.5 text-[10px] font-bold uppercase rounded bg-cyan-950 text-cyan-400 border border-cyan-900/60">
+                  CLIENT JS
+                </span>
+                <% } else if (log.method === 'CLIENT_PROMISE') { %>
+                <span class="inline-block px-2 py-0.5 text-[10px] font-bold uppercase rounded bg-violet-950 text-violet-400 border border-violet-900/60">
+                  PROMISE
+                </span>
+                <% } else if (log.method === 'POST') { %>
+                <span class="inline-block px-2 py-0.5 text-[10px] font-bold uppercase rounded bg-amber-950 text-amber-400 border border-amber-900/60">
+                  POST
+                </span>
+                <% } else if (log.method === 'DELETE') { %>
+                <span class="inline-block px-2 py-0.5 text-[10px] font-bold uppercase rounded bg-red-950 text-red-400 border border-red-900/60">
+                  DELETE
+                </span>
+                <% } else { %>
+                <span class="inline-block px-2 py-0.5 text-[10px] font-bold uppercase rounded bg-blue-950 text-blue-400 border border-blue-900/60">
+                  <%= log.method %>
+                </span>
+                <% } %>
+              </td>
+              <td class="py-3.5 px-4 font-mono text-neutral-300 truncate max-w-[200px]" title="<%= log.route %>">
+                <%= log.route %>
+              </td>
+              <td class="py-3.5 px-4 font-mono text-red-300 font-semibold truncate max-w-[320px]" title="<%= log.errorMessage %>">
+                <%= log.errorMessage %>
+              </td>
+              <td class="py-3.5 px-4 text-neutral-400 text-[11px]">
+                <span class="block font-medium text-white"><%= log.user ? log.user.fullName : 'Anónimo' %></span>
+                <span class="block text-[10px] text-neutral-500"><%= log.branch ? log.branch.name : 'Sistema Global' %></span>
+              </td>
+              <td class="py-3.5 px-4 text-right space-x-2">
+                <button onclick="openDetailModal(<%= JSON.stringify(log) %>)" class="px-2.5 py-1 text-[11px] font-bold bg-blue-950 hover:bg-blue-900 text-blue-400 border border-blue-900/60 rounded-lg transition-colors cursor-pointer">
+                  Ver Detalles
+                </button>
+                <button onclick="deleteSingleLog(<%= log.id %>)" class="px-2 py-1 text-[11px] font-bold bg-red-950/40 hover:bg-red-900 text-red-400 border border-red-900/60 rounded-lg transition-colors cursor-pointer" title="Eliminar registro permanentemente">
+                  ✕
+                </button>
+              </td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Error Detail Modal -->
+<div id="error-modal" class="fixed inset-0 bg-neutral-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+  <div class="bg-neutral-900 border border-neutral-800 w-full max-w-4xl p-6 rounded-2xl shadow-2xl relative max-h-[90vh] flex flex-col space-y-4">
+    <!-- Header -->
+    <div class="flex justify-between items-start border-b border-neutral-800 pb-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="text-xl font-bold text-white">Detalle de Error</span>
+          <span id="modal-error-id" class="px-2.5 py-0.5 bg-neutral-800 text-neutral-300 font-mono text-xs font-bold rounded-lg border border-neutral-700">#0</span>
+          <span id="modal-error-method" class="px-2.5 py-0.5 text-xs font-bold uppercase rounded">METHOD</span>
+        </div>
+        <p id="modal-error-route" class="text-xs font-mono text-neutral-400 mt-1">/route</p>
+      </div>
+      <button onclick="closeDetailModal()" class="text-neutral-500 hover:text-white cursor-pointer transition-colors p-1">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Metadata Badges -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-neutral-950 p-3 rounded-xl border border-neutral-800 text-xs">
+      <div>
+        <span class="block text-[10px] uppercase font-bold text-neutral-500">Fecha y Hora</span>
+        <span id="modal-error-date" class="font-mono text-neutral-300">--</span>
+      </div>
+      <div>
+        <span class="block text-[10px] uppercase font-bold text-neutral-500">Usuario</span>
+        <span id="modal-error-user" class="font-medium text-white">--</span>
+      </div>
+      <div>
+        <span class="block text-[10px] uppercase font-bold text-neutral-500">Sucursal</span>
+        <span id="modal-error-branch" class="font-medium text-white">--</span>
+      </div>
+    </div>
+
+    <!-- Error Message -->
+    <div class="space-y-1">
+      <label class="block text-xs font-bold text-red-400 uppercase tracking-wider">Mensaje de Excepción</label>
+      <div id="modal-error-message" class="bg-red-950/30 border border-red-900/60 text-red-200 p-3 rounded-xl font-mono text-xs break-words font-semibold max-h-24 overflow-y-auto">
+        --
+      </div>
+    </div>
+
+    <!-- Tab Buttons for Stack Trace / Payload -->
+    <div class="flex border-b border-neutral-800 gap-2">
+      <button onclick="switchTab('stack')" id="tab-btn-stack" class="px-4 py-2 text-xs font-bold text-blue-400 border-b-2 border-blue-500 transition-colors">
+        📜 Stack Trace (Traza)
+      </button>
+      <button onclick="switchTab('payload')" id="tab-btn-payload" class="px-4 py-2 text-xs font-bold text-neutral-400 hover:text-white border-b-2 border-transparent transition-colors">
+        📦 Payload & Encabezados (JSON)
+      </button>
+    </div>
+
+    <!-- Stack Trace View -->
+    <div id="tab-content-stack" class="flex-grow flex flex-col min-h-0 space-y-2">
+      <div class="flex justify-between items-center">
+        <span class="text-[10px] text-neutral-500 uppercase font-bold">Traza de Ejecución del Código</span>
+        <button onclick="copyToClipboard('modal-error-stack')" class="px-2.5 py-1 bg-neutral-800 hover:bg-neutral-750 text-neutral-300 text-[11px] font-bold rounded-lg transition-colors flex items-center gap-1 border border-neutral-700">
+          📋 Copiar Stack Trace
+        </button>
+      </div>
+      <pre id="modal-error-stack" class="flex-grow bg-neutral-950 border border-neutral-800 p-4 rounded-xl font-mono text-xs text-neutral-300 overflow-all max-h-64 overflow-y-auto space-y-1 select-text leading-relaxed whitespace-pre-wrap"></pre>
+    </div>
+
+    <!-- Payload JSON View -->
+    <div id="tab-content-payload" class="flex-grow flex flex-col min-h-0 space-y-2 hidden">
+      <div class="flex justify-between items-center">
+        <span class="text-[10px] text-neutral-500 uppercase font-bold">Información de la Petición HTTP / Cliente</span>
+        <button onclick="copyToClipboard('modal-error-payload')" class="px-2.5 py-1 bg-neutral-800 hover:bg-neutral-750 text-neutral-300 text-[11px] font-bold rounded-lg transition-colors flex items-center gap-1 border border-neutral-700">
+          📋 Copiar Payload
+        </button>
+      </div>
+      <pre id="modal-error-payload" class="flex-grow bg-neutral-950 border border-neutral-800 p-4 rounded-xl font-mono text-xs text-emerald-400 overflow-all max-h-64 overflow-y-auto select-text leading-relaxed whitespace-pre-wrap"></pre>
+    </div>
+
+    <!-- Actions Footer -->
+    <div class="flex justify-between items-center pt-3 border-t border-neutral-800">
+      <button id="modal-btn-delete" type="button" class="px-4 py-2 text-xs font-bold text-red-400 bg-red-950/40 border border-red-900/60 hover:bg-red-900 hover:text-white rounded-xl transition-all cursor-pointer flex items-center gap-1.5">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+        <span>Eliminar Registro</span>
+      </button>
+      <button onclick="closeDetailModal()" type="button" class="px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 rounded-xl transition-all cursor-pointer shadow-md shadow-blue-500/10">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let activeLogId = null;
+
+  function filterErrorLogs() {
+    const searchVal = document.getElementById('search-input').value.trim().toLowerCase();
+    const methodVal = document.getElementById('method-filter').value;
+    const rows = document.querySelectorAll('.error-row');
+    let visible = 0;
+
+    rows.forEach(row => {
+      const searchData = row.dataset.search;
+      const methodData = row.dataset.method;
+
+      const matchesSearch = !searchVal || searchData.includes(searchVal);
+      let matchesMethod = true;
+
+      if (methodVal !== 'ALL') {
+        if (methodVal === 'DELETE') {
+          matchesMethod = methodData === 'DELETE' || methodData === 'PUT';
+        } else {
+          matchesMethod = methodData === methodVal;
+        }
+      }
+
+      if (matchesSearch && matchesMethod) {
+        row.classList.remove('hidden');
+        visible++;
+      } else {
+        row.classList.add('hidden');
+      }
+    });
+
+    document.getElementById('visible-count').innerText = visible;
+  }
+
+  function openDetailModal(log) {
+    activeLogId = log.id;
+    document.getElementById('modal-error-id').innerText = '#' + log.id;
+    document.getElementById('modal-error-route').innerText = log.method + ' ' + log.route;
+    document.getElementById('modal-error-date').innerText = new Date(log.createdAt).toLocaleString('es-SV');
+    document.getElementById('modal-error-user').innerText = log.user ? log.user.fullName : 'Anónimo';
+    document.getElementById('modal-error-branch').innerText = log.branch ? log.branch.name : 'Sistema Global';
+    document.getElementById('modal-error-message').innerText = log.errorMessage || 'Sin mensaje especificado';
+
+    // Style method badge in modal
+    const methodBadge = document.getElementById('modal-error-method');
+    methodBadge.innerText = log.method;
+    if (log.method === 'CLIENT_JS') {
+      methodBadge.className = 'px-2.5 py-0.5 text-xs font-bold uppercase rounded bg-cyan-950 text-cyan-400 border border-cyan-900/60';
+    } else if (log.method === 'CLIENT_PROMISE') {
+      methodBadge.className = 'px-2.5 py-0.5 text-xs font-bold uppercase rounded bg-violet-950 text-violet-400 border border-violet-900/60';
+    } else if (log.method === 'POST') {
+      methodBadge.className = 'px-2.5 py-0.5 text-xs font-bold uppercase rounded bg-amber-950 text-amber-400 border border-amber-900/60';
+    } else if (log.method === 'DELETE') {
+      methodBadge.className = 'px-2.5 py-0.5 text-xs font-bold uppercase rounded bg-red-950 text-red-400 border border-red-900/60';
+    } else {
+      methodBadge.className = 'px-2.5 py-0.5 text-xs font-bold uppercase rounded bg-blue-950 text-blue-400 border border-blue-900/60';
+    }
+
+    // Format Stack Trace with highlighting
+    const stackEl = document.getElementById('modal-error-stack');
+    if (log.errorStack && log.errorStack.trim() !== '') {
+      stackEl.innerText = log.errorStack;
+    } else {
+      stackEl.innerText = 'No se registró traza de ejecución (Stack trace no disponible).';
+    }
+
+    // Format Payload JSON
+    const payloadEl = document.getElementById('modal-error-payload');
+    try {
+      const payloadObj = typeof log.payload === 'string' ? JSON.parse(log.payload) : log.payload;
+      payloadEl.innerText = JSON.stringify(payloadObj || {}, null, 2);
+    } catch (e) {
+      payloadEl.innerText = String(log.payload || '{}');
+    }
+
+    // Setup modal delete button
+    document.getElementById('modal-btn-delete').onclick = () => {
+      deleteSingleLog(log.id, true);
+    };
+
+    switchTab('stack');
+    document.getElementById('error-modal').classList.remove('hidden');
+  }
+
+  function closeDetailModal() {
+    document.getElementById('error-modal').classList.add('hidden');
+    activeLogId = null;
+  }
+
+  function switchTab(tab) {
+    const btnStack = document.getElementById('tab-btn-stack');
+    const btnPayload = document.getElementById('tab-btn-payload');
+    const contentStack = document.getElementById('tab-content-stack');
+    const contentPayload = document.getElementById('tab-content-payload');
+
+    if (tab === 'stack') {
+      btnStack.className = 'px-4 py-2 text-xs font-bold text-blue-400 border-b-2 border-blue-500 transition-colors';
+      btnPayload.className = 'px-4 py-2 text-xs font-bold text-neutral-400 hover:text-white border-b-2 border-transparent transition-colors';
+      contentStack.classList.remove('hidden');
+      contentPayload.classList.add('hidden');
+    } else {
+      btnPayload.className = 'px-4 py-2 text-xs font-bold text-blue-400 border-b-2 border-blue-500 transition-colors';
+      btnStack.className = 'px-4 py-2 text-xs font-bold text-neutral-400 hover:text-white border-b-2 border-transparent transition-colors';
+      contentPayload.classList.remove('hidden');
+      contentStack.classList.add('hidden');
+    }
+  }
+
+  function copyToClipboard(elementId) {
+    const text = document.getElementById(elementId).innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('Copiado al portapapeles con éxito.', 'success');
+    }).catch(err => {
+      showToast('Error al copiar al portapapeles.', 'error');
+    });
+  }
+
+  async function deleteSingleLog(id, fromModal = false) {
+    showConfirm(`¿Estás seguro de eliminar permanentemente el registro de error #${id}?`, async () => {
+      try {
+        const resp = await fetch(`/errors/${id}`, { method: 'DELETE' });
+        const data = await resp.json();
+        if (data.success) {
+          showToast(data.message, 'success');
+          if (fromModal) closeDetailModal();
+          const row = document.querySelector(`.error-row[data-id="${id}"]`);
+          if (row) row.remove();
+          filterErrorLogs();
+        } else {
+          showToast('Error: ' + data.message, 'error');
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Error de red al eliminar el registro.', 'error');
+      }
+    });
+  }
+
+  async function clearAllLogs() {
+    showConfirm('¿Estás seguro de que deseas eliminar TODOS los registros de errores acumulados en la base de datos? Esta acción es permanente.', async () => {
+      try {
+        const resp = await fetch('/errors/clear-all', { method: 'POST' });
+        const data = await resp.json();
+        if (data.success) {
+          showToast(data.message, 'success');
+          setTimeout(() => window.location.reload(), 600);
+        } else {
+          showToast('Error: ' + data.message, 'error');
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Error de red al limpiar los registros.', 'error');
+      }
+    });
+  }
+</script>
+
+<%- include('../../partials/foot') %>

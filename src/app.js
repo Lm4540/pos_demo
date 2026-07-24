@@ -74,6 +74,7 @@ const transfersRoutes = require('./modules/inventory/transfers-routes');
 const inventoryRoutes = require('./modules/inventory/inventory-routes');
 const categoriesRoutes = require('./modules/inventory/categories-routes');
 const promotionsRoutes = require('./modules/sales/promotions-routes');
+const errorsRoutes = require('./modules/errors/errors-routes');
 const authMiddleware = require('./core/middlewares/authMiddleware');
 
 // Registrar rutas
@@ -92,6 +93,7 @@ app.use('/transfers', transfersRoutes);
 app.use('/inventory', inventoryRoutes);
 app.use('/categories', categoriesRoutes);
 app.use('/promotions', promotionsRoutes);
+app.use('/errors', errorsRoutes);
 
 app.get('/help', authMiddleware, (req, res) => {
   return res.render('pages/help', {

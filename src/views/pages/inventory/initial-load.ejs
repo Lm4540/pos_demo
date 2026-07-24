@@ -539,7 +539,7 @@
       const data = await resp.json();
       
       if (data.success) {
-        showToast('Producto creado con éxito.', 'success');
+        showToast(data.message || 'Producto registrado con éxito.', 'success');
         
         // Add to autocomplete database list
         const newProduct = {
@@ -555,6 +555,46 @@
         // Auto-add to load list
         addProductToAudit(newProduct);
         closeQuickCreateModal();
+      } else if (data.canReactivate && data.deletedProduct) {
+        submitBtn.disabled = false;
+        submitBtn.innerText = 'Crear Producto';
+        showConfirm(
+          `El código de barras "${data.deletedProduct.barCode}" pertenece al producto eliminado <strong>"${data.deletedProduct.name}"</strong>.<br><br>¿Deseas <strong>REACTIVAR</strong> este producto?`,
+          async () => {
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Reactivando...';
+            formData.set('reactivate', 'true');
+            formData.set('reactivateId', data.deletedProduct.id);
+            try {
+              const r2 = await fetch('/inventory/initial-load/product', {
+                method: 'POST',
+                body: formData
+              });
+              const res2 = await r2.json();
+              if (res2.success) {
+                showToast(res2.message || 'Producto reactivado con éxito.', 'success');
+                const reactivatedProduct = {
+                  id: res2.product.id,
+                  name: res2.product.name,
+                  barCode: res2.product.barCode,
+                  imagePath: res2.product.imagePath,
+                  type: res2.product.type || 'physical',
+                  salePrice: 0.00
+                };
+                dbProducts.push(reactivatedProduct);
+                addProductToAudit(reactivatedProduct);
+                closeQuickCreateModal();
+              } else {
+                showToast('Error: ' + res2.message, 'error');
+              }
+            } catch(e) {
+              showToast('Error al reactivar el producto.', 'error');
+            } finally {
+              submitBtn.disabled = false;
+              submitBtn.innerText = 'Crear Producto';
+            }
+          }
+        );
       } else {
         showToast('Error: ' + data.message, 'error');
       }

@@ -87,7 +87,7 @@
 
     const sep = '----------------------------------------';
     try {
-      const logoImgData = await window.loadImageData('/images/logo.png').catch(() => null);
+      const logoImgData = await window.loadImageData('/images/logo.png', 384).catch(() => null);
       const builder = new ESCPOSBuilder();
       builder.initialize().setFont('A');
 

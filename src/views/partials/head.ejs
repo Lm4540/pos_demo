@@ -1,36 +1,32 @@
 <!DOCTYPE html>
 <html lang="es" class="h-full bg-neutral-950 text-neutral-100">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= typeof title !== 'undefined' && title ? title + ' - RG Simple POS' : 'RG Simple POS' %></title>
-  
-  <!-- Tailwind CSS v4 browser runtime -->
-  <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
-  
-  <!-- Inter Google Font -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  
+  <script src="/js/tailwind.js"></script>
+  <link href="/css/font.css" rel="stylesheet">
   <link rel="manifest" href="/manifest.json">
   <style>
     body {
       font-family: 'Inter', sans-serif;
     }
 
-    /* Custom scrollbars styling */
     ::-webkit-scrollbar {
       width: 8px;
       height: 8px;
     }
+
     ::-webkit-scrollbar-track {
       background: #0a0a0a;
     }
+
     ::-webkit-scrollbar-thumb {
       background: #262626;
       border-radius: 4px;
     }
+
     ::-webkit-scrollbar-thumb:hover {
       background: #404040;
     }
@@ -40,97 +36,142 @@
       background-color: #f3f4f6 !important;
       color: #1f2937 !important;
     }
+
     .light-mode body {
       background-color: #f3f4f6 !important;
       color: #1f2937 !important;
     }
+
     /* Webkit scrollbars light mode */
     .light-mode ::-webkit-scrollbar-track {
       background: #f3f4f6;
     }
+
     .light-mode ::-webkit-scrollbar-thumb {
       background: #d1d5db;
     }
+
     .light-mode ::-webkit-scrollbar-thumb:hover {
       background: #9ca3af;
     }
 
     /* Layout overrides for light mode */
-    .light-mode nav, .light-mode header, .light-mode aside {
+    .light-mode nav,
+    .light-mode header,
+    .light-mode aside {
       background-color: #ffffff !important;
       border-color: #e5e7eb !important;
       color: #1f2937 !important;
     }
-    .light-mode nav a, .light-mode header a, .light-mode aside a {
+
+    .light-mode nav a,
+    .light-mode header a,
+    .light-mode aside a {
       color: #4b5563 !important;
     }
-    .light-mode nav a:hover, .light-mode header a:hover, .light-mode aside a:hover {
+
+    .light-mode nav a:hover,
+    .light-mode header a:hover,
+    .light-mode aside a:hover {
       background-color: #f3f4f6 !important;
       color: #111827 !important;
     }
+
     .light-mode main {
       background-color: #f3f4f6 !important;
     }
-    .light-mode .bg-neutral-900, .light-mode .bg-neutral-800, .light-mode .bg-neutral-850 {
+
+    .light-mode .bg-neutral-900,
+    .light-mode .bg-neutral-800,
+    .light-mode .bg-neutral-850 {
       background-color: #ffffff !important;
       border-color: #e5e7eb !important;
       color: #1f2937 !important;
     }
-    .light-mode .bg-neutral-950, .light-mode .bg-neutral-950\/40, .light-mode .bg-neutral-950\/60, .light-mode .bg-neutral-950\/50, .light-mode .bg-neutral-950\/80 {
+
+    .light-mode .bg-neutral-950,
+    .light-mode .bg-neutral-950\/40,
+    .light-mode .bg-neutral-950\/60,
+    .light-mode .bg-neutral-950\/50,
+    .light-mode .bg-neutral-950\/80 {
       background-color: #f9fafb !important;
       border-color: #e5e7eb !important;
     }
-    .light-mode .text-white, .light-mode .text-neutral-100, .light-mode .text-neutral-200 {
+
+    .light-mode .text-white,
+    .light-mode .text-neutral-100,
+    .light-mode .text-neutral-200 {
       color: #111827 !important;
     }
-    .light-mode .text-neutral-300, .light-mode .text-neutral-400 {
+
+    .light-mode .text-neutral-300,
+    .light-mode .text-neutral-400 {
       color: #374151 !important;
     }
+
     .light-mode .text-neutral-500 {
       color: #6b7280 !important;
     }
-    .light-mode .border-neutral-800, .light-mode .border-neutral-700, .light-mode .border-neutral-900, .light-mode .border-neutral-850 {
+
+    .light-mode .border-neutral-800,
+    .light-mode .border-neutral-700,
+    .light-mode .border-neutral-900,
+    .light-mode .border-neutral-850 {
       border-color: #e5e7eb !important;
     }
-    .light-mode input, .light-mode select, .light-mode textarea {
+
+    .light-mode input,
+    .light-mode select,
+    .light-mode textarea {
       background-color: #ffffff !important;
       border-color: #d1d5db !important;
       color: #111827 !important;
     }
-    .light-mode input::placeholder, .light-mode textarea::placeholder {
+
+    .light-mode input::placeholder,
+    .light-mode textarea::placeholder {
       color: #9ca3af !important;
     }
+
     .light-mode table {
       border-color: #e5e7eb !important;
     }
+
     .light-mode th {
       background-color: #f9fafb !important;
       color: #374151 !important;
       border-color: #e5e7eb !important;
     }
+
     .light-mode td {
       border-color: #e5e7eb !important;
       color: #374151 !important;
     }
+
     .light-mode tr:hover {
       background-color: #f9fafb !important;
     }
+
     .light-mode button {
       background-color: #ffffff;
       border-color: #e5e7eb;
       color: #374151;
     }
+
     .light-mode button:hover {
       background-color: #f3f4f6;
     }
+
     .light-mode .bg-indigo-950 {
       background-color: #e0e7ff !important;
       color: #4338ca !important;
       border-color: #c7d2fe !important;
     }
+
     .light-mode .bg-indigo-950:hover {
       background-color: #c7d2fe !important;
     }
+
     .light-mode .bg-emerald-950,
     .light-mode .bg-emerald-950\/40,
     .light-mode .bg-emerald-950\/60 {
@@ -138,6 +179,7 @@
       color: #065f46 !important;
       border-color: #a7f3d0 !important;
     }
+
     .light-mode .bg-red-950,
     .light-mode .bg-red-950\/40,
     .light-mode .bg-red-950\/50,
@@ -146,6 +188,7 @@
       color: #991b1b !important;
       border-color: #fca5a5 !important;
     }
+
     .light-mode .bg-amber-950,
     .light-mode .bg-amber-950\/40,
     .light-mode .bg-amber-950\/60 {
@@ -153,51 +196,66 @@
       color: #92400e !important;
       border-color: #fde68a !important;
     }
+
     .light-mode .text-blue-400 {
       color: #1d4ed8 !important;
     }
+
     .light-mode .text-emerald-400 {
       color: #047857 !important;
     }
+
     .light-mode .text-violet-400 {
       color: #6d28d9 !important;
     }
+
     .light-mode .text-amber-400 {
       color: #b45309 !important;
     }
+
     .light-mode .text-indigo-400 {
       color: #4338ca !important;
     }
+
     .light-mode .text-red-400 {
       color: #b91c1c !important;
     }
+
     .light-mode .bg-blue-600 {
       background-color: #2563eb !important;
     }
+
     .light-mode .bg-blue-600:hover {
       background-color: #1d4ed8 !important;
     }
+
     .light-mode .bg-red-950\/50 {
       background-color: #fee2e2 !important;
     }
+
     .light-mode .border-red-900 {
       border-color: #fca5a5 !important;
     }
+
     .light-mode .text-red-300 {
       color: #b91c1c !important;
     }
+
     .light-mode .hover\:bg-red-900:hover {
       background-color: #fca5a5 !important;
     }
+
     .light-mode .bg-neutral-950 button {
       background-color: #ffffff !important;
       border-color: #d1d5db !important;
       color: #374151 !important;
     }
+
     .light-mode .bg-neutral-950 button:hover {
       background-color: #f3f4f6 !important;
       border-color: #2563eb !important;
     }
+
     .light-mode .bg-blue-950,
     .light-mode .bg-blue-950\/40,
     .light-mode .bg-blue-950\/50,
@@ -206,87 +264,110 @@
       color: #1d4ed8 !important;
       border-color: #bfdbfe !important;
     }
+
     .light-mode .bg-violet-950 {
       background-color: #f5f3ff !important;
       color: #6d28d9 !important;
       border-color: #ddd6fe !important;
     }
+
     .light-mode .bg-cyan-950 {
       background-color: #cffafe !important;
       color: #0e7490 !important;
       border-color: #a5f3fc !important;
     }
+
     .light-mode .bg-teal-950 {
       background-color: #ccfbf1 !important;
       color: #0f766e !important;
       border-color: #99f6e4 !important;
     }
+
     .light-mode .bg-sky-950 {
       background-color: #e0f2fe !important;
       color: #0369a1 !important;
       border-color: #bae6fd !important;
     }
+
     .light-mode .bg-pink-950 {
       background-color: #fce7f3 !important;
       color: #be185d !important;
       border-color: #fbcfe8 !important;
     }
-    .light-mode .bg-gradient-to-br, 
+
+    .light-mode .bg-gradient-to-br,
     .light-mode .bg-gradient-to-r {
       background-image: none !important;
     }
+
     .light-mode .bg-gradient-to-r.from-blue-600.to-indigo-600 {
       background-image: none !important;
       background-color: #2563eb !important;
     }
+
     .light-mode svg {
       color: currentColor;
     }
+
     .light-mode .text-cyan-400 {
       color: #0e7490 !important;
     }
+
     .light-mode .text-teal-400 {
       color: #0f766e !important;
     }
+
     .light-mode .text-sky-400 {
       color: #0369a1 !important;
     }
+
     .light-mode .text-pink-400 {
       color: #be185d !important;
     }
-    .light-mode .text-neutral-600, 
-    .light-mode .text-neutral-700, 
+
+    .light-mode .text-neutral-600,
+    .light-mode .text-neutral-700,
     .light-mode .text-neutral-750 {
       color: #6b7280 !important;
     }
+
     /* Light mode borders for colored icon containers */
     .light-mode .border-cyan-800 {
       border-color: #a5f3fc !important;
     }
+
     .light-mode .border-teal-800 {
       border-color: #99f6e4 !important;
     }
+
     .light-mode .border-sky-800 {
       border-color: #bae6fd !important;
     }
+
     .light-mode .border-pink-800 {
       border-color: #fbcfe8 !important;
     }
+
     .light-mode .border-emerald-800 {
       border-color: #a7f3d0 !important;
     }
+
     .light-mode .border-blue-800 {
       border-color: #bfdbfe !important;
     }
+
     .light-mode .border-violet-800 {
       border-color: #ddd6fe !important;
     }
+
     .light-mode .border-amber-800 {
       border-color: #fde68a !important;
     }
+
     .light-mode .border-red-800 {
       border-color: #fca5a5 !important;
     }
+
     .light-mode .border-indigo-800 {
       border-color: #c7d2fe !important;
     }
@@ -306,16 +387,19 @@
     }
 
     /* Touchscreen adjustments for Windows touch screen */
-    select, input[type="date"], input[type="time"] {
+    select,
+    input[type="date"],
+    input[type="time"] {
       touch-action: manipulation;
     }
 
     /* Dark mode input vs placeholder differentiation */
-    html:not(.light-mode) input::placeholder, 
+    html:not(.light-mode) input::placeholder,
     html:not(.light-mode) textarea::placeholder {
       color: #6b7280 !important;
       opacity: 1 !important;
     }
+
     html:not(.light-mode) input,
     html:not(.light-mode) select,
     html:not(.light-mode) textarea {
@@ -328,13 +412,18 @@
       if (event.filename && event.filename.includes('log-error')) return;
       fetch('/log-error', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({
           route: window.location.pathname + window.location.search,
           method: 'CLIENT_JS',
           message: event.message,
           stack: event.error ? event.error.stack : (event.filename + ':' + event.lineno + ':' + event.colno),
-          payload: { userAgent: navigator.userAgent, referrer: document.referrer }
+          payload: {
+            userAgent: navigator.userAgent,
+            referrer: document.referrer
+          }
         })
       }).catch(e => console.error('Failed to log client error:', e));
     });
@@ -342,13 +431,17 @@
     window.addEventListener('unhandledrejection', function(event) {
       fetch('/log-error', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({
           route: window.location.pathname + window.location.search,
           method: 'CLIENT_PROMISE',
           message: event.reason ? (event.reason.message || String(event.reason)) : 'Unhandled Rejection',
           stack: event.reason && event.reason.stack ? event.reason.stack : null,
-          payload: { userAgent: navigator.userAgent }
+          payload: {
+            userAgent: navigator.userAgent
+          }
         })
       }).catch(e => console.error('Failed to log client rejection:', e));
     });
@@ -362,11 +455,11 @@
     function toggleTheme() {
       const isLight = document.documentElement.classList.toggle('light-mode');
       localStorage.setItem('theme', isLight ? 'light' : 'dark');
-      
+
       // Update sun/moon icons globally on the page
       const sunIcons = document.querySelectorAll('#theme-sun-icon');
       const moonIcons = document.querySelectorAll('#theme-moon-icon');
-      
+
       sunIcons.forEach(icon => {
         if (isLight) icon.classList.add('hidden');
         else icon.classList.remove('hidden');
@@ -395,7 +488,7 @@
             rightDiv.className = 'flex items-center gap-3';
             nav.appendChild(rightDiv);
           }
-          
+
           // Create the theme toggle button
           const btn = document.createElement('button');
           btn.type = 'button';
@@ -413,7 +506,7 @@
             </svg>
           `;
           rightDiv.appendChild(btn);
-          
+
           // Sync icon display based on active theme
           const sunIcon = btn.querySelector('#theme-sun-icon');
           const moonIcon = btn.querySelector('#theme-moon-icon');
@@ -426,4 +519,5 @@
     });
   </script>
 </head>
+
 <body class="h-full flex flex-col antialiased">

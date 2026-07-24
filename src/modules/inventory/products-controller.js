@@ -77,7 +77,7 @@ const saveImageFromBase64OrUrl = async (imageBase64, imageUrl) => {
 };
 
 const createProduct = async (req, res, next) => {
-  const { barCode, name, isFrequent, categoryId, type, imageBase64, imageUrl } = req.body;
+  const { barCode, name, isFrequent, categoryId, type, imageBase64, imageUrl, reactivate, reactivateId } = req.body;
   let imagePath = null;
   
   if (req.file) {
@@ -92,7 +92,7 @@ const createProduct = async (req, res, next) => {
   try {
     if (!name || name.trim() === '') {
       if (req.file) {
-        fs.unlinkSync(req.file.path);
+        try { fs.unlinkSync(req.file.path); } catch(e) {}
       }
       if (req.xhr || req.headers.accept?.includes('json')) {
         return res.status(400).json({ success: false, message: 'El nombre del producto es obligatorio.' });
@@ -109,14 +109,143 @@ const createProduct = async (req, res, next) => {
       });
     }
 
+    const trimmedBarCode = barCode && barCode.trim() !== '' ? barCode.trim() : null;
+
+    // ── 1. CONFIRMED REACTIVATION OF SOFT-DELETED PRODUCT ──
+    if (reactivate === 'true' || reactivate === true) {
+      let targetProduct = null;
+      if (reactivateId) {
+        targetProduct = await Product.findByPk(reactivateId, { paranoid: false });
+      } else if (trimmedBarCode) {
+        targetProduct = await Product.findOne({ where: { barCode: trimmedBarCode }, paranoid: false });
+      }
+
+      if (targetProduct && targetProduct.deletedAt !== null) {
+        await targetProduct.restore();
+
+        const updatePayload = {
+          name: name.trim(),
+          barCode: trimmedBarCode,
+          isFrequent: isFrequent === 'true' || isFrequent === true,
+          type: type || 'physical',
+          categoryId: categoryId && categoryId !== '' ? parseInt(categoryId, 10) : null
+        };
+        if (imagePath) {
+          updatePayload.imagePath = imagePath;
+        }
+        await targetProduct.update(updatePayload);
+
+        // Ensure BranchProducts exist across all branches
+        const { Branch, BranchProduct } = require('../../core/models');
+        const branches = await Branch.findAll();
+        for (const b of branches) {
+          const bp = await BranchProduct.findOne({ where: { productId: targetProduct.id, branchId: b.id } });
+          if (!bp) {
+            await BranchProduct.create({
+              productId: targetProduct.id,
+              branchId: b.id,
+              totalStock: 0,
+              averageCost: 0,
+              salePrice: 0,
+              minStock: 0
+            });
+          }
+        }
+
+        await logAction({
+          userId: req.user.id,
+          branchId: req.user.branchId,
+          action: 'inventory.product_reactivated',
+          details: { name: targetProduct.name, barCode: targetProduct.barCode, productId: targetProduct.id },
+          ipAddress: req.ip
+        });
+
+        if (req.xhr || req.headers.accept?.includes('json')) {
+          return res.json({ success: true, message: `Producto "${targetProduct.name}" reactivado y actualizado con éxito.`, product: targetProduct });
+        }
+        return res.redirect('/products?success=1');
+      }
+    }
+
+    // ── 2. CHECK EXISTING ACTIVE & SOFT-DELETED PRODUCTS BEFORE CREATION ──
+    if (trimmedBarCode) {
+      const existing = await Product.findOne({ where: { barCode: trimmedBarCode }, paranoid: false });
+      if (existing) {
+        if (req.file) {
+          try { fs.unlinkSync(req.file.path); } catch(e) {}
+        }
+
+        if (existing.deletedAt !== null) {
+          // Soft-deleted product match
+          if (req.xhr || req.headers.accept?.includes('json')) {
+            return res.status(409).json({
+              success: false,
+              canReactivate: true,
+              deletedProduct: {
+                id: existing.id,
+                name: existing.name,
+                barCode: existing.barCode
+              },
+              message: `El código de barras "${trimmedBarCode}" pertenece al producto eliminado "${existing.name}". ¿Deseas reactivarlo en lugar de crear uno nuevo?`
+            });
+          }
+          const products = await Product.findAll({ order: [['name', 'ASC']] });
+          const categories = await Category.findAll({ order: [['name', 'ASC']] });
+          return res.render('pages/products/index', {
+            title: 'Catálogo de Productos',
+            products,
+            categories,
+            error: `El código de barras "${trimmedBarCode}" pertenece al producto eliminado "${existing.name}".`,
+            canReactivate: true,
+            deletedProduct: existing,
+            maxPx: process.env.IMG_MAX_PX || 1200,
+            quality: process.env.IMG_QUALITY || 0.8
+          });
+        } else {
+          // Active product match
+          if (req.xhr || req.headers.accept?.includes('json')) {
+            return res.status(400).json({
+              success: false,
+              message: `El código de barras "${trimmedBarCode}" ya pertenece al producto activo "${existing.name}".`
+            });
+          }
+          const products = await Product.findAll({ order: [['name', 'ASC']] });
+          const categories = await Category.findAll({ order: [['name', 'ASC']] });
+          return res.render('pages/products/index', {
+            title: 'Catálogo de Productos',
+            products,
+            categories,
+            error: `El código de barras "${trimmedBarCode}" ya pertenece al producto activo "${existing.name}".`,
+            maxPx: process.env.IMG_MAX_PX || 1200,
+            quality: process.env.IMG_QUALITY || 0.8
+          });
+        }
+      }
+    }
+
+    // ── 3. CREATE NEW PRODUCT ──
     const newProduct = await Product.create({
-      barCode: barCode && barCode.trim() !== '' ? barCode.trim() : null,
+      barCode: trimmedBarCode,
       name: name.trim(),
-      isFrequent: isFrequent === 'true',
+      isFrequent: isFrequent === 'true' || isFrequent === true,
       type: type || 'physical',
       imagePath,
       categoryId: categoryId && categoryId !== '' ? parseInt(categoryId, 10) : null
     });
+
+    const { Branch, BranchProduct } = require('../../core/models');
+    const branches = await Branch.findAll();
+    for (const b of branches) {
+      await BranchProduct.findOrCreate({
+        where: { productId: newProduct.id, branchId: b.id },
+        defaults: {
+          totalStock: 0,
+          averageCost: 0,
+          salePrice: 0,
+          minStock: 0
+        }
+      });
+    }
 
     await logAction({
       userId: req.user.id,
@@ -175,10 +304,37 @@ const updateProduct = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Producto no encontrado.' });
     }
 
+    const trimmedBarCode = barCode && barCode.trim() !== '' ? barCode.trim() : null;
+
+    if (trimmedBarCode) {
+      const { Op } = require('sequelize');
+      const existing = await Product.findOne({
+        where: {
+          barCode: trimmedBarCode,
+          id: { [Op.ne]: id }
+        },
+        paranoid: false
+      });
+      if (existing) {
+        if (req.file) try { fs.unlinkSync(req.file.path); } catch(e) {}
+        if (existing.deletedAt !== null) {
+          return res.status(400).json({
+            success: false,
+            message: `El código de barras "${trimmedBarCode}" pertenece al producto eliminado "${existing.name}".`
+          });
+        } else {
+          return res.status(400).json({
+            success: false,
+            message: `El código de barras "${trimmedBarCode}" ya pertenece al producto activo "${existing.name}".`
+          });
+        }
+      }
+    }
+
     const updatePayload = {
-      barCode: barCode && barCode.trim() !== '' ? barCode.trim() : null,
+      barCode: trimmedBarCode,
       name: name.trim(),
-      isFrequent: isFrequent === 'true',
+      isFrequent: isFrequent === 'true' || isFrequent === true,
       type: type || 'physical',
       categoryId: categoryId && categoryId !== '' ? parseInt(categoryId, 10) : null
     };
@@ -216,18 +372,102 @@ const updateProduct = async (req, res, next) => {
 const deleteProduct = async (req, res, next) => {
   const { id } = req.params;
   try {
+    const {
+      BranchProduct,
+      ProductBatch,
+      Kardex,
+      SaleDetail,
+      PurchaseDetail,
+      BranchTransferDetail,
+      InventoryAuditDetail,
+      Promotion
+    } = require('../../core/models');
+
     const product = await Product.findByPk(id);
     if (!product) {
       return res.status(404).json({ success: false, message: 'Producto no encontrado.' });
     }
 
+    // 1. Check total stock across all branches
+    const stockSum = await BranchProduct.sum('totalStock', { where: { productId: id } }) || 0;
+    if (stockSum > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `No se puede eliminar "${product.name}" porque cuenta con existencias (${stockSum} uds en inventario). Deberás ajustar el stock a cero antes de eliminar.`
+      });
+    }
+
+    // 2. Check batch stock
+    const batchStockSum = await ProductBatch.sum('currentQuantity', { where: { productId: id } }) || 0;
+    if (batchStockSum > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `No se puede eliminar "${product.name}" porque cuenta con lotes activos que tienen existencias (${batchStockSum} uds).`
+      });
+    }
+
+    // 3. Check Kardex inventory movements
+    const kardexCount = await Kardex.count({ where: { productId: id } });
+    if (kardexCount > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `No se puede eliminar "${product.name}" porque registra ${kardexCount} movimiento(s) en el historial de Kardex.`
+      });
+    }
+
+    // 4. Check related sales details
+    const salesCount = await SaleDetail.count({ where: { productId: id } });
+    if (salesCount > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `No se puede eliminar "${product.name}" porque cuenta con ${salesCount} registro(s) de ventas asociadas.`
+      });
+    }
+
+    // 5. Check related purchase details
+    const purchasesCount = await PurchaseDetail.count({ where: { productId: id } });
+    if (purchasesCount > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `No se puede eliminar "${product.name}" porque cuenta con ${purchasesCount} registro(s) de compras.`
+      });
+    }
+
+    // 6. Check branch transfer details
+    const transfersCount = await BranchTransferDetail.count({ where: { productId: id } });
+    if (transfersCount > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `No se puede eliminar "${product.name}" porque cuenta con traslados entre sucursales registrados.`
+      });
+    }
+
+    // 7. Check inventory audit details
+    const auditsCount = await InventoryAuditDetail.count({ where: { productId: id } });
+    if (auditsCount > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `No se puede eliminar "${product.name}" porque cuenta con registros en auditorías de inventario.`
+      });
+    }
+
+    // 8. Check promotions
+    const promotionsCount = await Promotion.count({ where: { productId: id } });
+    if (promotionsCount > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `No se puede eliminar "${product.name}" porque tiene promociones configuradas.`
+      });
+    }
+
+    // Proceed with soft-delete if no stock or related FK records exist
     await product.destroy();
 
     await logAction({
       userId: req.user.id,
       branchId: req.user.branchId,
       action: 'inventory.product_deleted',
-      details: { name: product.name },
+      details: { name: product.name, barCode: product.barCode, productId: product.id },
       ipAddress: req.ip
     });
 
