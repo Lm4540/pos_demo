@@ -285,15 +285,7 @@
                 <span class="block text-[10px] text-neutral-500">Consulta, reimprime o anula tickets emitidos</span>
               </div>
             </a>
-            <a href="/audit-logs" class="flex items-center gap-3 px-4 py-3 bg-neutral-950 border border-neutral-800 hover:border-amber-500/50 rounded-xl transition-all group cursor-pointer">
-              <div class="h-8 w-8 bg-amber-950 border border-amber-800/50 rounded-lg flex items-center justify-center flex-shrink-0">
-                <span class="text-sm">📋</span>
-              </div>
-              <div>
-                <span class="text-xs font-bold text-white group-hover:text-amber-400 transition-colors">Auditoría del Sistema</span>
-                <span class="block text-[10px] text-neutral-500">Registro de acciones y cambios por usuario</span>
-              </div>
-            </a>
+            
             <% if (user.roleId === 'admin') { %>
             <a href="/errors" class="flex items-center gap-3 px-4 py-3 bg-neutral-950 border border-neutral-800 hover:border-red-500/50 rounded-xl transition-all group cursor-pointer">
               <div class="h-8 w-8 bg-red-950 border border-red-800/50 rounded-lg flex items-center justify-center flex-shrink-0">

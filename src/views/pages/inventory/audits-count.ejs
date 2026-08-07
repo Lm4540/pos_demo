@@ -58,9 +58,12 @@
     <!-- Counting Table Right Panel -->
     <div class="lg:col-span-2">
       <div class="bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden shadow-sm flex flex-col h-[70vh]">
-        <div class="px-6 py-4 border-b border-neutral-800 flex items-center justify-between">
-          <h3 class="text-sm font-bold text-white uppercase tracking-wider">Productos en Conteo</h3>
-          <span id="items-count-badge" class="bg-neutral-850 border border-neutral-800 text-neutral-450 font-bold px-2.5 py-0.5 rounded-full text-[10px]">0 ítems</span>
+        <div class="px-6 py-4 border-b border-neutral-800 flex items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <h3 class="text-sm font-bold text-white uppercase tracking-wider">Productos en Conteo</h3>
+            <span id="items-count-badge" class="bg-neutral-850 border border-neutral-800 text-neutral-450 font-bold px-2.5 py-0.5 rounded-full text-[10px]">0 ítems</span>
+          </div>
+          <input type="text" id="filter-rows-input" oninput="onFilterChange(this.value)" placeholder="Filtrar en conteo..." class="bg-neutral-950 border border-neutral-800 text-white text-xs rounded-xl px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 w-48">
         </div>
 
         <div class="flex-grow overflow-y-auto">
@@ -79,6 +82,26 @@
             </tbody>
           </table>
         </div>
+
+        <div class="px-6 py-3 border-t border-neutral-800 flex items-center justify-between text-xs text-neutral-400 bg-neutral-950/60 flex-shrink-0">
+          <div class="flex items-center gap-2">
+            <span>Mostrar</span>
+            <select id="page-size-select" onchange="changePageSize(this.value)" class="bg-neutral-900 border border-neutral-800 text-white rounded-lg px-2 py-1 text-xs focus:outline-none">
+              <option value="50" selected>50</option>
+              <option value="100">100</option>
+              <option value="250">250</option>
+              <option value="500">500</option>
+            </select>
+            <span>ítems por página</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <button type="button" onclick="prevPage()" id="btn-prev-page" class="px-3 py-1 bg-neutral-850 hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed rounded-lg border border-neutral-800 text-white transition-all">Anterior</button>
+            <span id="page-info" class="font-mono text-neutral-300">Página 1 de 1</span>
+            <button type="button" onclick="nextPage()" id="btn-next-page" class="px-3 py-1 bg-neutral-850 hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed rounded-lg border border-neutral-800 text-white transition-all">Siguiente</button>
+            <span class="ml-2">Ir a página:</span>
+            <input type="number" id="jump-page-input" min="1" onchange="jumpToPage(this.value)" class="w-14 bg-neutral-950 border border-neutral-800 text-white rounded-lg text-center text-xs py-1 focus:outline-none focus:ring-1 focus:ring-blue-500">
+          </div>
+        </div>
       </div>
     </div>
   </main>
@@ -88,6 +111,10 @@
   const auditId = <%= audit.id %>;
   const branchId = <%= audit.branchId %>;
   let auditedItems = [];
+
+  let currentPage = 1;
+  let pageSize = 50;
+  let filterQuery = '';
 
   // Load existing session details
   <% if (audit.details && audit.details.length > 0) { %>
@@ -124,9 +151,8 @@
       // Look up locally first
       let localItem = auditedItems.find(item => item.barCode === code);
       if (localItem) {
-        localItem.countedQuantity += 1;
+        updateQty(localItem.productId, localItem.countedQuantity + 1);
         showToast(`Incrementado: ${localItem.name} (+1)`, 'success');
-        renderRows();
       } else {
         // Query database
         try {
@@ -200,7 +226,7 @@
 
     let existing = auditedItems.find(item => item.productId === r.productId);
     if (existing) {
-      existing.countedQuantity += 1;
+      updateQty(existing.productId, existing.countedQuantity + 1);
       showToast(`Incrementado: ${existing.name} (+1)`, 'success');
     } else {
       auditedItems.push({
@@ -212,8 +238,8 @@
         justification: ''
       });
       showToast(`Agregado: ${r.name} (1)`, 'success');
+      renderRows();
     }
-    renderRows();
   }
 
   // Load template helper
@@ -236,6 +262,7 @@
           justification: ''
         }));
         showToast('Plantilla de inventario cargada con éxito.', 'success');
+        currentPage = 1;
         renderRows();
       } else {
         showToast('Error: ' + data.message, 'error');
@@ -246,38 +273,101 @@
     }
   }
 
-  // Row Renderer
+  function getFilteredItems() {
+    if (!filterQuery) return auditedItems;
+    const q = filterQuery.toLowerCase();
+    return auditedItems.filter(item => 
+      (item.name && item.name.toLowerCase().includes(q)) || 
+      (item.barCode && item.barCode.toLowerCase().includes(q))
+    );
+  }
+
+  function onFilterChange(val) {
+    filterQuery = val.trim();
+    currentPage = 1;
+    renderRows();
+  }
+
+  function changePageSize(val) {
+    pageSize = parseInt(val, 10) || 50;
+    currentPage = 1;
+    renderRows();
+  }
+
+  function jumpToPage(val) {
+    const p = parseInt(val, 10);
+    const filtered = getFilteredItems();
+    const totalPages = Math.ceil(filtered.length / pageSize) || 1;
+    if (!isNaN(p) && p >= 1 && p <= totalPages) {
+      currentPage = p;
+      renderRows();
+    }
+  }
+
+  function prevPage() {
+    if (currentPage > 1) {
+      currentPage--;
+      renderRows();
+    }
+  }
+
+  function nextPage() {
+    const filtered = getFilteredItems();
+    const totalPages = Math.ceil(filtered.length / pageSize) || 1;
+    if (currentPage < totalPages) {
+      currentPage++;
+      renderRows();
+    }
+  }
+
+  // Row Renderer with Pagination
   function renderRows() {
     const container = document.getElementById('counting-rows-container');
-    document.getElementById('items-count-badge').innerText = `${auditedItems.length} ítems`;
+    const filtered = getFilteredItems();
 
-    if (auditedItems.length === 0) {
+    document.getElementById('items-count-badge').innerText = filterQuery 
+      ? `${filtered.length} de ${auditedItems.length} ítems` 
+      : `${auditedItems.length} ítems`;
+
+    if (filtered.length === 0) {
       container.innerHTML = `
         <tr>
           <td colspan="5" class="px-6 py-12 text-center text-xs text-neutral-500">
-            Escanee códigos o busque productos para comenzar el conteo físico.
+            ${auditedItems.length === 0 ? 'Escanee códigos o busque productos para comenzar el conteo físico.' : 'No hay productos que coincidan con el filtro.'}
           </td>
         </tr>
       `;
+      document.getElementById('page-info').innerText = 'Página 0 de 0';
+      document.getElementById('btn-prev-page').disabled = true;
+      document.getElementById('btn-next-page').disabled = true;
       return;
     }
 
-    container.innerHTML = auditedItems.map((item, idx) => {
-      const expected = parseFloat(item.expectedQuantity);
-      const counted = parseFloat(item.countedQuantity);
+    const totalPages = Math.ceil(filtered.length / pageSize) || 1;
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+
+    document.getElementById('page-info').innerText = `Página ${currentPage} de ${totalPages}`;
+    document.getElementById('btn-prev-page').disabled = (currentPage === 1);
+    document.getElementById('btn-next-page').disabled = (currentPage === totalPages);
+
+    const startIndex = (currentPage - 1) * pageSize;
+    const pageItems = filtered.slice(startIndex, startIndex + pageSize);
+
+    container.innerHTML = pageItems.map((item) => {
+      const expected = parseFloat(item.expectedQuantity) || 0;
+      const counted = parseFloat(item.countedQuantity) || 0;
       const discrepancy = counted - expected;
 
-      // Decide discrepancy color
-      let discClass = "text-center text-xs font-mono font-bold ";
+      let discClass = "discrepancy-cell text-center text-xs font-mono font-bold ";
       if (discrepancy > 0) discClass += "text-emerald-400";
       else if (discrepancy < 0) discClass += "text-red-400";
       else discClass += "text-neutral-500";
 
-      // Show justification only if discrepancy exists
       const hasDisc = Math.abs(discrepancy) > 0.001;
 
       return `
-        <tr class="hover:bg-neutral-950/30 transition-colors">
+        <tr id="row-item-${item.productId}" class="hover:bg-neutral-950/30 transition-colors">
           <td class="px-4 py-3">
             <span class="text-xs font-bold text-white block truncate max-w-sm">${item.name}</span>
             <span class="text-[10px] text-neutral-500 font-mono">Cód: ${item.barCode || 'N/A'}</span>
@@ -286,13 +376,13 @@
             ${expected.toFixed(0)}
           </td>
           <td class="px-4 py-3 text-center">
-            <input type="number" min="0" value="${counted}" onchange="updateQty(${idx}, this.value)" class="w-20 text-center bg-neutral-950 border border-neutral-800 text-white text-xs font-bold py-1 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500">
+            <input type="number" min="0" value="${counted}" onchange="updateQty(${item.productId}, this.value)" class="w-20 text-center bg-neutral-950 border border-neutral-800 text-white text-xs font-bold py-1 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500">
           </td>
           <td class="${discClass}">
             ${discrepancy > 0 ? '+' : ''}${discrepancy.toFixed(0)}
           </td>
           <td class="px-4 py-3">
-            <select onchange="updateJustification(${idx}, this.value)" ${hasDisc ? '' : 'disabled'} class="w-full bg-neutral-950 border border-neutral-800 text-white text-[11px] rounded-lg px-2 py-1 focus:outline-none disabled:opacity-30">
+            <select onchange="updateJustification(${item.productId}, this.value)" ${hasDisc ? '' : 'disabled'} class="justification-select w-full bg-neutral-950 border border-neutral-800 text-white text-[11px] rounded-lg px-2 py-1 focus:outline-none disabled:opacity-30">
               <option value="" ${item.justification === '' ? 'selected' : ''}>-- Sin justificar --</option>
               <option value="Merma: Producto Vencido" ${item.justification === 'Merma: Producto Vencido' ? 'selected' : ''}>Merma: Vencido</option>
               <option value="Merma: Producto Dañado" ${item.justification === 'Merma: Producto Dañado' ? 'selected' : ''}>Merma: Dañado</option>
@@ -306,22 +396,47 @@
     }).join('');
   }
 
-  function updateQty(idx, val) {
+  function updateQty(productId, val) {
     let qty = parseFloat(val);
     if (isNaN(qty) || qty < 0) qty = 0;
-    auditedItems[idx].countedQuantity = qty;
-    
-    // Auto-clear justification if no discrepancy now
-    const discrepancy = qty - auditedItems[idx].expectedQuantity;
+
+    const item = auditedItems.find(i => i.productId === productId);
+    if (!item) return;
+
+    item.countedQuantity = qty;
+
+    const expected = parseFloat(item.expectedQuantity) || 0;
+    const discrepancy = qty - expected;
     if (Math.abs(discrepancy) < 0.001) {
-      auditedItems[idx].justification = '';
+      item.justification = '';
     }
 
-    renderRows();
+    // Granular DOM update
+    const row = document.getElementById(`row-item-${productId}`);
+    if (row) {
+      const discCell = row.querySelector('.discrepancy-cell');
+      if (discCell) {
+        discCell.className = "discrepancy-cell text-center text-xs font-mono font-bold " + 
+          (discrepancy > 0 ? "text-emerald-400" : (discrepancy < 0 ? "text-red-400" : "text-neutral-500"));
+        discCell.innerText = (discrepancy > 0 ? '+' : '') + discrepancy.toFixed(0);
+      }
+
+      const selectEl = row.querySelector('.justification-select');
+      if (selectEl) {
+        const hasDisc = Math.abs(discrepancy) > 0.001;
+        selectEl.disabled = !hasDisc;
+        selectEl.value = item.justification || '';
+      }
+    } else {
+      renderRows();
+    }
   }
 
-  function updateJustification(idx, val) {
-    auditedItems[idx].justification = val;
+  function updateJustification(productId, val) {
+    const item = auditedItems.find(i => i.productId === productId);
+    if (item) {
+      item.justification = val;
+    }
   }
 
   // Save Draft (AJAX POST)

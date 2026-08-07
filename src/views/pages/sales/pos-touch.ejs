@@ -656,8 +656,8 @@
 
   const promotions = <%- JSON.stringify(promotions) %>;
 
-  // Default combined items list
-  const frequentItemsList = <%- JSON.stringify(frequentProducts.map(bp => ({
+  // Default combined items list (filtering out 0 stock physical items)
+  const frequentItemsList = <%- JSON.stringify(frequentProducts.filter(bp => bp.totalStock > 0).map(bp => ({
     productId: bp.productId,
     name: bp.product.name,
     salePrice: bp.salePrice,
@@ -1394,15 +1394,17 @@
       const resp = await fetch(`/sales/api/products?q=${encodeURIComponent(val)}`);
       const results = await resp.json();
 
-      const searchItems = results.map(r => ({
-        productId: r.id,
-        name: r.name,
-        salePrice: r.salePrice,
-        totalStock: r.totalStock,
-        categoryId: r.categoryId,
-        imagePath: r.imagePath,
-        type: r.type || 'physical'
-      }));
+      const searchItems = results
+        .filter(r => r.type === 'service' || r.totalStock > 0)
+        .map(r => ({
+          productId: r.id,
+          name: r.name,
+          salePrice: r.salePrice,
+          totalStock: r.totalStock,
+          categoryId: r.categoryId,
+          imagePath: r.imagePath,
+          type: r.type || 'physical'
+        }));
       renderCatalogItems(searchItems);
     } catch (e) {}
   });

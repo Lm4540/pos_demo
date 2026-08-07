@@ -7,9 +7,12 @@ const renderPOS = async (req, res, next) => {
   try {
     const activeTurn = req.activeTurn; // Guaranteed by checkActiveTurn middleware
 
-    // Get frequent products in this branch, including their category
+    // Get frequent products in this branch with stock (>0), including their category
     const branchProducts = await BranchProduct.findAll({
-      where: { branchId: req.user.branchId },
+      where: {
+        branchId: req.user.branchId,
+        totalStock: { [Op.gt]: 0 }
+      },
       include: [{
         model: Product,
         as: 'product',
@@ -124,7 +127,10 @@ const renderPOSTouch = async (req, res, next) => {
     const activeTurn = req.activeTurn;
 
     const branchProducts = await BranchProduct.findAll({
-      where: { branchId: req.user.branchId },
+      where: {
+        branchId: req.user.branchId,
+        totalStock: { [Op.gt]: 0 }
+      },
       include: [{
         model: Product,
         as: 'product',

@@ -95,9 +95,10 @@
     </div>
 
     <!-- Details Table -->
-    <div class="bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden shadow-sm">
-      <div class="px-6 py-4 border-b border-neutral-800">
+    <div class="bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden shadow-sm flex flex-col">
+      <div class="px-6 py-4 border-b border-neutral-800 flex items-center justify-between gap-4">
         <h3 class="text-sm font-bold text-white uppercase tracking-wider">Detalle de Ajustes Realizados</h3>
+        <input type="text" id="report-search-input" oninput="onReportFilterChange(this.value)" placeholder="Buscar en reporte..." class="bg-neutral-950 border border-neutral-800 text-white text-xs rounded-xl px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 w-52">
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
@@ -112,50 +113,165 @@
               <th class="px-6 py-3.5 text-[10px] font-bold text-neutral-500 uppercase w-48">Justificación (Merma)</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-neutral-800/60">
-            <% details.forEach(d => { %>
-              <tr class="hover:bg-neutral-950/30 transition-colors">
-                <td class="px-6 py-4">
-                  <span class="text-xs font-bold text-white block"><%= d.product ? d.product.name : 'Artículo' %></span>
-                  <span class="text-[10px] text-neutral-500 font-mono">Cód: <%= d.product ? (d.product.barCode || 'N/A') : 'N/A' %></span>
-                </td>
-                <td class="px-6 py-4 text-center text-xs text-neutral-400">
-                  <%= parseFloat(d.expectedQuantity).toFixed(0) %>
-                </td>
-                <td class="px-6 py-4 text-center text-xs font-bold text-white">
-                  <%= parseFloat(d.countedQuantity).toFixed(0) %>
-                </td>
-                <td class="px-6 py-4 text-center text-xs font-mono font-bold <%= d.discrepancy > 0 ? 'text-emerald-400' : (d.discrepancy < 0 ? 'text-red-400' : 'text-neutral-500') %>">
-                  <%= d.discrepancy > 0 ? '+' : '' %><%= parseFloat(d.discrepancy).toFixed(0) %>
-                </td>
-                <td class="px-6 py-4 text-right text-xs font-mono text-neutral-400">
-                  $<%= parseFloat(d.averageCost).toFixed(2) %>
-                </td>
-                <td class="px-6 py-4 text-right text-xs font-mono font-bold <%= d.totalCostValue > 0 ? 'text-emerald-400' : (d.totalCostValue < 0 ? 'text-red-400' : 'text-neutral-500') %>">
-                  <%= d.totalCostValue > 0 ? '+' : '' %>$<%= parseFloat(d.totalCostValue).toFixed(2) %>
-                </td>
-                <td class="px-6 py-4 text-xs font-semibold">
-                  <% if (d.justification) { %>
-                    <% if (d.justification.startsWith('Merma:')) { %>
-                      <span class="bg-red-950/40 text-red-450 border border-red-900 px-2 py-0.5 rounded text-[10px]">
-                        <%= d.justification %>
-                      </span>
-                    <% } else { %>
-                      <span class="bg-amber-950/40 text-amber-450 border border-amber-800 px-2 py-0.5 rounded text-[10px]">
-                        <%= d.justification %>
-                      </span>
-                    <% } %>
-                  <% } else { %>
-                    <span class="text-neutral-600">—</span>
-                  <% } %>
-                </td>
-              </tr>
-            <% }) %>
+          <tbody id="report-rows-container" class="divide-y divide-neutral-800/60">
+            <!-- Dynamically rendered rows -->
           </tbody>
         </table>
+      </div>
+
+      <div class="px-6 py-3 border-t border-neutral-800 flex items-center justify-between text-xs text-neutral-400 bg-neutral-950/60 flex-shrink-0">
+        <div class="flex items-center gap-2">
+          <span>Mostrar</span>
+          <select id="report-page-size" onchange="changeReportPageSize(this.value)" class="bg-neutral-900 border border-neutral-800 text-white rounded-lg px-2 py-1 text-xs focus:outline-none">
+            <option value="50" selected>50</option>
+            <option value="100">100</option>
+            <option value="250">250</option>
+            <option value="500">500</option>
+          </select>
+          <span>por página</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <button type="button" onclick="prevReportPage()" id="btn-prev-report" class="px-3 py-1 bg-neutral-850 hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed rounded-lg border border-neutral-800 text-white transition-all">Anterior</button>
+          <span id="report-page-info" class="font-mono text-neutral-300">Página 1 de 1</span>
+          <button type="button" onclick="nextReportPage()" id="btn-next-report" class="px-3 py-1 bg-neutral-850 hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed rounded-lg border border-neutral-800 text-white transition-all">Siguiente</button>
+          <span class="ml-2">Ir a página:</span>
+          <input type="number" id="jump-report-page" min="1" onchange="jumpToReportPage(this.value)" class="w-14 bg-neutral-950 border border-neutral-800 text-white rounded-lg text-center text-xs py-1 focus:outline-none focus:ring-1 focus:ring-blue-500">
+        </div>
       </div>
     </div>
   </main>
 </div>
+
+<script>
+  const rawReportDetails = <%- JSON.stringify(details) %>;
+  let reportPage = 1;
+  let reportPageSize = 50;
+  let reportQuery = '';
+
+  function getFilteredReportDetails() {
+    if (!reportQuery) return rawReportDetails;
+    const q = reportQuery.toLowerCase();
+    return rawReportDetails.filter(d => {
+      const pName = d.product ? d.product.name.toLowerCase() : '';
+      const pCode = d.product ? (d.product.barCode || '').toLowerCase() : '';
+      return pName.includes(q) || pCode.includes(q);
+    });
+  }
+
+  function onReportFilterChange(val) {
+    reportQuery = val.trim();
+    reportPage = 1;
+    renderReportTable();
+  }
+
+  function changeReportPageSize(val) {
+    reportPageSize = parseInt(val, 10) || 50;
+    reportPage = 1;
+    renderReportTable();
+  }
+
+  function jumpToReportPage(val) {
+    const p = parseInt(val, 10);
+    const filtered = getFilteredReportDetails();
+    const totalPages = Math.ceil(filtered.length / reportPageSize) || 1;
+    if (!isNaN(p) && p >= 1 && p <= totalPages) {
+      reportPage = p;
+      renderReportTable();
+    }
+  }
+
+  function prevReportPage() {
+    if (reportPage > 1) {
+      reportPage--;
+      renderReportTable();
+    }
+  }
+
+  function nextReportPage() {
+    const filtered = getFilteredReportDetails();
+    const totalPages = Math.ceil(filtered.length / reportPageSize) || 1;
+    if (reportPage < totalPages) {
+      reportPage++;
+      renderReportTable();
+    }
+  }
+
+  function renderReportTable() {
+    const container = document.getElementById('report-rows-container');
+    const filtered = getFilteredReportDetails();
+
+    if (filtered.length === 0) {
+      container.innerHTML = `
+        <tr>
+          <td colspan="7" class="px-6 py-12 text-center text-xs text-neutral-500">
+            No hay registros que coincidan con la búsqueda.
+          </td>
+        </tr>
+      `;
+      document.getElementById('report-page-info').innerText = 'Página 0 de 0';
+      document.getElementById('btn-prev-report').disabled = true;
+      document.getElementById('btn-next-report').disabled = true;
+      return;
+    }
+
+    const totalPages = Math.ceil(filtered.length / reportPageSize) || 1;
+    if (reportPage > totalPages) reportPage = totalPages;
+    if (reportPage < 1) reportPage = 1;
+
+    document.getElementById('report-page-info').innerText = `Página ${reportPage} de ${totalPages}`;
+    document.getElementById('btn-prev-report').disabled = (reportPage === 1);
+    document.getElementById('btn-next-report').disabled = (reportPage === totalPages);
+
+    const startIndex = (reportPage - 1) * reportPageSize;
+    const pageItems = filtered.slice(startIndex, startIndex + reportPageSize);
+
+    container.innerHTML = pageItems.map(d => {
+      const exp = parseFloat(d.expectedQuantity) || 0;
+      const cnt = parseFloat(d.countedQuantity) || 0;
+      const disc = parseFloat(d.discrepancy) || 0;
+      const cost = parseFloat(d.averageCost) || 0;
+      const val = parseFloat(d.totalCostValue) || 0;
+
+      let justHtml = '<span class="text-neutral-600">—</span>';
+      if (d.justification) {
+        if (d.justification.startsWith('Merma:')) {
+          justHtml = `<span class="bg-red-950/40 text-red-450 border border-red-900 px-2 py-0.5 rounded text-[10px]">${d.justification}</span>`;
+        } else {
+          justHtml = `<span class="bg-amber-950/40 text-amber-450 border border-amber-800 px-2 py-0.5 rounded text-[10px]">${d.justification}</span>`;
+        }
+      }
+
+      return `
+        <tr class="hover:bg-neutral-950/30 transition-colors">
+          <td class="px-6 py-4">
+            <span class="text-xs font-bold text-white block">${d.product ? d.product.name : 'Artículo'}</span>
+            <span class="text-[10px] text-neutral-500 font-mono">Cód: ${d.product ? (d.product.barCode || 'N/A') : 'N/A'}</span>
+          </td>
+          <td class="px-6 py-4 text-center text-xs text-neutral-400">
+            ${exp.toFixed(0)}
+          </td>
+          <td class="px-6 py-4 text-center text-xs font-bold text-white">
+            ${cnt.toFixed(0)}
+          </td>
+          <td class="px-6 py-4 text-center text-xs font-mono font-bold ${disc > 0 ? 'text-emerald-400' : (disc < 0 ? 'text-red-400' : 'text-neutral-500')}">
+            ${disc > 0 ? '+' : ''}${disc.toFixed(0)}
+          </td>
+          <td class="px-6 py-4 text-right text-xs font-mono text-neutral-400">
+            $${cost.toFixed(2)}
+          </td>
+          <td class="px-6 py-4 text-right text-xs font-mono font-bold ${val > 0 ? 'text-emerald-400' : (val < 0 ? 'text-red-400' : 'text-neutral-500')}">
+            ${val > 0 ? '+' : ''}$${val.toFixed(2)}
+          </td>
+          <td class="px-6 py-4 text-xs font-semibold">
+            ${justHtml}
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // Initial render
+  renderReportTable();
+</script>
 
 <%- include('../../partials/foot') %>

@@ -7,6 +7,7 @@ const {
   BranchProduct, 
   ProductBatch, 
   AuditLog, 
+  Kardex,
   sequelize 
 } = require('../../core/models');
 const { logKardex } = require('./kardexService');
@@ -227,6 +228,25 @@ async function handleSaveDraft(req, res) {
   }
 }
 
+// Helper for chunked findAll queries on large datasets (e.g., 3,000+ items)
+async function bulkFindAll(model, options, idField, ids, chunkSize = 1000) {
+  if (!ids || ids.length === 0) return [];
+  const results = [];
+  for (let i = 0; i < ids.length; i += chunkSize) {
+    const chunkIds = ids.slice(i, i + chunkSize);
+    const chunkOptions = {
+      ...options,
+      where: {
+        ...(options.where || {}),
+        [idField]: { [Op.in]: chunkIds }
+      }
+    };
+    const chunkRes = await model.findAll(chunkOptions);
+    results.push(...chunkRes);
+  }
+  return results;
+}
+
 // Finalize Audit and Commit inventory stock updates & Kardex logs
 async function handleFinalizeAudit(req, res) {
   const transaction = await sequelize.transaction();
@@ -249,88 +269,157 @@ async function handleFinalizeAudit(req, res) {
       transaction
     });
 
-    // 2. Build and Bulk Create Details
+    // 2. Build and Bulk Create Details, Stock updates, ProductBatches, and Kardex
     const records = [];
     if (items && items.length > 0) {
+      const productIds = Array.from(new Set(items.map(item => parseInt(item.productId, 10)).filter(id => !isNaN(id))));
+
+      // Bulk chunked fetch BranchProduct
+      const existingBps = await bulkFindAll(BranchProduct, { transaction }, 'productId', productIds, 1000);
+      const bpMap = new Map();
+      existingBps.forEach(bp => {
+        if (bp.branchId === audit.branchId) bpMap.set(bp.productId, bp);
+      });
+
+      // Bulk chunked fetch Products
+      const products = await bulkFindAll(Product, { transaction }, 'id', productIds, 1000);
+      const productMap = new Map();
+      products.forEach(p => productMap.set(p.id, p));
+
+      // Bulk chunked fetch existing ProductBatch records
+      const existingBatches = await bulkFindAll(ProductBatch, { transaction }, 'productId', productIds, 1000);
+      const productBatchesMap = new Map();
+      existingBatches.forEach(b => {
+        if (b.branchId === audit.branchId) {
+          if (!productBatchesMap.has(b.productId)) productBatchesMap.set(b.productId, []);
+          productBatchesMap.get(b.productId).push(b);
+        }
+      });
+
+      // Bulk chunked fetch previous global stocks for Kardex
+      const globalStocks = await bulkFindAll(BranchProduct, {
+        attributes: ['productId', [sequelize.fn('SUM', sequelize.col('totalStock')), 'sumStock']],
+        group: ['productId'],
+        raw: true,
+        transaction
+      }, 'productId', productIds, 1000);
+      const globalStockMap = new Map();
+      globalStocks.forEach(gs => globalStockMap.set(gs.productId, parseFloat(gs.sumStock) || 0));
+
+      const bpUpsertList = [];
+      const batchesToCreate = [];
+      const batchesToUpdate = [];
+      const kardexLogsToCreate = [];
+
       for (const item of items) {
+        const pId = parseInt(item.productId, 10);
+        if (isNaN(pId)) continue;
+
         const expected = parseFloat(item.expectedQuantity) || 0;
         const counted = parseFloat(item.countedQuantity) || 0;
         const discrepancy = counted - expected;
-        
+
         records.push({
           inventoryAuditId: auditId,
-          productId: item.productId,
+          productId: pId,
           expectedQuantity: expected,
           countedQuantity: counted,
           discrepancy,
           justification: item.justification || null
         });
 
-        // 3. Update stock in BranchProduct
-        const bp = await BranchProduct.findOne({
-          where: { branchId: audit.branchId, productId: item.productId },
-          transaction
+        const bp = bpMap.get(pId);
+        const prevBranchStock = bp ? bp.totalStock : 0;
+        const prevGlobalStock = globalStockMap.get(pId) || 0;
+
+        bpUpsertList.push({
+          branchId: audit.branchId,
+          productId: pId,
+          totalStock: counted,
+          averageCost: bp ? bp.averageCost : (item.averageCost || 0.00),
+          salePrice: bp ? bp.salePrice : (item.salePrice || 0.00),
+          minStock: bp ? bp.minStock : 0
         });
 
-        if (bp) {
-          bp.totalStock = counted;
-          await bp.save({ transaction });
-        } else {
-          // If product wasn't mapped, create mapping
-          await BranchProduct.create({
-            branchId: audit.branchId,
-            productId: item.productId,
-            totalStock: counted,
-            averageCost: item.averageCost || 0.00,
-            salePrice: item.salePrice || 0.00,
-            minStock: 0
-          }, { transaction });
-        }
+        const product = productMap.get(pId);
+        if (product && product.type === 'physical') {
+          const pBatches = productBatchesMap.get(pId) || [];
+          if (counted === 0) {
+            // Zero out all existing batches if counted stock is 0
+            for (const b of pBatches) {
+              if (b.currentQuantity > 0) {
+                b.currentQuantity = 0;
+                batchesToUpdate.push(b);
+              }
+            }
+          } else {
+            if (pBatches.length === 0) {
+              // Create new batch if no batch exists
+              const randomBatchCode = 'LOTE-AUD-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+              const expDate = new Date();
+              expDate.setDate(expDate.getDate() + 15);
+              const expirationDate = expDate.toISOString().split('T')[0];
 
-        // Si el producto es físico, la cantidad contada es mayor a cero y no tiene lotes,
-        // generamos un lote aleatorio con vencimiento en 15 días para poder vender el excedente.
-        const product = await Product.findByPk(item.productId, { transaction });
-        if (product && product.type === 'physical' && counted > 0) {
-          const batchCount = await ProductBatch.count({
-            where: { branchId: audit.branchId, productId: item.productId },
-            transaction
-          });
-
-          if (batchCount === 0) {
-            const randomBatchCode = 'LOTE-AUD-' + Math.random().toString(36).substring(2, 8).toUpperCase();
-            const expDate = new Date();
-            expDate.setDate(expDate.getDate() + 15);
-            const expirationDate = expDate.toISOString().split('T')[0];
-
-            await ProductBatch.create({
-              branchId: audit.branchId,
-              productId: item.productId,
-              batchCode: randomBatchCode,
-              expirationDate,
-              initialQuantity: counted,
-              currentQuantity: counted,
-              unitCost: bp ? bp.averageCost : (item.averageCost || 0.00)
-            }, { transaction });
+              batchesToCreate.push({
+                branchId: audit.branchId,
+                productId: pId,
+                batchCode: randomBatchCode,
+                expirationDate,
+                initialQuantity: counted,
+                currentQuantity: counted,
+                unitCost: bp ? bp.averageCost : (item.averageCost || 0.00)
+              });
+            } else {
+              // Update primary batch currentQuantity to match counted stock, zero out remaining
+              pBatches[0].currentQuantity = counted;
+              batchesToUpdate.push(pBatches[0]);
+              for (let i = 1; i < pBatches.length; i++) {
+                if (pBatches[i].currentQuantity > 0) {
+                  pBatches[i].currentQuantity = 0;
+                  batchesToUpdate.push(pBatches[i]);
+                }
+              }
+            }
           }
         }
 
-        // 4. Log to Kardex if discrepancy exists
         if (Math.abs(discrepancy) > 0.001) {
           const isInput = discrepancy > 0;
-          await logKardex({
-            productId: item.productId,
+          kardexLogsToCreate.push({
+            productId: pId,
             branchId: audit.branchId,
             userId: req.user.id,
             quantity: Math.abs(discrepancy),
             isInput,
-            type: isInput ? 'input' : 'output',
-            description: `Auditoría física (Sector: ${audit.sector}). Justificación: ${item.justification || 'Ajuste regular'}`,
-            transaction
+            previousGlobalStock: prevGlobalStock,
+            previousBranchStock: prevBranchStock,
+            type: 'adjustment',
+            description: `Auditoría física (Sector: ${audit.sector}). Justificación: ${item.justification || 'Ajuste regular'}`
           });
         }
       }
 
-      await InventoryAuditDetail.bulkCreate(records, { transaction });
+      // Execute in chunks of 500 for high-performance bulk handling
+      await InventoryAuditDetail.bulkCreate(records, { transaction, chunkSize: 500 });
+      if (bpUpsertList.length > 0) {
+        await BranchProduct.bulkCreate(bpUpsertList, {
+          updateOnDuplicate: ['totalStock', 'averageCost', 'salePrice', 'updatedAt'],
+          transaction,
+          chunkSize: 500
+        });
+      }
+      if (batchesToUpdate.length > 0) {
+        for (let i = 0; i < batchesToUpdate.length; i += 500) {
+          const chunk = batchesToUpdate.slice(i, i + 500);
+          await Promise.all(chunk.map(b => b.save({ transaction })));
+        }
+      }
+      if (batchesToCreate.length > 0) {
+        await ProductBatch.bulkCreate(batchesToCreate, { transaction, chunkSize: 500 });
+      }
+      if (kardexLogsToCreate.length > 0) {
+        await Kardex.bulkCreate(kardexLogsToCreate, { transaction, chunkSize: 500 });
+      }
     }
 
     // 5. Finalize status
@@ -381,15 +470,19 @@ async function renderAuditReport(req, res, next) {
     // Calculate aggregated stats
     let totalItems = audit.details.length;
     let discrepancyItems = 0;
-    let financialLoss = 0.00; // sum of cost of negative discrepancies (mermas)
-    let financialGain = 0.00; // sum of cost of positive discrepancies
+    let financialLoss = 0.00;
+    let financialGain = 0.00;
 
-    // Fetch BranchProduct relations to read averageCosts for final valuation report
-    const detailsValued = [];
-    for (const d of audit.details) {
-      const bp = await BranchProduct.findOne({
-        where: { branchId: audit.branchId, productId: d.productId }
-      });
+    // Pre-fetch BranchProduct relations in bulk for valuation
+    const productIds = Array.from(new Set(audit.details.map(d => d.productId)));
+    const bps = productIds.length > 0 ? await bulkFindAll(BranchProduct, {}, 'productId', productIds, 1000) : [];
+    const bpMap = new Map();
+    bps.forEach(bp => {
+      if (bp.branchId === audit.branchId) bpMap.set(bp.productId, bp);
+    });
+
+    const detailsValued = audit.details.map(d => {
+      const bp = bpMap.get(d.productId);
       const cost = bp ? parseFloat(bp.averageCost) : 0.00;
       const discrepancy = parseFloat(d.discrepancy);
       const totalCostValue = discrepancy * cost;
@@ -403,12 +496,12 @@ async function renderAuditReport(req, res, next) {
         }
       }
 
-      detailsValued.push({
+      return {
         ...d.toJSON(),
         averageCost: cost,
         totalCostValue
-      });
-    }
+      };
+    });
 
     res.render('pages/inventory/audits-report', {
       title: `Reporte de Auditoría - Sector: ${audit.sector}`,
@@ -575,10 +668,30 @@ const submitInitialLoad = async (req, res, next) => {
     return res.status(400).json({ success: false, message: 'Debe ingresar al menos un artículo.' });
   }
 
-  const { ProductBatch, BranchProduct } = require('../../core/models');
   const transaction = await sequelize.transaction();
 
   try {
+    const productIds = Array.from(new Set(items.map(item => parseInt(item.productId, 10)).filter(id => !isNaN(id))));
+
+    const existingBps = await bulkFindAll(BranchProduct, { transaction }, 'productId', productIds, 1000);
+    const bpMap = new Map();
+    existingBps.forEach(bp => {
+      if (bp.branchId === branchId) bpMap.set(bp.productId, bp);
+    });
+
+    const globalStocks = await bulkFindAll(BranchProduct, {
+      attributes: ['productId', [sequelize.fn('SUM', sequelize.col('totalStock')), 'sumStock']],
+      group: ['productId'],
+      raw: true,
+      transaction
+    }, 'productId', productIds, 1000);
+    const globalStockMap = new Map();
+    globalStocks.forEach(gs => globalStockMap.set(gs.productId, parseFloat(gs.sumStock) || 0));
+
+    const batchesToCreate = [];
+    const bpUpsertList = [];
+    const kardexLogsToCreate = [];
+
     for (const item of items) {
       const productId = parseInt(item.productId, 10);
       const qty = parseInt(item.quantity, 10);
@@ -587,11 +700,11 @@ const submitInitialLoad = async (req, res, next) => {
       const batchCode = item.batchCode ? item.batchCode.trim() : 'LOTE-INICIAL';
       const expDate = item.expirationDate || null;
 
-      if (isNaN(qty) || qty <= 0) {
-        throw new Error(`Cantidad inválida para el producto ID ${productId}`);
+      if (isNaN(productId) || isNaN(qty) || qty <= 0) {
+        throw new Error(`Cantidad inválida para el producto ID ${item.productId}`);
       }
 
-      await ProductBatch.create({
+      batchesToCreate.push({
         productId,
         branchId,
         batchCode,
@@ -599,49 +712,63 @@ const submitInitialLoad = async (req, res, next) => {
         initialQuantity: qty,
         currentQuantity: qty,
         unitCost: cost
-      }, { transaction });
-
-      let bp = await BranchProduct.findOne({
-        where: { productId, branchId },
-        transaction
       });
 
-      if (!bp) {
-        bp = await BranchProduct.create({
-          productId,
-          branchId,
-          totalStock: 0,
-          averageCost: 0.00,
-          salePrice: price,
-          minStock: 0
-        }, { transaction });
-      }
+      let bp = bpMap.get(productId);
+      const prevStock = bp ? bp.totalStock : 0;
+      const prevCost = bp ? parseFloat(bp.averageCost || 0) : 0.00;
+      const prevSalePrice = bp ? parseFloat(bp.salePrice || 0) : 0.00;
+      const prevGlobalStock = globalStockMap.get(productId) || 0;
 
-      const prevStock = bp.totalStock;
-      const prevCost = parseFloat(bp.averageCost || 0);
       const newStock = prevStock + qty;
-
       let newAvgCost = cost;
       if (newStock > 0) {
         newAvgCost = ((prevStock * prevCost) + (qty * cost)) / newStock;
       }
+      const finalPrice = price > 0 ? price : prevSalePrice;
 
-      await bp.update({
+      bpUpsertList.push({
+        branchId,
+        productId,
         totalStock: newStock,
         averageCost: newAvgCost,
-        salePrice: price > 0 ? price : bp.salePrice
-      }, { transaction });
+        salePrice: finalPrice,
+        minStock: bp ? bp.minStock : 0
+      });
 
-      await logKardex({
+      if (bp) {
+        bp.totalStock = newStock;
+        bp.averageCost = newAvgCost;
+        bp.salePrice = finalPrice;
+      } else {
+        bpMap.set(productId, { branchId, productId, totalStock: newStock, averageCost: newAvgCost, salePrice: finalPrice, minStock: 0 });
+      }
+
+      kardexLogsToCreate.push({
         productId,
         branchId,
         userId: req.user.id,
         quantity: qty,
         isInput: true,
-        type: 'adjustment_in',
-        description: 'Levantamiento inicial de inventario',
-        transaction
+        previousGlobalStock: prevGlobalStock,
+        previousBranchStock: prevStock,
+        type: 'adjustment',
+        description: 'Levantamiento inicial de inventario'
       });
+    }
+
+    if (batchesToCreate.length > 0) {
+      await ProductBatch.bulkCreate(batchesToCreate, { transaction, chunkSize: 500 });
+    }
+    if (bpUpsertList.length > 0) {
+      await BranchProduct.bulkCreate(bpUpsertList, {
+        updateOnDuplicate: ['totalStock', 'averageCost', 'salePrice', 'updatedAt'],
+        transaction,
+        chunkSize: 500
+      });
+    }
+    if (kardexLogsToCreate.length > 0) {
+      await Kardex.bulkCreate(kardexLogsToCreate, { transaction, chunkSize: 500 });
     }
 
     await transaction.commit();
@@ -650,7 +777,7 @@ const submitInitialLoad = async (req, res, next) => {
       userId: req.user.id,
       branchId,
       action: 'inventory.initial_load_completed',
-      details: { itemsCount: items.length },
+      details: JSON.stringify({ itemsCount: items.length }),
       ipAddress: req.ip
     });
 

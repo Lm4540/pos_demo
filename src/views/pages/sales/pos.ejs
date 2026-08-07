@@ -134,7 +134,7 @@
 
         <div class="overflow-y-auto flex-grow pr-1">
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <% frequentProducts.forEach(bp => { %>
+            <% frequentProducts.filter(bp => bp.totalStock > 0).forEach(bp => { %>
               <button 
                 onclick="addToCart(<%= bp.productId %>, '<%= bp.product.name.replace(/'/g, "\\'") %>', <%= bp.salePrice %>, <%= bp.totalStock %>, <%= bp.product.categoryId || 'null' %>, 'physical');"
                 data-category-id="<%= bp.product.categoryId || 'null' %>"

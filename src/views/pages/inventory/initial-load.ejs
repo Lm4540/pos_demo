@@ -289,6 +289,24 @@
     recalculateSummary();
   }
 
+  let ilCurrentPage = 1;
+  const ilPageSize = 50;
+
+  function prevIlPage() {
+    if (ilCurrentPage > 1) {
+      ilCurrentPage--;
+      renderAuditList();
+    }
+  }
+
+  function nextIlPage() {
+    const totalPages = Math.ceil(auditItems.length / ilPageSize) || 1;
+    if (ilCurrentPage < totalPages) {
+      ilCurrentPage++;
+      renderAuditList();
+    }
+  }
+
   function renderAuditList() {
     const container = document.getElementById('load-list-container');
     const emptyState = document.getElementById('empty-state');
@@ -299,8 +317,15 @@
       recalculateSummary();
       return;
     }
+
+    const totalPages = Math.ceil(auditItems.length / ilPageSize) || 1;
+    if (ilCurrentPage > totalPages) ilCurrentPage = totalPages;
+    if (ilCurrentPage < 1) ilCurrentPage = 1;
+
+    const startIndex = (ilCurrentPage - 1) * ilPageSize;
+    const pageItems = auditItems.slice(startIndex, startIndex + ilPageSize);
     
-    container.innerHTML = auditItems.map(item => `
+    container.innerHTML = pageItems.map(item => `
       <div class="bg-neutral-950 p-4 border border-neutral-850 rounded-2xl flex flex-col md:flex-row gap-4 items-center justify-between">
         <!-- Details thumbnail and info -->
         <div class="flex items-center gap-3 w-full md:max-w-[30%]">
@@ -354,6 +379,19 @@
         </div>
       </div>
     `).join('');
+
+    if (totalPages > 1) {
+      const pagEl = document.createElement('div');
+      pagEl.className = "pt-3 flex justify-between items-center text-xs text-neutral-400 border-t border-neutral-850 mt-3";
+      pagEl.innerHTML = `
+        <span>Página ${ilCurrentPage} de ${totalPages}</span>
+        <div class="flex gap-2">
+          <button onclick="prevIlPage()" ${ilCurrentPage === 1 ? 'disabled' : ''} class="px-2.5 py-1 bg-neutral-800 hover:bg-neutral-750 disabled:opacity-30 rounded border border-neutral-700 text-white">Anterior</button>
+          <button onclick="nextIlPage()" ${ilCurrentPage === totalPages ? 'disabled' : ''} class="px-2.5 py-1 bg-neutral-800 hover:bg-neutral-750 disabled:opacity-30 rounded border border-neutral-700 text-white">Siguiente</button>
+        </div>
+      `;
+      container.appendChild(pagEl);
+    }
     
     recalculateSummary();
   }
