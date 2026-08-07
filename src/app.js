@@ -30,6 +30,7 @@ app.use(session(sessionConfig));
 // Middleware de autenticación global (Simulado temporalmente)
 app.use((req, res, next) => {
   res.locals.user = req.session?.user || null;
+  res.locals.storeName = process.env.STORE_NAME || 'Tienda el Kinder';
   res.locals.formatMoney = (val) => {
     const num = parseFloat(val);
     if (isNaN(num)) return '$0.00';

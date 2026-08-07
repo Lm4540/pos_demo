@@ -1632,7 +1632,7 @@
         builder.image(logoImgData).newLine();
       }
       builder.bold(true).doubleHeightWidth(true);
-      builder.text('TIENDA EL KINDER').newLine();
+      builder.text('<%= (storeName || "TIENDA EL KINDER").toUpperCase() %>').newLine();
       builder.doubleHeightWidth(false);
       builder.text('HACIENDA SAN CARLOS, CASA SAN CARLOS,').newLine();
       builder.text('CANTON EL SUNCITA, ACAJUTLA.').newLine();
