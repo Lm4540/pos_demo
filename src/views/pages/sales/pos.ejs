@@ -14,7 +14,7 @@
         <span class="text-xs block text-neutral-400 font-medium">Turno Activo: <strong class="text-indigo-400">#<%= turn.id %></strong> | Sucursal: <span class="text-neutral-300"><%= user.branch ? user.branch.name : 'N/A' %></span></span>
       </div>
     </div>
-    
+
     <div class="flex items-center gap-3">
       <!-- Contenedor de estado de impresora -->
       <div id="printer-status-container" class="flex items-center gap-2"></div>
@@ -30,11 +30,7 @@
       <a href="/cashier/details" class="bg-indigo-950 border border-indigo-800 hover:bg-indigo-900 px-4 py-2 rounded-xl text-xs font-semibold text-indigo-300 transition-all">
         Ver Estado de Caja
       </a>
-      <button 
-        type="button" 
-        id="btn-theme-toggle" 
-        onclick="toggleTheme()" 
-        class="bg-neutral-800 border border-neutral-700 hover:bg-neutral-750 p-2 rounded-xl text-neutral-300 transition-all cursor-pointer flex items-center justify-center">
+      <button type="button" id="btn-theme-toggle" onclick="toggleTheme()" class="bg-neutral-800 border border-neutral-700 hover:bg-neutral-750 p-2 rounded-xl text-neutral-300 transition-all cursor-pointer flex items-center justify-center">
         <!-- Sun icon (shown in dark mode) -->
         <svg id="theme-sun-icon" class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
@@ -57,11 +53,7 @@
         <div class="md:w-1/3">
           <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Escáner Código de Barras</label>
           <div class="relative">
-            <input 
-              type="text" 
-              id="barcode-input" 
-              class="w-full pl-9 pr-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm" 
-              placeholder="Escanear...">
+            <input type="text" id="barcode-input" class="w-full pl-9 pr-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm" placeholder="Escanear...">
             <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-neutral-500">
               <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -74,12 +66,7 @@
         <div class="flex-grow relative">
           <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Buscador de Artículos</label>
           <div class="relative">
-            <input 
-              type="text" 
-              id="search-input" 
-              class="w-full pl-9 pr-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" 
-              placeholder="Buscar por nombre..."
-              autocomplete="off">
+            <input type="text" id="search-input" class="w-full pl-9 pr-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" placeholder="Buscar por nombre..." autocomplete="off">
             <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-neutral-500">
               <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -122,12 +109,12 @@
       <!-- High Rotation (Frequent) Grid (Top) -->
       <div class="bg-neutral-900 border border-neutral-800 p-5 rounded-2xl max-h-[40%] flex flex-col flex-shrink-0 overflow-hidden shadow-sm">
         <h2 class="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-3 flex-shrink-0">Productos de Alta Rotación</h2>
-        
+
         <!-- Category filter tabs -->
         <div class="flex gap-2 overflow-x-auto pb-3 mb-3 flex-shrink-0 border-b border-neutral-800/60 scrollbar-none">
           <button type="button" onclick="filterFrequentByCategory('all')" id="tab-cat-all" class="cat-tab-btn py-1.5 px-3 rounded-lg text-xs font-bold bg-blue-600 text-white transition-all cursor-pointer whitespace-nowrap shadow-md">Todas</button>
           <% categories.forEach(cat => { %>
-            <button type="button" onclick="filterFrequentByCategory(<%= cat.id %>)" id="tab-cat-<%= cat.id %>" class="cat-tab-btn py-1.5 px-3 rounded-lg text-xs font-bold bg-neutral-950 text-neutral-400 hover:text-white border border-neutral-850 hover:border-neutral-700 transition-all cursor-pointer whitespace-nowrap"><%= cat.name %></button>
+          <button type="button" onclick="filterFrequentByCategory(<%= cat.id %>)" id="tab-cat-<%= cat.id %>" class="cat-tab-btn py-1.5 px-3 rounded-lg text-xs font-bold bg-neutral-950 text-neutral-400 hover:text-white border border-neutral-850 hover:border-neutral-700 transition-all cursor-pointer whitespace-nowrap"><%= cat.name %></button>
           <% }) %>
           <button type="button" onclick="filterFrequentByCategory('services')" id="tab-cat-services" class="cat-tab-btn py-1.5 px-3 rounded-lg text-xs font-bold bg-neutral-950 text-neutral-400 hover:text-white border border-neutral-850 hover:border-neutral-700 transition-all cursor-pointer whitespace-nowrap">Servicios</button>
         </div>
@@ -135,52 +122,42 @@
         <div class="overflow-y-auto flex-grow pr-1">
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <% frequentProducts.filter(bp => bp.totalStock > 0).forEach(bp => { %>
-              <button 
-                onclick="addToCart(<%= bp.productId %>, '<%= bp.product.name.replace(/'/g, "\\'") %>', <%= bp.salePrice %>, <%= bp.totalStock %>, <%= bp.product.categoryId || 'null' %>, 'physical');"
-                data-category-id="<%= bp.product.categoryId || 'null' %>"
-                data-type="physical"
-                data-product-category-id="<%= bp.product.categoryId || 'null' %>"
-                class="frequent-product-card group bg-neutral-950 border border-neutral-800 hover:border-blue-500 p-2.5 rounded-xl flex flex-col items-center text-center cursor-pointer transition-all hover:scale-102">
-                <div class="h-10 w-10 bg-neutral-900 rounded-lg overflow-hidden border border-neutral-800 flex items-center justify-center mb-1.5 flex-shrink-0">
-                  <% if (bp.product.imagePath) { %>
-                    <img src="<%= bp.product.imagePath %>" alt="<%= bp.product.name %>" class="h-full w-full object-cover">
-                  <% } else { %>
-                    <svg class="h-4 w-4 text-neutral-700 group-hover:text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                    </svg>
-                  <% } %>
-                </div>
-                <span class="text-[10px] font-bold text-white line-clamp-1 leading-tight w-full" title="<%= bp.product.name %>"><%= bp.product.name %></span>
-                <span class="text-[10px] font-bold text-blue-400 mt-1">$<%= parseFloat(bp.salePrice).toFixed(2) %></span>
-                <span class="text-[8px] text-neutral-500 mt-0.5">Stock: <%= bp.totalStock %></span>
-              </button>
+            <button onclick="addToCart(<%= bp.productId %>, '<%= bp.product.name.replace(/'/g, "\\'") %>', <%= bp.salePrice %>, <%= bp.totalStock %>, <%= bp.product.categoryId || 'null' %>, 'physical');" data-category-id="<%= bp.product.categoryId || 'null' %>" data-type="physical" data-product-category-id="<%= bp.product.categoryId || 'null' %>" class="frequent-product-card group bg-neutral-950 border border-neutral-800 hover:border-blue-500 p-2.5 rounded-xl flex flex-col items-center text-center cursor-pointer transition-all hover:scale-102">
+              <div class="h-10 w-10 bg-neutral-900 rounded-lg overflow-hidden border border-neutral-800 flex items-center justify-center mb-1.5 flex-shrink-0">
+                <% if (bp.product.imagePath) { %>
+                <img src="<%= bp.product.imagePath %>" alt="<%= bp.product.name %>" class="h-full w-full object-cover">
+                <% } else { %>
+                <svg class="h-4 w-4 text-neutral-700 group-hover:text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+                <% } %>
+              </div>
+              <span class="text-[10px] font-bold text-white line-clamp-1 leading-tight w-full" title="<%= bp.product.name %>"><%= bp.product.name %></span>
+              <span class="text-[10px] font-bold text-blue-400 mt-1">$<%= parseFloat(bp.salePrice).toFixed(2) %></span>
+              <span class="text-[8px] text-neutral-500 mt-0.5">Stock: <%= bp.totalStock %></span>
+            </button>
             <% }) %>
 
             <% serviceProducts.forEach(sp => { %>
-              <% const salePrice = sp.branchProducts && sp.branchProducts[0] ? parseFloat(sp.branchProducts[0].salePrice) : 0.00; %>
-              <button 
-                onclick="addToCart(<%= sp.id %>, '<%= sp.name.replace(/'/g, "\\'") %>', <%= salePrice %>, 9999, <%= sp.categoryId || 'null' %>, 'service');"
-                data-category-id="services"
-                data-type="service"
-                data-product-category-id="<%= sp.categoryId || 'null' %>"
-                class="frequent-product-card group bg-neutral-950 border border-neutral-800 hover:border-violet-500 p-2.5 rounded-xl flex flex-col items-center text-center cursor-pointer transition-all hover:scale-102">
-                <div class="h-10 w-10 bg-neutral-900 rounded-lg overflow-hidden border border-neutral-800 flex items-center justify-center mb-1.5 flex-shrink-0">
-                  <% if (sp.imagePath) { %>
-                    <img src="<%= sp.imagePath %>" alt="<%= sp.name %>" class="h-full w-full object-cover">
-                  <% } else { %>
-                    <svg class="h-4 w-4 text-violet-400 group-hover:text-violet-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                  <% } %>
-                </div>
-                <span class="text-[10px] font-bold text-white line-clamp-1 leading-tight w-full" title="<%= sp.name %>"><%= sp.name %></span>
-                <span class="text-[10px] font-bold text-violet-400 mt-1">$<%= salePrice.toFixed(2) %></span>
-                <span class="text-[8px] text-violet-500 mt-0.5">Servicio</span>
-              </button>
+            <% const salePrice = sp.branchProducts && sp.branchProducts[0] ? parseFloat(sp.branchProducts[0].salePrice) : 0.00; %>
+            <button onclick="addToCart(<%= sp.id %>, '<%= sp.name.replace(/'/g, "\\'") %>', <%= salePrice %>, 9999, <%= sp.categoryId || 'null' %>, 'service');" data-category-id="services" data-type="service" data-product-category-id="<%= sp.categoryId || 'null' %>" class="frequent-product-card group bg-neutral-950 border border-neutral-800 hover:border-violet-500 p-2.5 rounded-xl flex flex-col items-center text-center cursor-pointer transition-all hover:scale-102">
+              <div class="h-10 w-10 bg-neutral-900 rounded-lg overflow-hidden border border-neutral-800 flex items-center justify-center mb-1.5 flex-shrink-0">
+                <% if (sp.imagePath) { %>
+                <img src="<%= sp.imagePath %>" alt="<%= sp.name %>" class="h-full w-full object-cover">
+                <% } else { %>
+                <svg class="h-4 w-4 text-violet-400 group-hover:text-violet-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <% } %>
+              </div>
+              <span class="text-[10px] font-bold text-white line-clamp-1 leading-tight w-full" title="<%= sp.name %>"><%= sp.name %></span>
+              <span class="text-[10px] font-bold text-violet-400 mt-1">$<%= salePrice.toFixed(2) %></span>
+              <span class="text-[8px] text-violet-500 mt-0.5">Servicio</span>
+            </button>
             <% }) %>
           </div>
           <% if (frequentProducts.length === 0 && serviceProducts.length === 0) { %>
-            <p class="text-xs text-neutral-500 py-6 text-center">No hay productos frecuentes ni servicios configurados.</p>
+          <p class="text-xs text-neutral-500 py-6 text-center">No hay productos frecuentes ni servicios configurados.</p>
           <% } %>
         </div>
       </div>
@@ -208,32 +185,16 @@
           <div>
             <label class="block text-[10px] font-semibold text-neutral-500 uppercase tracking-wider mb-1.5">Método de Pago</label>
             <div class="grid grid-cols-2 gap-2.5">
-              <button 
-                type="button"
-                onclick="setPaymentMethod('cash')" 
-                id="btn-pay-cash"
-                class="py-3 rounded-xl text-sm font-bold border border-blue-500 bg-blue-950/40 text-blue-400 transition-all cursor-pointer text-center">
+              <button type="button" onclick="setPaymentMethod('cash')" id="btn-pay-cash" class="py-3 rounded-xl text-sm font-bold border border-blue-500 bg-blue-950/40 text-blue-400 transition-all cursor-pointer text-center">
                 Efectivo
               </button>
-              <button 
-                type="button"
-                onclick="setPaymentMethod('card')" 
-                id="btn-pay-card"
-                class="py-3 rounded-xl text-sm font-bold border border-neutral-800 bg-neutral-950 text-neutral-400 transition-all cursor-pointer text-center">
+              <button type="button" onclick="setPaymentMethod('card')" id="btn-pay-card" class="py-3 rounded-xl text-sm font-bold border border-neutral-800 bg-neutral-950 text-neutral-400 transition-all cursor-pointer text-center">
                 Tarjeta
               </button>
-              <button 
-                type="button"
-                onclick="setPaymentMethod('credit')" 
-                id="btn-pay-credit"
-                class="py-3 rounded-xl text-sm font-bold border border-neutral-800 bg-neutral-950 text-neutral-400 transition-all cursor-pointer text-center">
+              <button type="button" onclick="setPaymentMethod('credit')" id="btn-pay-credit" class="py-3 rounded-xl text-sm font-bold border border-neutral-800 bg-neutral-950 text-neutral-400 transition-all cursor-pointer text-center">
                 Crédito
               </button>
-              <button 
-                type="button"
-                onclick="setPaymentMethod('split')" 
-                id="btn-pay-split"
-                class="py-3 rounded-xl text-sm font-bold border border-neutral-800 bg-neutral-950 text-neutral-400 transition-all cursor-pointer text-center">
+              <button type="button" onclick="setPaymentMethod('split')" id="btn-pay-split" class="py-3 rounded-xl text-sm font-bold border border-neutral-800 bg-neutral-950 text-neutral-400 transition-all cursor-pointer text-center">
                 Dividido
               </button>
             </div>
@@ -275,7 +236,7 @@
           <!-- Cash Received & Change (Visible only for cash or split payments) -->
           <div id="cash-received-container" class="p-3.5 bg-neutral-950 border border-neutral-800 rounded-xl space-y-3.5">
             <span class="block text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Cálculo de Vuelto</span>
-            
+
             <div class="flex flex-row gap-3 items-center">
               <div class="flex-grow w-full">
                 <label class="block text-[9px] text-neutral-400 mb-0.5">Efectivo Recibido ($)</label>
@@ -327,36 +288,33 @@
                 <span>Buscar</span>
               </button>
             </div>
-            
+
             <select id="client-id-select" class="hidden">
               <option value="">Consumidor Final (No registrado)</option>
               <% clients.forEach(c => { %>
-                <option value="<%= c.id %>" data-limit="<%= c.creditLimit %>" data-balance="<%= c.currentBalance %>" data-is-overdue="<%= c.isOverdue %>" data-overdue-days="<%= c.overdueDays %>">
-                  <%= c.name %> <%= c.isOverdue ? '⚠️ (MORA)' : '' %> (Disp: $<%= (c.creditLimit - c.currentBalance).toFixed(2) %>)
-                </option>
+              <option value="<%= c.id %>" data-limit="<%= c.creditLimit %>" data-balance="<%= c.currentBalance %>" data-is-overdue="<%= c.isOverdue %>" data-overdue-days="<%= c.overdueDays %>">
+                <%= c.name %> <%= c.isOverdue ? '⚠️ (MORA)' : '' %> (Disp: $<%= (c.creditLimit - c.currentBalance).toFixed(2) %>)
+              </option>
               <% }) %>
             </select>
-            
+
             <!-- Overdue Warning Banner -->
             <div id="client-overdue-warning" class="mt-2 p-2.5 bg-red-950/40 border border-red-800 text-red-400 text-xs rounded-xl hidden font-medium">
               <span class="font-bold text-red-200">⚠️ CRÉDITO VENCIDO:</span> Este cliente tiene deudas con una antigüedad de <span id="overdue-days-span" class="font-bold">0</span> días.
             </div>
-          <!-- Print Ticket switch -->
-          <div class="flex items-center justify-between p-3.5 bg-neutral-950 border border-neutral-800 rounded-xl mb-4">
-            <span class="text-xs font-bold text-neutral-300">Imprimir Ticket</span>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" id="print-ticket-switch" class="sr-only peer" checked>
-              <div class="w-9 h-5 bg-neutral-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-            </label>
-          </div>
+            <!-- Print Ticket switch -->
+            <div class="flex items-center justify-between p-3.5 bg-neutral-950 border border-neutral-800 rounded-xl mb-4">
+              <span class="text-xs font-bold text-neutral-300">Imprimir Ticket</span>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="print-ticket-switch" class="sr-only peer" checked>
+                <div class="w-9 h-5 bg-neutral-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+              </label>
+            </div>
 
           </div>
         </div>
 
-        <button 
-          onclick="submitSale()" 
-          id="btn-checkout"
-          class="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-xl text-base transition-all shadow-lg shadow-blue-500/10 cursor-pointer text-center">
+        <button onclick="submitSale()" id="btn-checkout" class="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-xl text-base transition-all shadow-lg shadow-blue-500/10 cursor-pointer text-center">
           Procesar Venta
         </button>
       </div>
@@ -372,14 +330,14 @@
         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
       </svg>
     </button>
-    
+
     <h3 class="text-lg font-bold text-white text-center mb-4">Venta Exitosa</h3>
-    
+
     <!-- Printable Area -->
     <div id="printable-ticket" class="bg-white text-black p-4 font-mono text-xs border border-neutral-200 rounded-lg max-h-96 overflow-y-auto">
       <!-- Dynamic ticket content injected here -->
     </div>
-    
+
     <!-- WhatsApp Send Container -->
     <div class="mt-4 pt-4 border-t border-neutral-800/80 space-y-2">
       <label class="block text-[10px] font-semibold text-neutral-500 uppercase tracking-wider">Enviar Comprobante por WhatsApp</label>
@@ -396,7 +354,7 @@
         </button>
       </div>
     </div>
-    
+
     <div class="flex gap-3 mt-5">
       <button onclick="closeTicketModal()" class="w-1/2 py-2.5 text-xs font-semibold text-neutral-400 bg-neutral-850 hover:bg-neutral-800 border border-neutral-800 rounded-xl transition-all cursor-pointer text-center">
         Nueva Venta
@@ -435,12 +393,7 @@
       <div>
         <label class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">Nombre o DUI del Cliente</label>
         <div class="relative">
-          <input 
-            type="text" 
-            id="client-search-query" 
-            class="w-full pl-9 pr-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium" 
-            placeholder="Escribe el DUI o Nombre para buscar..."
-            autocomplete="off">
+          <input type="text" id="client-search-query" class="w-full pl-9 pr-3 py-2.5 border border-neutral-800 bg-neutral-950 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium" placeholder="Escribe el DUI o Nombre para buscar..." autocomplete="off">
           <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-neutral-500">
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -462,7 +415,7 @@
         <div class="flex justify-between items-center">
           <span class="text-xs font-bold text-neutral-400 uppercase tracking-wider">Registro Rápido (Nuevo Cliente)</span>
         </div>
-        
+
         <div id="quick-client-error" class="bg-red-950/40 border border-red-800 text-red-200 p-2.5 rounded-xl text-xs hidden"></div>
 
         <form id="quick-client-form" onsubmit="handleQuickClientSubmit(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -517,14 +470,18 @@
     body * {
       visibility: hidden;
     }
-    #printable-ticket, #printable-ticket * {
+
+    #printable-ticket,
+    #printable-ticket * {
       visibility: visible;
     }
+
     #printable-ticket {
       position: absolute;
       left: 0;
       top: 0;
-      width: 80mm; /* standard thermal receipt width */
+      width: 80mm;
+      /* standard thermal receipt width */
       margin: 0;
       padding: 0;
       border: none;
@@ -534,148 +491,203 @@
 
   /* Light theme styles */
   body.light-mode {
-    background-color: #f3f4f6 !important; /* gray-100 */
-    color: #1f2937 !important; /* gray-800 */
+    background-color: #f3f4f6 !important;
+    /* gray-100 */
+    color: #1f2937 !important;
+    /* gray-800 */
   }
+
   body.light-mode nav {
     background-color: #ffffff !important;
-    border-color: #e5e7eb !important; /* gray-200 */
+    border-color: #e5e7eb !important;
+    /* gray-200 */
   }
-  body.light-mode nav span, body.light-mode nav strong {
+
+  body.light-mode nav span,
+  body.light-mode nav strong {
     color: #1f2937 !important;
   }
+
   body.light-mode nav a {
     background-color: #f3f4f6 !important;
     border-color: #e5e7eb !important;
     color: #4b5563 !important;
   }
+
   body.light-mode nav a:hover {
     background-color: #e5e7eb !important;
     color: #1f2937 !important;
   }
+
   body.light-mode #btn-theme-toggle {
     background-color: #f3f4f6 !important;
     border-color: #e5e7eb !important;
     color: #4b5563 !important;
   }
+
   body.light-mode main {
     background-color: #f3f4f6 !important;
   }
+
   body.light-mode .bg-neutral-900 {
     background-color: #ffffff !important;
   }
-  body.light-mode .border-neutral-800, body.light-mode .border-neutral-850 {
+
+  body.light-mode .border-neutral-800,
+  body.light-mode .border-neutral-850 {
     border-color: #e5e7eb !important;
   }
-  body.light-mode .bg-neutral-950, 
-  body.light-mode .bg-neutral-950\/40, 
-  body.light-mode .bg-neutral-950\/60, 
-  body.light-mode .bg-neutral-950\/50, 
+
+  body.light-mode .bg-neutral-950,
+  body.light-mode .bg-neutral-950\/40,
+  body.light-mode .bg-neutral-950\/60,
+  body.light-mode .bg-neutral-950\/50,
   body.light-mode .bg-neutral-950\/80 {
-    background-color: #f9fafb !important; /* gray-50 */
+    background-color: #f9fafb !important;
+    /* gray-50 */
   }
+
   body.light-mode .text-white {
-    color: #111827 !important; /* gray-900 */
+    color: #111827 !important;
+    /* gray-900 */
   }
+
   body.light-mode .text-neutral-300 {
-    color: #374151 !important; /* gray-700 */
+    color: #374151 !important;
+    /* gray-700 */
   }
+
   body.light-mode .text-neutral-400 {
-    color: #4b5563 !important; /* gray-600 */
+    color: #4b5563 !important;
+    /* gray-600 */
   }
+
   body.light-mode .text-neutral-500 {
-    color: #6b7280 !important; /* gray-500 */
+    color: #6b7280 !important;
+    /* gray-500 */
   }
-  body.light-mode input, body.light-mode select {
+
+  body.light-mode input,
+  body.light-mode select {
     background-color: #ffffff !important;
     border-color: #d1d5db !important;
     color: #111827 !important;
   }
+
   body.light-mode input::placeholder {
     color: #9ca3af !important;
   }
+
   body.light-mode button {
     background-color: #ffffff;
     border-color: #e5e7eb;
   }
+
   body.light-mode button:hover {
     background-color: #f3f4f6;
   }
+
   body.light-mode #selected-client-box {
     background-color: #f9fafb !important;
     border-color: #e5e7eb !important;
   }
-  body.light-mode #split-payment-breakdown, body.light-mode #cash-received-container {
+
+  body.light-mode #split-payment-breakdown,
+  body.light-mode #cash-received-container {
     background-color: #f9fafb !important;
     border-color: #e5e7eb !important;
   }
-  body.light-mode #split-payment-breakdown input, body.light-mode #cash-received-container input {
+
+  body.light-mode #split-payment-breakdown input,
+  body.light-mode #cash-received-container input {
     background-color: #ffffff !important;
     border-color: #d1d5db !important;
   }
+
   body.light-mode #autocomplete-results {
     background-color: #ffffff !important;
     border-color: #e5e7eb !important;
   }
+
   body.light-mode #autocomplete-results button:hover {
     background-color: #f3f4f6 !important;
   }
+
   body.light-mode .hover\:bg-neutral-950:hover {
     background-color: #f3f4f6 !important;
   }
+
   body.light-mode .bg-neutral-850 {
     background-color: #e5e7eb !important;
     color: #374151 !important;
   }
+
   body.light-mode .bg-neutral-850:hover {
     background-color: #d1d5db !important;
   }
+
   body.light-mode #client-search-modal .bg-neutral-900,
   body.light-mode #custom-prompt-modal .bg-neutral-900 {
     background-color: #ffffff !important;
     border-color: #e5e7eb !important;
   }
+
   body.light-mode #btn-open-client-search {
     background-color: #e5e7eb !important;
     border-color: #d1d5db !important;
     color: #374151 !important;
   }
+
   body.light-mode #btn-open-client-search:hover {
     background-color: #d1d5db !important;
   }
+
   /* Restore styled colors for tags/badges */
   body.light-mode .text-blue-400 {
-    color: #2563eb !important; /* blue-600 */
+    color: #2563eb !important;
+    /* blue-600 */
   }
+
   body.light-mode .text-emerald-400 {
-    color: #059669 !important; /* emerald-600 */
+    color: #059669 !important;
+    /* emerald-600 */
   }
-  body.light-mode .text-indigo-405, body.light-mode .text-indigo-400 {
+
+  body.light-mode .text-indigo-405,
+  body.light-mode .text-indigo-400 {
     color: #4f46e5 !important;
   }
+
   body.light-mode .bg-blue-600 {
     background-color: #2563eb !important;
   }
+
   body.light-mode .bg-blue-600:hover {
     background-color: #1d4ed8 !important;
   }
+
   body.light-mode .bg-red-950\/50 {
     background-color: #fee2e2 !important;
   }
+
   body.light-mode .border-red-900 {
     border-color: #fca5a5 !important;
   }
+
   body.light-mode .text-red-300 {
     color: #b91c1c !important;
   }
+
   body.light-mode .hover\:bg-red-900:hover {
     background-color: #fca5a5 !important;
   }
+
   body.light-mode .bg-neutral-950 button {
     background-color: #ffffff !important;
     border-color: #d1d5db !important;
     color: #374151 !important;
   }
+
   body.light-mode .bg-neutral-950 button:hover {
     background-color: #f3f4f6 !important;
     border-color: #2563eb !important;
@@ -701,6 +713,7 @@
 
   // Auto-open customer display on second screen
   let customerDisplayWindow = null;
+
   function openCustomerDisplay() {
     if (customerDisplayWindow && !customerDisplayWindow.closed) return;
     const features = 'menubar=no,toolbar=no,location=no,status=no,scrollbars=no,resizable=yes';
@@ -716,7 +729,13 @@
     posChannel.postMessage({
       type: 'cart_update',
       data: {
-        items: cart.map(i => ({ name: i.name, price: i.price, quantity: i.quantity, type: i.type || 'physical', customDescription: i.customDescription || null })),
+        items: cart.map(i => ({
+          name: i.name,
+          price: i.price,
+          quantity: i.quantity,
+          type: i.type || 'physical',
+          customDescription: i.customDescription || null
+        })),
         totalGross: totals.gross,
         totalDiscount: totals.discount,
         totalNet: totals.net,
@@ -730,14 +749,14 @@
   function getCartTotals() {
     let totalGross = 0;
     let totalDiscount = 0;
-    
+
     cart.forEach(item => {
       const price = parseFloat(item.price);
       let promo = promotions.find(p => p.productId === item.productId);
       if (!promo && item.categoryId) {
         promo = promotions.find(p => p.categoryId === item.categoryId);
       }
-      
+
       let discount = 0;
       if (promo) {
         if (promo.type === 'percentage') {
@@ -760,7 +779,7 @@
       totalGross += price * item.quantity;
       totalDiscount += discount;
     });
-    
+
     return {
       gross: totalGross,
       discount: totalDiscount,
@@ -771,14 +790,14 @@
   function getLastCompletedCartTotals() {
     let totalGross = 0;
     let totalDiscount = 0;
-    
+
     lastCompletedCart.forEach(item => {
       const price = parseFloat(item.price);
       let promo = promotions.find(p => p.productId === item.productId);
       if (!promo && item.categoryId) {
         promo = promotions.find(p => p.categoryId === item.categoryId);
       }
-      
+
       let discount = 0;
       if (promo) {
         if (promo.type === 'percentage') {
@@ -801,7 +820,7 @@
       totalGross += price * item.quantity;
       totalDiscount += discount;
     });
-    
+
     return {
       gross: totalGross,
       discount: totalDiscount,
@@ -814,7 +833,7 @@
     document.querySelectorAll('.cat-tab-btn').forEach(btn => {
       btn.className = "cat-tab-btn py-1.5 px-3 rounded-lg text-xs font-bold bg-neutral-950 text-neutral-400 hover:text-white border border-neutral-850 hover:border-neutral-700 transition-all cursor-pointer whitespace-nowrap";
     });
-    
+
     const activeTab = document.getElementById(catId === 'all' ? 'tab-cat-all' : (catId === 'services' ? 'tab-cat-services' : `tab-cat-${catId}`));
     if (activeTab) {
       activeTab.className = "cat-tab-btn py-1.5 px-3 rounded-lg text-xs font-bold bg-blue-600 text-white transition-all cursor-pointer whitespace-nowrap shadow-md";
@@ -990,7 +1009,16 @@
         showToast('Producto agotado.', 'warning');
         return;
       }
-      cart.push({ productId, name, price, quantity: 1, stock, categoryId, type, customDescription: null });
+      cart.push({
+        productId,
+        name,
+        price,
+        quantity: 1,
+        stock,
+        categoryId,
+        type,
+        customDescription: null
+      });
     }
     renderCart();
   }
@@ -1033,7 +1061,7 @@
     document.getElementById('custom-prompt-label').innerText = label;
     const input = document.getElementById('custom-prompt-input');
     input.value = defaultValue;
-    
+
     // Clear previous submit listener by replacing the button with a clone
     const submitBtn = document.getElementById('custom-prompt-submit-btn');
     const newSubmitBtn = submitBtn.cloneNode(true);
@@ -1111,7 +1139,7 @@
 
   function renderCart() {
     const container = document.getElementById('cart-items-container');
-    
+
     if (cart.length === 0) {
       container.innerHTML = `
         <div class="text-center py-12 text-neutral-500 text-sm" id="empty-cart-msg">
@@ -1132,7 +1160,7 @@
 
     container.innerHTML = cart.map(item => {
       const price = parseFloat(item.price);
-      
+
       // Buscar promoción aplicable
       let promo = promotions.find(p => p.productId === item.productId);
       if (!promo && item.categoryId) {
@@ -1169,7 +1197,7 @@
 
       const itemGross = price * item.quantity;
       const itemNet = itemGross - discount;
-      
+
       totalGross += itemGross;
       totalDiscount += discount;
 
@@ -1238,7 +1266,7 @@
     // Reset styles
     const activeClass = "py-3 rounded-xl text-sm font-bold border border-blue-500 bg-blue-950/40 text-blue-400 transition-all cursor-pointer text-center";
     const inactiveClass = "py-3 rounded-xl text-sm font-bold border border-neutral-800 bg-neutral-950 text-neutral-400 transition-all cursor-pointer text-center";
-    
+
     btnCash.className = inactiveClass;
     btnCard.className = inactiveClass;
     btnCredit.className = inactiveClass;
@@ -1268,19 +1296,19 @@
       splitBreakdown.classList.remove('hidden');
       if (cashReceivedContainer) cashReceivedContainer.classList.remove('hidden');
       if (cardRefContainer) cardRefContainer.classList.remove('hidden');
-      
+
       const subtotal = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
       document.getElementById('split-cash-input').value = subtotal.toFixed(2);
       document.getElementById('split-card-input').value = '0.00';
       document.getElementById('split-credit-input').value = '0.00';
       updateSplitBreakdownTotals();
     }
-    
+
     // Reset received cash on payment method change
     const cashReceivedInput = document.getElementById('cash-received-input');
     if (cashReceivedInput) cashReceivedInput.value = '0.00';
     updateChangeCalculation();
-    
+
     checkClientCreditStatus();
     emitCartUpdate();
   }
@@ -1295,7 +1323,7 @@
     const remaining = subtotal - sum;
 
     document.getElementById('split-total-sum').innerText = `$${sum.toFixed(2)}`;
-    
+
     const remainingSpan = document.getElementById('split-remaining');
     if (Math.abs(remaining) < 0.01) {
       remainingSpan.innerText = "$0.00 (Cuadrado)";
@@ -1344,9 +1372,9 @@
     const queryInput = document.getElementById('client-search-query');
     queryInput.value = '';
     queryInput.focus();
-    
+
     document.getElementById('client-search-results').innerHTML = '<div class="text-center py-6 text-neutral-500 text-xs">Escribe para empezar a buscar clientes...</div>';
-    
+
     document.getElementById('quick-client-name').value = '';
     document.getElementById('quick-client-dui').value = '';
     document.getElementById('quick-client-phone').value = '';
@@ -1360,33 +1388,33 @@
   document.getElementById('client-search-query').addEventListener('input', (e) => {
     clearTimeout(clientSearchDebounce);
     const query = e.target.value.trim();
-    
+
     if (query.length < 2) {
       document.getElementById('client-search-results').innerHTML = '<div class="text-center py-6 text-neutral-500 text-xs">Escribe para empezar a buscar clientes...</div>';
       return;
     }
-    
+
     clientSearchDebounce = setTimeout(async () => {
       try {
         const resp = await fetch(`/clients/api/search?q=${encodeURIComponent(query)}`);
         const data = await resp.json();
-        
+
         const resultsContainer = document.getElementById('client-search-results');
         resultsContainer.innerHTML = '';
-        
+
         if (data.success && data.clients.length > 0) {
           data.clients.forEach(c => {
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.className = "w-full text-left bg-neutral-950 hover:bg-neutral-800 border border-neutral-800 hover:border-blue-500 p-3 rounded-xl flex items-center justify-between transition-all cursor-pointer";
-            
+
             let creditBadge = '';
             if (c.isOverdue) {
               creditBadge = '<span class="text-[9px] font-bold bg-red-950/60 border border-red-900 text-red-400 px-1.5 py-0.5 rounded ml-2">⚠️ MORA</span>';
             } else if (c.creditLimit > 0) {
               creditBadge = `<span class="text-[9px] font-bold bg-blue-950/60 border border-blue-900 text-blue-400 px-1.5 py-0.5 rounded ml-2">CRÉDITO: $${(c.creditLimit - c.currentBalance).toFixed(2)}</span>`;
             }
-            
+
             btn.innerHTML = `
               <div class="flex flex-col">
                 <span class="font-bold text-white text-xs">${c.name}${creditBadge}</span>
@@ -1394,7 +1422,7 @@
               </div>
               <span class="text-[10px] text-blue-400 font-semibold uppercase tracking-wider">Seleccionar</span>
             `;
-            
+
             btn.onclick = () => {
               selectClient(c.id, c.name, c.dui, c.creditLimit, c.currentBalance, c.isOverdue, c.overdueDays);
               closeClientSearchModal();
@@ -1403,7 +1431,7 @@
           });
         } else {
           resultsContainer.innerHTML = '<div class="text-center py-6 text-neutral-500 text-xs">No se encontraron clientes que coincidan.</div>';
-          
+
           // Autofill DUI if query looks like one
           if (/^\d{8}-?\d?$/.test(query)) {
             let formattedDui = query;
@@ -1423,23 +1451,29 @@
     event.preventDefault();
     const errorDiv = document.getElementById('quick-client-error');
     errorDiv.classList.add('hidden');
-    
+
     const name = document.getElementById('quick-client-name').value.trim();
     const dui = document.getElementById('quick-client-dui').value.trim();
     const phone = document.getElementById('quick-client-phone').value.trim();
-    
+
     const submitBtn = document.getElementById('btn-quick-client-submit');
     submitBtn.disabled = true;
     submitBtn.innerText = 'Registrando...';
-    
+
     try {
       const resp = await fetch('/clients/api/quick-create', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, dui, phone })
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name,
+          dui,
+          phone
+        })
       });
       const data = await resp.json();
-      
+
       if (data.success) {
         const c = data.client;
         selectClient(c.id, c.name, c.dui, c.creditLimit, c.currentBalance, c.isOverdue, c.overdueDays);
@@ -1460,37 +1494,37 @@
 
   function selectClient(clientId, clientName, clientDui, clientLimit = 0.00, clientBalance = 0.00, clientIsOverdue = false, clientOverdueDays = 0) {
     const select = document.getElementById('client-id-select');
-    
+
     let option = select.querySelector(`option[value="${clientId}"]`);
     if (!option) {
       option = document.createElement('option');
       option.value = clientId;
       select.appendChild(option);
     }
-    
+
     option.text = `${clientName} ${clientIsOverdue ? '⚠️ (MORA)' : ''} (Disp: $${(clientLimit - clientBalance).toFixed(2)})`;
     option.dataset.limit = clientLimit;
     option.dataset.balance = clientBalance;
     option.dataset.isOverdue = clientIsOverdue ? 'true' : 'false';
     option.dataset.overdueDays = clientOverdueDays;
-    
+
     select.value = clientId;
-    
+
     document.getElementById('selected-client-name').innerText = clientName;
     document.getElementById('selected-client-dui').innerText = clientDui ? `DUI: ${clientDui}` : 'Sin DUI';
     document.getElementById('btn-clear-client').classList.remove('hidden');
-    
+
     checkClientCreditStatus();
   }
 
   function clearSelectedClient() {
     const select = document.getElementById('client-id-select');
     select.value = '';
-    
+
     document.getElementById('selected-client-name').innerText = 'Consumidor Final';
     document.getElementById('selected-client-dui').innerText = 'Sin registrar';
     document.getElementById('btn-clear-client').classList.add('hidden');
-    
+
     checkClientCreditStatus();
   }
 
@@ -1524,14 +1558,14 @@
     const el = document.getElementById('cash-received-input');
     if (!el) return;
     const cashReceived = parseFloat(el.value) || 0;
-    
+
     let cashToPay = 0;
     if (paymentMethod === 'cash') {
       cashToPay = totalNet;
     } else if (paymentMethod === 'split') {
       cashToPay = parseFloat(document.getElementById('split-cash-input').value) || 0;
     }
-    
+
     const change = cashReceived - cashToPay;
     const changeSpan = document.getElementById('change-to-give');
     if (changeSpan) {
@@ -1596,7 +1630,7 @@
       const net = (parseFloat(item.price) * item.quantity) - discount;
       return `* ${item.name} x ${item.quantity} - $${net.toFixed(2)}${discount > 0 ? ` (Ahorro: $${discount.toFixed(2)})` : ''}`;
     }).join('\n');
-    
+
     let paymentLabel = 'Efectivo';
     if (lastCompletedPaymentMethod === 'card') paymentLabel = 'Tarjeta';
     if (lastCompletedPaymentMethod === 'credit') paymentLabel = 'Crédito';
@@ -1637,7 +1671,7 @@
   window.addEventListener('DOMContentLoaded', () => {
     const barInput = document.getElementById('barcode-input');
     if (barInput) barInput.focus();
-    
+
     // Initialize theme state from localStorage
     const currentTheme = localStorage.getItem('theme') || 'dark';
     if (currentTheme === 'light') {
@@ -1653,10 +1687,10 @@
   function toggleTheme() {
     const isLight = document.body.classList.toggle('light-mode');
     localStorage.setItem('theme', isLight ? 'light' : 'dark');
-    
+
     const sunIcon = document.getElementById('theme-sun-icon');
     const moonIcon = document.getElementById('theme-moon-icon');
-    
+
     if (isLight) {
       if (sunIcon) sunIcon.classList.add('hidden');
       if (moonIcon) moonIcon.classList.remove('hidden');
@@ -1675,7 +1709,7 @@
 
     const clientId = document.getElementById('client-id-select').value;
     const totalNet = getCartTotals().net;
-    
+
     let splitCash = 0.00;
     let splitCard = 0.00;
     let splitCredit = 0.00;
@@ -1717,7 +1751,7 @@
       const option = document.querySelector(`#client-id-select option[value="${clientId}"]`);
       const limit = parseFloat(option.dataset.limit);
       const balance = parseFloat(option.dataset.balance);
-      
+
       if (balance + creditPortion > limit) {
         showToast(`Límite de crédito excedido. Disponible: $${(limit - balance).toFixed(2)}. Crédito solicitado: $${creditPortion.toFixed(2)}`, 'error');
         return;
@@ -1731,11 +1765,18 @@
     try {
       const resp = await fetch('/sales', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({
           clientId: clientId || null,
           paymentMethod,
-          items: cart.map(i => ({ productId: i.productId, quantity: i.quantity, customDescription: i.customDescription || null, unitPrice: i.type === 'service' ? i.price : undefined })),
+          items: cart.map(i => ({
+            productId: i.productId,
+            quantity: i.quantity,
+            customDescription: i.customDescription || null,
+            unitPrice: i.type === 'service' ? i.price : undefined
+          })),
           splitCash,
           splitCard,
           splitCredit,
@@ -1748,7 +1789,7 @@
       if (resData.success) {
         showToast('Venta realizada con éxito.', 'success');
         buildPrintTicket(resData.ticketNumber, resData.saleId, splitCash, splitCard, splitCredit, cardTransactionRef);
-        
+
         window.lastCompletedSaleData = {
           ticketNumber: resData.ticketNumber,
           saleId: resData.saleId,
@@ -1758,7 +1799,7 @@
           cardRef: hasCardPayment ? cardTransactionRef : null
         };
         handlePOSPrinting(resData.ticketNumber, resData.saleId, splitCash, splitCard, splitCredit, window.lastCompletedSaleData.cardRef);
-        
+
         // Emit sale completion to customer display
         const cashReceived = parseFloat(document.getElementById('cash-received-input')?.value) || 0;
         const cashToPay = paymentMethod === 'cash' ? totalNet : (paymentMethod === 'split' ? splitCash : 0);
@@ -1776,17 +1817,17 @@
         // Save copy of completed transaction details for WhatsApp sending
         lastCompletedCart = JSON.parse(JSON.stringify(cart));
         lastCompletedPaymentMethod = paymentMethod;
-        
+
         clearCart();
 
         // Reset card reference field
         const cardRefInput = document.getElementById('card-transaction-ref');
         if (cardRefInput) cardRefInput.value = '';
-        
+
         // Reset WhatsApp input field
         const waNumInput = document.getElementById('whatsapp-number');
         if (waNumInput) waNumInput.value = '';
-        
+
         const isPrintEnabled = document.getElementById('print-ticket-switch')?.checked;
         if (isPrintEnabled) {
           // Bypasses the ticket modal and reloads the view silently
@@ -1874,32 +1915,41 @@
             }
             const net = (price * i.quantity) - discount;
             const displayName = i.name;
-            const descHtml = i.customDescription ? `<br><small style="color:gray;font-style:italic;margin-left:8px;">* ${i.customDescription}</small>` : '';
-            return `
+            const descHtml = i.customDescription ? ` < br > < small style = "color:gray;font-style:italic;margin-left:8px;" > * $ {
+      i.customDescription
+    } < /small>` : '';
+    return `
               <tr>
                 <td style="padding: 3px 0;">${displayName}${descHtml}${discount > 0 ? ' <small style="color:gray;">(desc)</small>' : ''}${i.type === 'service' ? ' <small style="color:#8b5cf6;">✦</small>' : ''}</td>
                 <td style="text-align: center;">${i.quantity}</td>
                 <td style="text-align: right;">$${net.toFixed(2)}</td>
               </tr>
             `;
-          }).join('')}
-        </tbody>
-      </table>
-      <div style="border-top: 1px dashed #000; padding-top: 5px; text-align: right; font-size: 9px;">
-        Subtotal Bruto: $${totals.gross.toFixed(2)}
-      </div>
-      ${totals.discount > 0 ? `
+  }).join('')
+  } <
+  /tbody> <
+  /table> <
+  div style = "border-top: 1px dashed #000; padding-top: 5px; text-align: right; font-size: 9px;" >
+    Subtotal Bruto: $$ {
+      totals.gross.toFixed(2)
+    } <
+    /div>
+  $ {
+    totals.discount > 0 ? `
       <div style="text-align: right; font-size: 9px; color: red;">
         Descuento: -$${totals.discount.toFixed(2)}
       </div>
-      ` : ''}
-      <div style="border-top: 1px dashed #000; padding-top: 3px; text-align: right; font-weight: bold; font-size: 11px;">
-        TOTAL NETO: $${totals.net.toFixed(2)}
-      </div>
-      <div style="margin-top: 15px; text-align: center; font-size: 9px;">
-        ¡Gracias por su compra!
-      </div>
-    `;
+      ` : ''
+  } <
+  div style = "border-top: 1px dashed #000; padding-top: 3px; text-align: right; font-weight: bold; font-size: 11px;" >
+    TOTAL NETO: $$ {
+      totals.net.toFixed(2)
+    } <
+    /div> <
+    div style = "margin-top: 15px; text-align: center; font-size: 9px;" > ¡Gracias por su compra!
+    <
+    /div>
+  `;
   }
 
   function closeTicketModal() {
@@ -1940,21 +1990,37 @@
       builder.text('CANTON EL SUNCITA, ACAJUTLA.').newLine();
       builder.text('TELÉFONO: 6314 0051').newLine();
       builder.text('PROPIETARIO').newLine();
-      builder.text('ANTONIO CAMPOS').newLine();
+      builder.text('<%= (ticketName || "INVERSIONES M & G S.A.").toUpperCase() %>').newLine();
       builder.bold(false);
       builder.text(sep).newLine();
 
       // ── Info del ticket ──
       builder.align('left');
-      builder.text(`Ticket #: ${ticketNumber}`).newLine();
-      builder.text(`Fecha: ${new Date().toLocaleString('es-SV')}`).newLine();
+      builder.text(`
+  Ticket #: $ {
+    ticketNumber
+  }
+  `).newLine();
+      builder.text(`
+  Fecha: $ {
+    new Date().toLocaleString('es-SV')
+  }
+  `).newLine();
 
       const clientSelect = document.getElementById('client-id-select');
       const clientName = clientSelect && clientSelect.value
         ? clientSelect.options[clientSelect.selectedIndex].text.split('(')[0].trim()
         : 'Consumidor Final';
-      builder.text(`Cliente: ${clientName}`).newLine();
-      builder.text(`Cajero: ${window.currentUserFullName || 'Cajero'}`).newLine();
+      builder.text(`
+  Cliente: $ {
+    clientName
+  }
+  `).newLine();
+      builder.text(`
+  Cajero: $ {
+    window.currentUserFullName || 'Cajero'
+  }
+  `).newLine();
       builder.text(sep).newLine();
 
       // ── Encabezado de artículos ──
@@ -1985,10 +2051,17 @@
         builder.itemLine(i.name, i.quantity, price, net);
         builder.newLine();
         if (i.customDescription) {
-          builder.text(`  * ${i.customDescription}`).newLine();
+          builder.text(` * $ {
+    i.customDescription
+  }
+  `).newLine();
         }
         if (discount > 0) {
-          builder.text(`  Desc: -$${discount.toFixed(2)}`).newLine();
+          builder.text(`
+  Desc: -$$ {
+    discount.toFixed(2)
+  }
+  `).newLine();
         }
       });
 
@@ -1998,11 +2071,23 @@
       const totals = getCartTotals();
       builder.align('right');
       if (totals.discount > 0) {
-        builder.text(`Subtotal: $${totals.gross.toFixed(2)}`).newLine();
-        builder.text(`Descuento: -$${totals.discount.toFixed(2)}`).newLine();
+        builder.text(`
+  Subtotal: $$ {
+    totals.gross.toFixed(2)
+  }
+  `).newLine();
+        builder.text(`
+  Descuento: -$$ {
+    totals.discount.toFixed(2)
+  }
+  `).newLine();
       }
       builder.bold(true);
-      builder.text(`TOTAL: $${totals.net.toFixed(2)}`);
+      builder.text(`
+  TOTAL: $$ {
+    totals.net.toFixed(2)
+  }
+  `);
       builder.bold(false).newLine();
 
       // ── Detalle de pago ──
@@ -2012,23 +2097,51 @@
       if (paymentMethod === 'card') payLabel = 'Tarjeta';
       if (paymentMethod === 'credit') payLabel = 'Credito';
       if (paymentMethod === 'split') payLabel = 'Mixto';
-      builder.text(`Forma de pago: ${payLabel}`).newLine();
+      builder.text(`
+  Forma de pago: $ {
+    payLabel
+  }
+  `).newLine();
 
       if (paymentMethod === 'split') {
-        if (cashPaid > 0) builder.text(`  Efectivo: $${cashPaid.toFixed(2)}`).newLine();
-        if (cardPaid > 0) builder.text(`  Tarjeta:  $${cardPaid.toFixed(2)}`).newLine();
-        if (creditPaid > 0) builder.text(`  Credito:  $${creditPaid.toFixed(2)}`).newLine();
+        if (cashPaid > 0) builder.text(`
+  Efectivo: $$ {
+    cashPaid.toFixed(2)
+  }
+  `).newLine();
+        if (cardPaid > 0) builder.text(`
+  Tarjeta: $$ {
+    cardPaid.toFixed(2)
+  }
+  `).newLine();
+        if (creditPaid > 0) builder.text(`
+  Credito: $$ {
+    creditPaid.toFixed(2)
+  }
+  `).newLine();
       }
       if (cardRef) {
-        builder.text(`Ref. Tarjeta: ${cardRef}`).newLine();
+        builder.text(`
+  Ref.Tarjeta: $ {
+    cardRef
+  }
+  `).newLine();
       }
       if (paymentMethod === 'cash' || (paymentMethod === 'split' && cashPaid > 0)) {
         const totalPaid = paymentMethod === 'split' ? (cashPaid + cardPaid + creditPaid) : cashPaid;
         const change = totalPaid - totals.net;
         if (change > 0) {
-          builder.text(`Recibido: $${totalPaid.toFixed(2)}`).newLine();
+          builder.text(`
+  Recibido: $$ {
+    totalPaid.toFixed(2)
+  }
+  `).newLine();
           builder.bold(true);
-          builder.text(`Cambio:   $${change.toFixed(2)}`);
+          builder.text(`
+  Cambio: $$ {
+    change.toFixed(2)
+  }
+  `);
           builder.bold(false).newLine();
         }
       }

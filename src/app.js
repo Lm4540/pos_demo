@@ -31,6 +31,7 @@ app.use(session(sessionConfig));
 app.use((req, res, next) => {
   res.locals.user = req.session?.user || null;
   res.locals.storeName = process.env.STORE_NAME || 'Tienda el Kinder';
+  res.locals.ticketName = process.env.TICKET_NAME || 'INVERSIONES M & G S.A.';
   res.locals.formatMoney = (val) => {
     const num = parseFloat(val);
     if (isNaN(num)) return '$0.00';
