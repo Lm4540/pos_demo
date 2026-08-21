@@ -1867,6 +1867,12 @@
       - Créd: $${creditPaid.toFixed(2)}`;
     }
 
+    const cashReceivedInput = parseFloat(document.getElementById('cash-received-input')?.value) || 0;
+    const isCashPayment = paymentMethod === 'cash' || (paymentMethod === 'split' && cashPaid > 0);
+    const totalCashToPay = paymentMethod === 'cash' ? totals.net : cashPaid;
+    const effectiveCashReceived = cashReceivedInput > 0 ? cashReceivedInput : totalCashToPay;
+    const changeGiven = Math.max(0, effectiveCashReceived - totalCashToPay);
+
     container.innerHTML = `
       <div style="text-align: center; margin-bottom: 10px;">
         <h4 style="margin: 0; text-transform: uppercase;">RG Simple POS</h4>
@@ -1915,41 +1921,42 @@
             }
             const net = (price * i.quantity) - discount;
             const displayName = i.name;
-            const descHtml = i.customDescription ? ` < br > < small style = "color:gray;font-style:italic;margin-left:8px;" > * $ {
-      i.customDescription
-    } < /small>` : '';
-    return `
+            const descHtml = i.customDescription ? `<br><small style="color:gray;font-style:italic;margin-left:8px;">* ${i.customDescription}</small>` : '';
+            return `
               <tr>
                 <td style="padding: 3px 0;">${displayName}${descHtml}${discount > 0 ? ' <small style="color:gray;">(desc)</small>' : ''}${i.type === 'service' ? ' <small style="color:#8b5cf6;">✦</small>' : ''}</td>
                 <td style="text-align: center;">${i.quantity}</td>
                 <td style="text-align: right;">$${net.toFixed(2)}</td>
               </tr>
             `;
-  }).join('')
-  } <
-  /tbody> <
-  /table> <
-  div style = "border-top: 1px dashed #000; padding-top: 5px; text-align: right; font-size: 9px;" >
-    Subtotal Bruto: $$ {
-      totals.gross.toFixed(2)
-    } <
-    /div>
-  $ {
-    totals.discount > 0 ? `
-      <div style="text-align: right; font-size: 9px; color: red;">
-        Descuento: -$${totals.discount.toFixed(2)}
+          }).join('')}
+        </tbody>
+      </table>
+      <div style="border-top: 1px dashed #000; padding-top: 5px; text-align: right; font-size: 9px;">
+        Subtotal Bruto: $${totals.gross.toFixed(2)}
       </div>
-      ` : ''
-  } <
-  div style = "border-top: 1px dashed #000; padding-top: 3px; text-align: right; font-weight: bold; font-size: 11px;" >
-    TOTAL NETO: $$ {
-      totals.net.toFixed(2)
-    } <
-    /div> <
-    div style = "margin-top: 15px; text-align: center; font-size: 9px;" > ¡Gracias por su compra!
-    <
-    /div>
-  `;
+      ${totals.discount > 0 ? `
+        <div style="text-align: right; font-size: 9px; color: red;">
+          Descuento: -$${totals.discount.toFixed(2)}
+        </div>
+      ` : ''}
+      <div style="border-top: 1px dashed #000; padding-top: 3px; text-align: right; font-weight: bold; font-size: 11px;">
+        TOTAL NETO: $${totals.net.toFixed(2)}
+      </div>
+      ${isCashPayment ? `
+        <div style="border-top: 1px dotted #ccc; margin-top: 4px; padding-top: 2px;">
+          <div style="text-align: right; font-size: 10px; color: #111;">
+            Efectivo Recibido: $${effectiveCashReceived.toFixed(2)}
+          </div>
+          <div style="text-align: right; font-size: 10px; font-weight: bold; color: #111;">
+            Cambio / Vuelto: $${changeGiven.toFixed(2)}
+          </div>
+        </div>
+      ` : ''}
+      <div style="margin-top: 15px; text-align: center; font-size: 9px;">
+        ¡Gracias por su compra!
+      </div>
+    `;
   }
 
   function closeTicketModal() {
@@ -2128,22 +2135,14 @@
   `).newLine();
       }
       if (paymentMethod === 'cash' || (paymentMethod === 'split' && cashPaid > 0)) {
-        const totalPaid = paymentMethod === 'split' ? (cashPaid + cardPaid + creditPaid) : cashPaid;
-        const change = totalPaid - totals.net;
-        if (change > 0) {
-          builder.text(`
-  Recibido: $$ {
-    totalPaid.toFixed(2)
-  }
-  `).newLine();
-          builder.bold(true);
-          builder.text(`
-  Cambio: $$ {
-    change.toFixed(2)
-  }
-  `);
-          builder.bold(false).newLine();
-        }
+        const cashRecInput = parseFloat(document.getElementById('cash-received-input')?.value) || 0;
+        const totalCashToPay = paymentMethod === 'cash' ? totals.net : cashPaid;
+        const totalPaid = cashRecInput > 0 ? cashRecInput : totalCashToPay;
+        const change = Math.max(0, totalPaid - totalCashToPay);
+        builder.text(`Recibido: $${totalPaid.toFixed(2)}`).newLine();
+        builder.bold(true);
+        builder.text(`Cambio:   $${change.toFixed(2)}`);
+        builder.bold(false).newLine();
       }
 
       // ── Pie ──

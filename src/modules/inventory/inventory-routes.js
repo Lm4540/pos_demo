@@ -15,6 +15,8 @@ router.post('/audits/api/save-draft', checkPermission('inventory.adjust'), inven
 router.post('/audits/api/finalize', checkPermission('inventory.adjust'), inventoryController.handleFinalizeAudit);
 router.get('/audits/:id', checkPermission('inventory.adjust'), inventoryController.renderAuditCount);
 router.get('/audits/:id/report', checkPermission('inventory.view'), inventoryController.renderAuditReport);
+router.post('/audits/:id/delete', checkPermission('inventory.adjust'), inventoryController.handleDeleteAudit);
+router.delete('/audits/:id', checkPermission('inventory.adjust'), inventoryController.handleDeleteAudit);
 
 // Levantamiento Inicial de Inventario
 const upload = require('../../core/middlewares/upload');

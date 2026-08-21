@@ -28,7 +28,8 @@ async function renderAuditsIndex(req, res, next) {
       where: whereClause,
       include: [
         { model: Branch, as: 'branch' },
-        { model: User, as: 'user' }
+        { model: User, as: 'user' },
+        { model: InventoryAuditDetail, as: 'details', attributes: ['id'] }
       ],
       order: [['createdAt', 'DESC']]
     });
@@ -788,6 +789,51 @@ const submitInitialLoad = async (req, res, next) => {
   }
 };
 
+// Delete physical audit
+async function handleDeleteAudit(req, res, next) {
+  try {
+    const auditId = req.params.id;
+    const audit = await InventoryAudit.findByPk(auditId);
+
+    if (!audit) {
+      if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+        return res.status(404).json({ success: false, message: 'Auditoría no encontrada.' });
+      }
+      return res.redirect('/inventory/audits?error=Auditoría no encontrada');
+    }
+
+    if (['supervisor', 'cashier'].includes(req.user.roleId) && audit.branchId !== req.user.branchId) {
+      if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+        return res.status(403).json({ success: false, message: 'No autorizado para esta sucursal.' });
+      }
+      return res.redirect('/inventory/audits?error=No autorizado para esta sucursal');
+    }
+
+    // Delete details first
+    await InventoryAuditDetail.destroy({ where: { inventoryAuditId: audit.id } });
+
+    // Delete audit
+    await audit.destroy();
+
+    // Audit log
+    await AuditLog.create({
+      userId: req.user.id,
+      branchId: req.user.branchId || null,
+      action: 'inventory.audit_deleted',
+      details: JSON.stringify({ auditId, sector: audit.sector, branchId: audit.branchId }),
+      ipAddress: req.ip
+    });
+
+    if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+      return res.json({ success: true, message: 'Auditoría eliminada correctamente.' });
+    }
+
+    return res.redirect('/inventory/audits?success=1');
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   renderAuditsIndex,
   handleCreateAudit,
@@ -799,5 +845,6 @@ module.exports = {
   renderAuditReport,
   renderInitialLoad,
   quickCreateProduct,
-  submitInitialLoad
+  submitInitialLoad,
+  handleDeleteAudit
 };

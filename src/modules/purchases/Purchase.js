@@ -58,6 +58,11 @@ class Purchase extends Model {
         type: DataTypes.STRING(255),
         allowNull: true,
         defaultValue: null
+      },
+      purchaseOrderId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: null
       }
     }, {
       sequelize,
@@ -72,6 +77,7 @@ class Purchase extends Model {
     this.belongsTo(models.Branch, { foreignKey: 'branchId', as: 'branch' });
     this.belongsTo(models.Supplier, { foreignKey: 'supplierId', as: 'supplier' });
     this.belongsTo(models.CashierTurn, { foreignKey: 'turnId', as: 'turn' });
+    this.belongsTo(models.PurchaseOrder, { foreignKey: 'purchaseOrderId', as: 'order' });
     this.hasMany(models.PurchaseDetail, { foreignKey: 'purchaseId', as: 'details' });
     this.hasMany(models.SupplierPayment, { foreignKey: 'purchaseId', as: 'payments' });
   }

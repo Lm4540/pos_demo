@@ -12,6 +12,8 @@ const Supplier = require('../../modules/purchases/Supplier');
 const Client = require('../../modules/cxc/Client');
 const Purchase = require('../../modules/purchases/Purchase');
 const PurchaseDetail = require('../../modules/purchases/PurchaseDetail');
+const PurchaseOrder = require('../../modules/purchases/PurchaseOrder');
+const PurchaseOrderDetail = require('../../modules/purchases/PurchaseOrderDetail');
 const CashierTurn = require('../../modules/cashier/CashierTurn');
 const CashierMovement = require('../../modules/cashier/CashierMovement');
 const Sale = require('../../modules/sales/Sale');
@@ -40,6 +42,8 @@ const models = {
   Client,
   Purchase,
   PurchaseDetail,
+  PurchaseOrder,
+  PurchaseOrderDetail,
   CashierTurn,
   CashierMovement,
   Sale,

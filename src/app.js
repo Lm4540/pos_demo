@@ -248,7 +248,7 @@ app.get('/', (req, res) => {
 // Manejador global de errores
 app.use(async (err, req, res, next) => {
   console.error(err.stack);
-  
+
   let errorLogId = null;
   try {
     const { ErrorLog } = require('./core/models');
@@ -288,7 +288,7 @@ app.use(async (err, req, res, next) => {
   } else {
     res.status(500).json({
       success: false,
-      message: 'Ha ocurrido un error interno en el servidor: '+err.message,
+      message: 'Ha ocurrido un error interno en el servidor: ' + err.message,
       error: err.message,
       errorLogId: errorLogId
     });
@@ -300,10 +300,10 @@ const startServer = async () => {
   try {
     await sequelize.authenticate();
     console.log('Conexión a la base de datos establecida exitosamente.');
-    
+
     // Sembrar administrador inicial y sucursal si están vacíos
     await seedInitialData();
-    
+
     app.listen(PORT, () => {
       console.log(`Servidor escuchando en http://localhost:${PORT} en modo ${process.env.NODE_ENV}`);
     });

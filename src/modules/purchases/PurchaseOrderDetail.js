@@ -1,6 +1,6 @@
 const { Model, DataTypes } = require('sequelize');
 
-class PurchaseDetail extends Model {
+class PurchaseOrderDetail extends Model {
   static init(sequelize) {
     super.init({
       id: {
@@ -8,23 +8,13 @@ class PurchaseDetail extends Model {
         autoIncrement: true,
         primaryKey: true
       },
-      purchaseId: {
+      purchaseOrderId: {
         type: DataTypes.INTEGER,
         allowNull: false
       },
       productId: {
         type: DataTypes.INTEGER,
         allowNull: false
-      },
-      batchCode: {
-        type: DataTypes.STRING(50),
-        allowNull: true,
-        defaultValue: null
-      },
-      expirationDate: {
-        type: DataTypes.DATEONLY,
-        allowNull: true,
-        defaultValue: null
       },
       quantity: {
         type: DataTypes.INTEGER,
@@ -33,20 +23,24 @@ class PurchaseDetail extends Model {
       unitCost: {
         type: DataTypes.DECIMAL(12, 2),
         allowNull: false
+      },
+      subtotal: {
+        type: DataTypes.DECIMAL(12, 2),
+        allowNull: false
       }
     }, {
       sequelize,
-      modelName: 'PurchaseDetail',
-      tableName: 'purchasedetails',
+      modelName: 'PurchaseOrderDetail',
+      tableName: 'purchase_order_details',
       timestamps: true
     });
     return this;
   }
 
   static associate(models) {
-    this.belongsTo(models.Purchase, { foreignKey: 'purchaseId', as: 'purchase' });
+    this.belongsTo(models.PurchaseOrder, { foreignKey: 'purchaseOrderId', as: 'order' });
     this.belongsTo(models.Product, { foreignKey: 'productId', as: 'product' });
   }
 }
 
-module.exports = PurchaseDetail;
+module.exports = PurchaseOrderDetail;

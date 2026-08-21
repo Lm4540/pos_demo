@@ -99,7 +99,7 @@
                     </span>
                   <% } %>
                 </td>
-                <td class="px-6 py-4 text-xs text-right whitespace-nowrap">
+                <td class="px-6 py-4 text-xs text-right whitespace-nowrap space-x-2">
                   <% if (a.status === 'draft') { %>
                     <a href="/inventory/audits/<%= a.id %>" class="inline-flex items-center bg-amber-600 hover:bg-amber-500 text-neutral-950 font-bold px-3 py-1.5 rounded-lg cursor-pointer transition-colors shadow-sm">
                       Continuar Conteo
@@ -108,6 +108,13 @@
                     <a href="/inventory/audits/<%= a.id %>/report" class="inline-flex items-center bg-neutral-800 hover:bg-neutral-750 text-white font-bold px-3 py-1.5 rounded-lg cursor-pointer transition-colors border border-neutral-700">
                       Ver Reporte
                     </a>
+                  <% } %>
+                  <% if (a.status === 'draft' || !a.details || a.details.length === 0) { %>
+                    <form action="/inventory/audits/<%= a.id %>/delete" method="POST" onsubmit="return confirm('¿Está seguro de eliminar esta sesión de auditoría física?');" class="inline">
+                      <button type="submit" class="inline-flex items-center bg-red-950/60 hover:bg-red-900 text-red-400 border border-red-800 font-bold px-2.5 py-1.5 rounded-lg cursor-pointer transition-colors text-xs" title="Eliminar sesión de auditoría">
+                        🗑️ Borrar
+                      </button>
+                    </form>
                   <% } %>
                 </td>
               </tr>

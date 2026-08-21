@@ -356,11 +356,23 @@
             </svg>
           </div>
         </div>
-        <button id="btn-search-product" onclick="openProductSearchModal()" class="px-5 py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-extrabold text-sm flex items-center gap-1.5 transition-all shadow-md shadow-blue-500/10 cursor-pointer">
+
+        <div class="relative flex-grow min-w-[200px]">
+          <input type="text" id="pos-touch-name-search" autocomplete="off" class="w-full pl-10 pr-3 py-3.5 bg-neutral-950 border border-neutral-800 text-white rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium" placeholder="Buscar por nombre...">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center text-neutral-550 pointer-events-none">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <div id="pos-touch-name-results" class="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl z-50 hidden divide-y divide-neutral-850">
+          </div>
+        </div>
+
+        <button id="btn-search-product" onclick="openProductSearchModal()" class="px-5 py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-extrabold text-sm flex items-center gap-1.5 transition-all shadow-md shadow-blue-500/10 cursor-pointer whitespace-nowrap">
           <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
-          <span>Buscar Producto</span>
+          <span>Catálogo</span>
         </button>
       </div>
 
@@ -1227,6 +1239,69 @@
       });
     }
 
+    // Listener para búsqueda predictiva por nombre en POS Touch
+    const touchNameSearch = document.getElementById('pos-touch-name-search');
+    const touchNameResults = document.getElementById('pos-touch-name-results');
+    let nameSearchTimeout = null;
+
+    if (touchNameSearch) {
+      touchNameSearch.addEventListener('input', (e) => {
+        const q = e.target.value.trim();
+        clearTimeout(nameSearchTimeout);
+        if (q.length < 2) {
+          touchNameResults.innerHTML = '';
+          touchNameResults.classList.add('hidden');
+          return;
+        }
+
+        nameSearchTimeout = setTimeout(async () => {
+          try {
+            const resp = await fetch(`/sales/api/products?q=${encodeURIComponent(q)}`);
+            const results = await resp.json();
+            touchNameResults.innerHTML = '';
+
+            const filtered = results.filter(r => r.type === 'service' || r.totalStock > 0);
+
+            if (filtered.length > 0) {
+              filtered.forEach(p => {
+                const div = document.createElement('div');
+                div.className = "p-3 hover:bg-neutral-800 cursor-pointer flex items-center justify-between transition-colors";
+                const isService = p.type === 'service';
+                div.innerHTML = `
+                  <div>
+                    <span class="text-xs font-bold text-white block">${escapeHtml(p.name)}</span>
+                    <span class="text-[10px] text-neutral-400">${p.barCode ? `Cód: ${p.barCode} | ` : ''}${isService ? '✦ Servicio' : 'Stock: ' + p.totalStock}</span>
+                  </div>
+                  <span class="text-xs font-mono font-bold text-emerald-400">$${parseFloat(p.salePrice).toFixed(2)}</span>
+                `;
+                div.onclick = () => {
+                  addToCart(p.id, p.name, p.salePrice, p.totalStock, p.categoryId, p.type);
+                  touchNameSearch.value = '';
+                  touchNameResults.innerHTML = '';
+                  touchNameResults.classList.add('hidden');
+                  const barInput = document.getElementById('barcode-input');
+                  if (barInput) barInput.focus();
+                };
+                touchNameResults.appendChild(div);
+              });
+              touchNameResults.classList.remove('hidden');
+            } else {
+              touchNameResults.innerHTML = '<div class="p-3 text-center text-neutral-500 text-xs">Sin resultados con stock</div>';
+              touchNameResults.classList.remove('hidden');
+            }
+          } catch (err) {
+            console.error(err);
+          }
+        }, 200);
+      });
+    }
+
+    document.addEventListener('click', (e) => {
+      if (touchNameSearch && touchNameResults && !touchNameSearch.contains(e.target) && !touchNameResults.contains(e.target)) {
+        touchNameResults.classList.add('hidden');
+      }
+    });
+
     // Initial theme sync
     syncCustomerDisplayTheme();
   });
@@ -1313,12 +1388,35 @@
     }
   }
 
+  window.catalogMap = new Map();
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function handleCatalogClick(productId) {
+    const item = window.catalogMap.get(String(productId));
+    if (item) {
+      addToCart(item.productId, item.name, item.salePrice, item.totalStock, item.categoryId, item.type);
+    }
+  }
+
   function renderCatalogItems(items) {
     const grid = document.getElementById('catalog-modal-grid');
     if (items.length === 0) {
       grid.innerHTML = '<div class="col-span-full text-center text-neutral-600 text-xs py-8">Sin resultados</div>';
       return;
     }
+
+    items.forEach(item => {
+      window.catalogMap.set(String(item.productId), item);
+    });
 
     grid.innerHTML = items.map(item => {
       const isService = item.type === 'service';
@@ -1332,7 +1430,7 @@
 
       return `
         <button 
-          onclick="addToCart(${item.productId}, '${item.name.replace(/'/g, "\\'")}', ${item.salePrice}, ${item.totalStock}, ${item.categoryId || 'null'}, '${item.type}')"
+          onclick="handleCatalogClick('${item.productId}')"
           data-category-id="${categoryValue}"
           class="catalog-item-card p-3 bg-neutral-950 border border-neutral-850 hover:border-blue-500 rounded-2xl flex flex-col items-center justify-between text-center transition-all min-h-[130px] hover:scale-[1.02] cursor-pointer ${isHidden ? 'hidden' : ''}">
           <div class="h-10 w-10 bg-neutral-900 rounded-xl overflow-hidden flex items-center justify-center border border-neutral-800">
@@ -1348,7 +1446,7 @@
               </svg>
             `)}
           </div>
-          <span class="text-[11px] font-bold line-clamp-2 mt-2 leading-tight w-full text-white">${item.name}</span>
+          <span class="text-[11px] font-bold line-clamp-2 mt-2 leading-tight w-full text-white">${escapeHtml(item.name)}</span>
           <div class="mt-2 w-full flex items-center justify-between text-[9px] font-bold">
             <span class="${isService ? 'text-violet-400' : 'text-blue-400'}">$${parseFloat(item.salePrice).toFixed(2)}</span>
             <span class="text-neutral-500">${isService ? 'Servicio' : 'Stock: ' + item.totalStock}</span>
@@ -1552,6 +1650,7 @@
           creditPaid: splitCredit,
           cardRef: hasCardPayment ? cardTransactionRef : null
         };
+        buildPrintTicket(resData.ticketNumber, resData.saleId, splitCash, splitCard, splitCredit, window.lastCompletedSaleData.cardRef);
         handlePOSPrinting(resData.ticketNumber, resData.saleId, splitCash, splitCard, splitCredit, window.lastCompletedSaleData.cardRef);
 
         const cashReceived = parseFloat(document.getElementById('cash-received-input').value) || 0;
@@ -1568,26 +1667,17 @@
           }
         });
 
-        setTimeout(() => {
+        const isPrintEnabled = document.getElementById('print-ticket-switch')?.checked;
+        if (isPrintEnabled) {
+          setTimeout(() => {
             window.location.reload();
           }, 1200);
+        } else {
+          document.getElementById('ticket-modal').classList.remove('hidden');
+        }
 
 
-        // clearCart();
-        // clearCashReceived();
-        // if (cobraBtn) {
-        //   cobraBtn.disabled = false;
-        //   cobraBtn.innerText = 'COBRAR';
-        // }
-
-        // const isPrintEnabled = document.getElementById('print-ticket-switch')?.checked;
-        // if (isPrintEnabled) {
-        //   setTimeout(() => {
-        //     window.location.reload();
-        //   }, 1200);
-        // } else {
-        //   document.getElementById('ticket-modal').classList.remove('hidden');
-        // }
+        
       } else {
         showToast('Error: ' + resData.message, 'error');
         if (cobraBtn) {
@@ -1604,7 +1694,119 @@
     }
   }
 
+  function buildPrintTicket(ticketNumber, saleId, cashPaid, cardPaid, creditPaid, cardRef) {
+    const container = document.getElementById('printable-ticket');
+    if (!container) return;
+    const date = new Date().toLocaleString('es-SV');
+    const totals = getCartTotals();
+    const clientSelect = document.getElementById('client-id-select');
+    const clientName = clientSelect && clientSelect.value ? clientSelect.options[clientSelect.selectedIndex].text.split('(')[0].trim() : 'Consumidor Final';
 
+    let paymentLabel = 'Efectivo';
+    if (paymentMethod === 'card') paymentLabel = 'Tarjeta';
+    if (paymentMethod === 'credit') paymentLabel = 'Crédito';
+    if (paymentMethod === 'split') {
+      paymentLabel = `Dividido:<br>
+      - Efec: $${cashPaid.toFixed(2)}<br>
+      - Tarj: $${cardPaid.toFixed(2)}<br>
+      - Créd: $${creditPaid.toFixed(2)}`;
+    }
+
+    const cashReceivedInput = parseFloat(document.getElementById('cash-received-input')?.value) || 0;
+    const isCashPayment = paymentMethod === 'cash' || (paymentMethod === 'split' && cashPaid > 0);
+    const totalCashToPay = paymentMethod === 'cash' ? totals.net : cashPaid;
+    const effectiveCashReceived = cashReceivedInput > 0 ? cashReceivedInput : totalCashToPay;
+    const changeGiven = Math.max(0, effectiveCashReceived - totalCashToPay);
+
+    container.innerHTML = `
+      <div style="text-align: center; margin-bottom: 8px;">
+        <h4 style="margin: 0; text-transform: uppercase; font-size: 11px;"><%= (storeName || 'TIENDA EL KINDER').toUpperCase() %></h4>
+        <p style="margin: 2px 0; font-size: 8px;">HACIENDA SAN CARLOS, CASA SAN CARLOS</p>
+        <p style="margin: 2px 0; font-size: 8px;">TEL: 6314 0051</p>
+        <p style="margin: 2px 0; font-size: 8px;">IVA Incluido - Consumidor Final</p>
+      </div>
+      <div style="border-top: 1px dashed #000; border-bottom: 1px dashed #000; padding: 4px 0; margin-bottom: 8px;">
+        <p style="margin: 2px 0;"><strong>Ticket:</strong> ${ticketNumber}</p>
+        <p style="margin: 2px 0;"><strong>Fecha:</strong> ${date}</p>
+        <p style="margin: 2px 0;"><strong>Cajero:</strong> <%= user.fullName %></p>
+        <p style="margin: 2px 0;"><strong>Cliente:</strong> ${clientName}</p>
+        <p style="margin: 2px 0;"><strong>Pago:</strong><br>${paymentLabel}</p>
+        ${cardRef ? `<p style="margin: 2px 0;"><strong>Ref. Tarjeta:</strong> ${cardRef}</p>` : ''}
+      </div>
+      <table style="width: 100%; font-size: 9px; border-collapse: collapse; margin-bottom: 8px;">
+        <thead>
+          <tr style="border-bottom: 1px solid #000;">
+            <th style="text-align: left;">Art.</th>
+            <th style="text-align: center;">Cant.</th>
+            <th style="text-align: right;">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${cart.map(i => {
+            const price = parseFloat(i.price);
+            let promo = typeof promotions !== 'undefined' ? promotions.find(p => p.productId === i.productId) : null;
+            if (!promo && i.categoryId && typeof promotions !== 'undefined') {
+              promo = promotions.find(p => p.categoryId === i.categoryId);
+            }
+            let discount = 0;
+            if (promo) {
+              if (promo.type === 'percentage') {
+                discount = price * (parseFloat(promo.value) / 100) * i.quantity;
+              } else if (promo.type === 'fixed_price') {
+                const promoPrice = parseFloat(promo.value);
+                if (promoPrice < price) discount = (price - promoPrice) * i.quantity;
+              } else if (promo.type === 'bulk' && i.quantity >= promo.buyQty) {
+                discount = Math.floor(i.quantity / promo.buyQty) * (promo.buyQty - promo.payQty) * price;
+              }
+            }
+            const net = (price * i.quantity) - discount;
+            const displayName = i.name;
+            const descHtml = i.customDescription ? `<br><small style="color:gray;font-style:italic;margin-left:6px;">* ${i.customDescription}</small>` : '';
+            return `
+              <tr>
+                <td style="padding: 2px 0;">${displayName}${descHtml}${discount > 0 ? ' <small style="color:gray;">(desc)</small>' : ''}${i.type === 'service' ? ' <small style="color:#8b5cf6;">✦</small>' : ''}</td>
+                <td style="text-align: center;">${i.quantity}</td>
+                <td style="text-align: right;">$${net.toFixed(2)}</td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+      <div style="border-top: 1px dashed #000; padding-top: 4px; text-align: right; font-size: 9px;">
+        Subtotal Bruto: $${totals.gross.toFixed(2)}
+      </div>
+      ${totals.discount > 0 ? `
+        <div style="text-align: right; font-size: 9px; color: red;">
+          Descuento: -$${totals.discount.toFixed(2)}
+        </div>
+      ` : ''}
+      <div style="border-top: 1px dashed #000; padding-top: 3px; text-align: right; font-weight: bold; font-size: 10px;">
+        TOTAL NETO: $${totals.net.toFixed(2)}
+      </div>
+      ${isCashPayment ? `
+        <div style="border-top: 1px dotted #ccc; margin-top: 4px; padding-top: 2px;">
+          <div style="text-align: right; font-size: 9px; color: #111;">
+            Efectivo Recibido: $${effectiveCashReceived.toFixed(2)}
+          </div>
+          <div style="text-align: right; font-size: 9px; font-weight: bold; color: #111;">
+            Cambio / Vuelto: $${changeGiven.toFixed(2)}
+          </div>
+        </div>
+      ` : ''}
+      <div style="margin-top: 10px; text-align: center; font-size: 8px;">
+        ¡Gracias por su compra!
+      </div>
+    `;
+  }
+
+  function printTicket() {
+    window.print();
+  }
+
+  function closeTicketModal() {
+    document.getElementById('ticket-modal').classList.add('hidden');
+    window.location.reload();
+  }
 
   async function handlePOSPrinting(ticketNumber, saleId, cashPaid, cardPaid, creditPaid, cardRef) {
     const isPrintEnabled = document.getElementById('print-ticket-switch')?.checked;
@@ -1720,14 +1922,14 @@
         builder.text(`Ref. Tarjeta: ${cardRef}`).newLine();
       }
       if (paymentMethod === 'cash' || (paymentMethod === 'split' && cashPaid > 0)) {
-        const totalPaid = paymentMethod === 'split' ? (cashPaid + cardPaid + creditPaid) : cashPaid;
-        const change = totalPaid - totals.net;
-        if (change > 0) {
-          builder.text(`Recibido: $${totalPaid.toFixed(2)}`).newLine();
-          builder.bold(true);
-          builder.text(`Cambio:   $${change.toFixed(2)}`);
-          builder.bold(false).newLine();
-        }
+        const cashRecInput = parseFloat(document.getElementById('cash-received-input')?.value) || 0;
+        const totalCashToPay = paymentMethod === 'cash' ? totals.net : cashPaid;
+        const totalPaid = cashRecInput > 0 ? cashRecInput : totalCashToPay;
+        const change = Math.max(0, totalPaid - totalCashToPay);
+        builder.text(`Recibido: $${totalPaid.toFixed(2)}`).newLine();
+        builder.bold(true);
+        builder.text(`Cambio:   $${change.toFixed(2)}`);
+        builder.bold(false).newLine();
       }
 
       // ── Pie ──

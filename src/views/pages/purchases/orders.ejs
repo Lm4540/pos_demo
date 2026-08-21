@@ -1,0 +1,1042 @@
+<%- include('../../partials/head', { title: title || 'Pedidos a Proveedores' }) %>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="min-h-screen bg-neutral-950 flex flex-col">
+  <!-- Nav Bar -->
+  <nav class="bg-neutral-900 border-b border-neutral-800 px-6 py-4 flex items-center justify-between shadow-md">
+    <div class="flex items-center gap-3">
+      <a href="/purchases" class="text-neutral-400 hover:text-white transition-colors">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+      </a>
+      <div>
+        <span class="text-xl font-bold text-white tracking-wide">Pedidos y Calendario de Entregas</span>
+        <span class="text-xs block text-neutral-400 font-medium">Control de órdenes a proveedores, analítica de compras e ingreso programado</span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <a href="/purchases/orders/new" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-md shadow-blue-500/10 flex items-center gap-2">
+        <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+        <span>Registrar Nuevo Pedido</span>
+      </a>
+    </div>
+  </nav>
+
+  <main class="flex-grow p-6 max-w-7xl w-full mx-auto space-y-6">
+    
+    <!-- Filtros de Rango de Fechas -->
+    <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 shadow-sm space-y-4">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+            <svg class="h-4 w-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            <span>Filtro de Periodo & Inversión</span>
+          </h2>
+          <p class="text-xs text-neutral-400 mt-0.5">Seleccione el rango de fechas para actualizar los totales y el gráfico de compras y pedidos.</p>
+        </div>
+
+        <!-- Quick Presets -->
+        <div class="flex flex-wrap items-center gap-1.5 text-xs">
+          <button type="button" onclick="setPresetRange('this_month')" class="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-750 text-neutral-300 rounded-xl font-semibold cursor-pointer transition-colors border border-neutral-750">Este Mes</button>
+          <button type="button" onclick="setPresetRange('last_month')" class="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-750 text-neutral-300 rounded-xl font-semibold cursor-pointer transition-colors border border-neutral-750">Mes Anterior</button>
+          <button type="button" onclick="setPresetRange('last_30_days')" class="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-750 text-neutral-300 rounded-xl font-semibold cursor-pointer transition-colors border border-neutral-750">Últimos 30 Días</button>
+          <button type="button" onclick="setPresetRange('this_year')" class="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-750 text-neutral-300 rounded-xl font-semibold cursor-pointer transition-colors border border-neutral-750">Este Año</button>
+        </div>
+      </div>
+
+      <form id="orders-filter-form" method="GET" action="/purchases/orders" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 pt-2 border-t border-neutral-800">
+        <div class="md:col-span-2">
+          <label class="block text-[10px] font-bold text-neutral-400 uppercase mb-1">Fecha Desde</label>
+          <input type="date" id="filter-startDate" name="startDate" value="<%= startDate %>" class="w-full px-3.5 py-2.5 bg-neutral-950 border border-neutral-800 text-white rounded-xl text-xs focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-[10px] font-bold text-neutral-400 uppercase mb-1">Fecha Hasta</label>
+          <input type="date" id="filter-endDate" name="endDate" value="<%= endDate %>" class="w-full px-3.5 py-2.5 bg-neutral-950 border border-neutral-800 text-white rounded-xl text-xs focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div class="flex items-end">
+          <button type="submit" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-blue-500/10 flex items-center justify-center gap-1.5 cursor-pointer">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <span>Filtrar</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Tarjetas KPI de Resumen Financiero -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- Gran Total Invertido -->
+      <div class="bg-gradient-to-br from-neutral-900 to-indigo-950/40 border-2 border-indigo-500/60 rounded-2xl p-5 shadow-lg relative overflow-hidden">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] font-extrabold text-indigo-400 uppercase tracking-widest">Gran Total Invertido</span>
+          <div class="h-9 w-9 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center border border-indigo-500/30">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        </div>
+        <div class="mt-3">
+          <span class="text-2xl font-black text-white font-mono tracking-tight">$<%= stats ? stats.grandTotalInvested.toLocaleString('es-SV', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00' %></span>
+          <p class="text-[10px] text-neutral-400 mt-1">Compras facturadas + pedidos pendientes en el rango</p>
+        </div>
+      </div>
+
+      <!-- Compras Facturadas / Recibidas -->
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 shadow-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Compras Facturadas</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-950 text-blue-400 border border-blue-900"><%= stats ? stats.purchasesCount : 0 %> compras</span>
+        </div>
+        <div class="mt-3">
+          <span class="text-2xl font-bold text-white font-mono">$<%= stats ? stats.totalPurchasesAmount.toLocaleString('es-SV', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00' %></span>
+          <p class="text-[10px] text-neutral-400 mt-1">Ingresadas directamente al inventario</p>
+        </div>
+      </div>
+
+      <!-- Pedidos Pendientes -->
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 shadow-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] font-bold text-amber-400 uppercase tracking-widest">Pedidos Pendientes</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-950 text-amber-400 border border-amber-900"><%= stats ? stats.pendingCount : 0 %> pendientes</span>
+        </div>
+        <div class="mt-3">
+          <span class="text-2xl font-bold text-amber-400 font-mono">$<%= stats ? stats.pendingOrdersAmount.toLocaleString('es-SV', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00' %></span>
+          <p class="text-[10px] text-neutral-400 mt-1">Órdenes pendientes por recibir</p>
+        </div>
+      </div>
+
+      <!-- Total Pedidos Registrados -->
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 shadow-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Total en Órdenes</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-900"><%= stats ? stats.ordersCount : 0 %> órdenes</span>
+        </div>
+        <div class="mt-3">
+          <span class="text-2xl font-bold text-emerald-400 font-mono">$<%= stats ? stats.totalOrdersAmount.toLocaleString('es-SV', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00' %></span>
+          <p class="text-[10px] text-neutral-400 mt-1">Monto total ordenado en el periodo</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gráfico de Compras y Pedidos del Periodo -->
+    <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-neutral-800 pb-3">
+        <div>
+          <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+            <svg class="h-4.5 w-4.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+            </svg>
+            <span>Gráfico de Compras y Pedidos del Periodo</span>
+          </h3>
+          <span class="text-xs text-neutral-400">Comparativa de montos ($) entre facturas de compras ejecutadas y pedidos registrados</span>
+        </div>
+        <div class="flex items-center gap-4 text-xs font-semibold">
+          <div class="flex items-center gap-1.5">
+            <span class="w-3 h-3 rounded-full bg-blue-500 inline-block"></span>
+            <span class="text-neutral-300">Compras Facturadas ($)</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-3 h-3 rounded-full bg-amber-500 inline-block"></span>
+            <span class="text-neutral-300">Pedidos a Proveedores ($)</span>
+          </div>
+        </div>
+      </div>
+      <div class="relative w-full h-72">
+        <canvas id="purchasesOrdersChart"></canvas>
+      </div>
+    </div>
+    
+    <!-- Navigation Tabs -->
+    <div class="flex border-b border-neutral-800">
+      <button onclick="switchOrdersTab('calendar')" id="tab-calendar-btn" class="px-6 py-3 text-sm font-bold border-b-2 border-blue-500 text-blue-400 transition-all cursor-pointer flex items-center gap-2">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        <span>Calendario Interactivo</span>
+      </button>
+      <button onclick="switchOrdersTab('list')" id="tab-list-btn" class="px-6 py-3 text-sm font-bold border-b-2 border-transparent text-neutral-400 hover:text-white transition-all cursor-pointer flex items-center gap-2">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+        </svg>
+        <span>Listado de Pedidos (<%= orders.length %>)</span>
+      </button>
+    </div>
+
+    <!-- Tab 1: Interactive Calendar View -->
+    <div id="view-calendar" class="space-y-4">
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+          <div class="flex items-center gap-3">
+            <button onclick="changeMonth(-1)" class="p-2 bg-neutral-800 hover:bg-neutral-750 text-white rounded-xl cursor-pointer">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            <h2 id="calendar-month-year" class="text-lg font-extrabold text-white min-w-[180px] text-center uppercase tracking-wide"></h2>
+            <button onclick="changeMonth(1)" class="p-2 bg-neutral-800 hover:bg-neutral-750 text-white rounded-xl cursor-pointer">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </button>
+            <button onclick="goToToday()" class="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-750 text-neutral-300 text-xs font-bold rounded-xl cursor-pointer ml-2">Hoy</button>
+          </div>
+
+          <!-- Calendar Legend -->
+          <div class="flex items-center gap-4 text-xs">
+            <div class="flex items-center gap-1.5">
+              <span class="w-3 h-3 rounded-full bg-blue-500 inline-block"></span>
+              <span class="text-neutral-400">Fecha de Compra</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-3 h-3 rounded-full bg-amber-500 inline-block"></span>
+              <span class="text-neutral-400">Entrega Pendiente</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
+              <span class="text-neutral-400">Entrega Recibida</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Calendar Grid -->
+        <div class="grid grid-cols-7 gap-px bg-neutral-800 border border-neutral-800 rounded-xl overflow-hidden text-xs">
+          <!-- Weekday Headers -->
+          <div class="bg-neutral-950 p-2.5 text-center font-bold text-neutral-400">DOM</div>
+          <div class="bg-neutral-950 p-2.5 text-center font-bold text-neutral-400">LUN</div>
+          <div class="bg-neutral-950 p-2.5 text-center font-bold text-neutral-400">MAR</div>
+          <div class="bg-neutral-950 p-2.5 text-center font-bold text-neutral-400">MIÉ</div>
+          <div class="bg-neutral-950 p-2.5 text-center font-bold text-neutral-400">JUE</div>
+          <div class="bg-neutral-950 p-2.5 text-center font-bold text-neutral-400">VIE</div>
+          <div class="bg-neutral-950 p-2.5 text-center font-bold text-neutral-400">SÁB</div>
+          
+          <!-- Calendar Days -->
+          <div id="calendar-days-container" class="contents"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: Orders List View -->
+    <div id="view-list" class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm hidden">
+      <h2 class="text-lg font-bold text-white mb-4">Registro Histórico de Pedidos</h2>
+
+      <% if (orders.length === 0) { %>
+        <p class="text-sm text-neutral-500 py-8 text-center">No se han registrado pedidos a proveedores.</p>
+      <% } else { %>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-neutral-800 text-left text-sm text-neutral-300">
+            <thead>
+              <tr class="text-neutral-500 font-semibold uppercase tracking-wider text-xs">
+                <th class="py-3 px-4">Pedido No.</th>
+                <th class="py-3 px-4">Proveedor</th>
+                <th class="py-3 px-4">Sucursal</th>
+                <th class="py-3 px-4">Fecha Compra</th>
+                <th class="py-3 px-4">Fecha Llegada</th>
+                <th class="py-3 px-4">Monto Total</th>
+                <th class="py-3 px-4 text-center">Estado</th>
+                <th class="py-3 px-4 text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-neutral-800">
+              <% orders.forEach(o => { %>
+                <tr class="hover:bg-neutral-950/40 transition-colors">
+                  <td class="py-4 px-4 font-mono font-bold text-blue-400"><%= o.orderNumber %></td>
+                  <td class="py-4 px-4 font-bold text-white"><%= o.supplier ? o.supplier.name : 'N/A' %></td>
+                  <td class="py-4 px-4 text-neutral-400"><%= o.branch ? o.branch.name : 'N/A' %></td>
+                  <td class="py-4 px-4 font-mono text-xs text-neutral-300"><%= o.orderDate %></td>
+                  <td class="py-4 px-4 font-mono text-xs text-neutral-300"><%= o.expectedDeliveryDate %></td>
+                  <td class="py-4 px-4 font-mono font-bold text-emerald-400">$<%= parseFloat(o.totalAmount).toFixed(2) %></td>
+                  <td class="py-4 px-4 text-center">
+                    <% if (o.status === 'received') { %>
+                      <% if (o.purchase) { %>
+                        <a href="/purchases/<%= o.purchase.id %>" class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-emerald-950 text-emerald-400 border border-emerald-900 hover:bg-emerald-900 transition-colors inline-flex items-center gap-1" title="Ver Factura #<%= o.purchase.invoiceNumber %>">
+                          <span>Recibido</span>
+                          <span class="text-emerald-300 font-mono">(<%= o.purchase.invoiceNumber %>)</span>
+                        </a>
+                      <% } else { %>
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-emerald-950 text-emerald-400 border border-emerald-900">Recibido</span>
+                      <% } %>
+                    <% } else if (o.status === 'pending') { %>
+                      <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-amber-950 text-amber-400 border border-amber-900">Pendiente</span>
+                    <% } else { %>
+                      <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-neutral-800 text-neutral-500 border border-neutral-700">Cancelado</span>
+                    <% } %>
+                  </td>
+                  <td class="py-4 px-4 text-right space-x-2">
+                    <button type="button" onclick="openOrderModal('<%= o.id %>')" class="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-750 text-white text-xs font-semibold rounded-lg cursor-pointer">Detalles</button>
+                    <% if (o.status === 'pending') { %>
+                      <button type="button" onclick="openReceiveModal('<%= o.id %>')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg cursor-pointer transition-all shadow-md shadow-emerald-600/10">Marcar Recibido</button>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </main>
+</div>
+
+<!-- Modal para ver detalle de Pedido -->
+<div id="order-detail-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+  <div class="bg-neutral-900 border border-neutral-800 rounded-2xl max-w-2xl w-full overflow-hidden shadow-2xl p-6 space-y-4">
+    <div class="flex justify-between items-center border-b border-neutral-800 pb-3">
+      <div>
+        <h3 id="modal-order-number" class="text-lg font-bold text-white">Detalle de Pedido</h3>
+        <span id="modal-order-supplier" class="text-xs text-neutral-400 block"></span>
+      </div>
+      <button type="button" onclick="closeOrderModal()" class="text-neutral-400 hover:text-white font-bold text-lg cursor-pointer">✕</button>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 bg-neutral-950 p-4 rounded-xl border border-neutral-850 text-xs">
+      <div>
+        <span class="text-neutral-500 block uppercase font-bold text-[10px]">Fecha de Compra</span>
+        <span id="modal-order-date" class="font-mono font-bold text-white"></span>
+      </div>
+      <div>
+        <span class="text-neutral-500 block uppercase font-bold text-[10px]">Fecha Estimada Llegada</span>
+        <span id="modal-delivery-date" class="font-mono font-bold text-amber-400"></span>
+      </div>
+    </div>
+
+    <div class="space-y-2">
+      <h4 class="text-xs font-bold text-neutral-400 uppercase tracking-wider">Productos Solicitados</h4>
+      <div id="modal-order-items" class="max-h-60 overflow-y-auto space-y-2"></div>
+    </div>
+
+    <div class="flex justify-between items-center border-t border-neutral-800 pt-4">
+      <div class="text-xs">
+        <span class="text-neutral-400">Total Pedido:</span>
+        <span id="modal-order-total" class="font-mono text-base font-bold text-emerald-400 ml-1"></span>
+      </div>
+      <button type="button" onclick="closeOrderModal()" class="px-4 py-2 bg-neutral-800 hover:bg-neutral-750 text-white text-xs font-bold rounded-xl cursor-pointer">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para Procesar Recepción de Pedido -->
+<div id="receive-order-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+  <div class="bg-neutral-900 border border-neutral-800 rounded-2xl max-w-4xl w-full overflow-hidden shadow-2xl p-6 space-y-4 max-h-[92vh] flex flex-col">
+    <!-- Modal Header -->
+    <div class="flex justify-between items-center border-b border-neutral-800 pb-3 flex-shrink-0">
+      <div>
+        <h3 id="receive-modal-title" class="text-lg font-bold text-white">Recepción de Pedido</h3>
+        <span id="receive-modal-subtitle" class="text-xs text-neutral-400 block">Complete los datos de la factura e insumos recibidos</span>
+      </div>
+      <button type="button" onclick="closeReceiveModal()" class="text-neutral-400 hover:text-white font-bold text-lg cursor-pointer">✕</button>
+    </div>
+
+    <!-- Scrollable Modal Body -->
+    <div class="overflow-y-auto space-y-4 pr-1 flex-grow">
+      <input type="hidden" id="receive-order-id">
+
+      <!-- Section 1: Factura & Pago -->
+      <div class="bg-neutral-950 p-4 rounded-xl border border-neutral-850 space-y-4">
+        <h4 class="text-xs font-bold text-neutral-300 uppercase tracking-wider">Datos de Facturación y Pago</h4>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-[10px] font-bold text-neutral-400 uppercase mb-1">Número de Factura *</label>
+            <input type="text" id="receive-invoiceNumber" class="w-full px-3 py-2 bg-neutral-900 border border-neutral-800 text-white rounded-xl text-xs font-mono focus:ring-2 focus:ring-blue-500" placeholder="FAC-00123">
+          </div>
+
+          <div>
+            <label class="block text-[10px] font-bold text-neutral-400 uppercase mb-1">Condición de Pago</label>
+            <select id="receive-paymentMethod" onchange="toggleReceivePaymentMethod()" class="w-full px-3 py-2 bg-neutral-900 border border-neutral-800 text-white rounded-xl text-xs focus:ring-2 focus:ring-blue-500">
+              <option value="cash">Contado (Pagado)</option>
+              <option value="credit">Crédito (CxP)</option>
+            </select>
+          </div>
+
+          <div id="receive-due-date-container" class="hidden">
+            <label class="block text-[10px] font-bold text-neutral-400 uppercase mb-1">Fecha Vencimiento *</label>
+            <input type="date" id="receive-dueDate" class="w-full px-3 py-2 bg-neutral-900 border border-neutral-800 text-white rounded-xl text-xs focus:ring-2 focus:ring-blue-500">
+          </div>
+        </div>
+
+        <!-- Cash Details -->
+        <div id="receive-cash-details-container" class="space-y-3 pt-2 border-t border-neutral-900">
+          <label class="block text-[10px] font-bold text-neutral-400 uppercase">Origen de Fondos (Contado)</label>
+          <div class="grid grid-cols-2 gap-3">
+            <label id="receive-source-cashier-label" class="flex items-center gap-2 px-3 py-2 bg-neutral-900 border-2 border-blue-500 rounded-xl cursor-pointer">
+              <input type="radio" name="receivePaymentSource" value="cashier" checked onchange="toggleReceivePaymentSource()" class="text-blue-600 bg-neutral-950 border-neutral-800">
+              <span class="text-xs font-semibold text-white">💵 Caja Chica</span>
+            </label>
+            <label id="receive-source-external-label" class="flex items-center gap-2 px-3 py-2 bg-neutral-900 border-2 border-neutral-800 rounded-xl cursor-pointer">
+              <input type="radio" name="receivePaymentSource" value="external" onchange="toggleReceivePaymentSource()" class="text-blue-600 bg-neutral-950 border-neutral-800">
+              <span class="text-xs font-semibold text-white">🏦 Banco / Depósito</span>
+            </label>
+          </div>
+
+          <div id="receive-caja-section" class="space-y-1">
+            <label class="block text-[10px] font-bold text-neutral-400 uppercase">Caja Chica de Retiro *</label>
+            <select id="receive-turnId" class="w-full px-3 py-2 bg-neutral-900 border border-neutral-800 text-white rounded-xl text-xs focus:ring-2 focus:ring-blue-500">
+            </select>
+          </div>
+
+          <div id="receive-bank-section" class="hidden space-y-1">
+            <label class="block text-[10px] font-bold text-neutral-400 uppercase">No. Voucher / Autorización *</label>
+            <input type="text" id="receive-transactionRef" class="w-full px-3 py-2 bg-neutral-900 border border-neutral-800 text-white rounded-xl text-xs font-mono" placeholder="VOUCHER-12345">
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Extra Product Hot Purchase Add Input -->
+      <div class="bg-neutral-950 p-3 rounded-xl border border-neutral-850 space-y-2">
+        <label class="block text-[10px] font-bold text-emerald-400 uppercase tracking-wider">➕ Agregar Producto Extra al Camión / Factura ("Compra en caliente")</label>
+        <div class="relative">
+          <input type="text" id="receive-extra-product-input" autocomplete="off" placeholder="Escriba para buscar y agregar otro producto que venía en el camión..." class="w-full px-3 py-2 bg-neutral-900 border border-neutral-800 text-white rounded-xl text-xs focus:ring-2 focus:ring-emerald-500">
+          <div id="receive-extra-product-results" class="absolute left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-neutral-900 border border-neutral-800 rounded-xl shadow-2xl z-50 hidden divide-y divide-neutral-850"></div>
+        </div>
+      </div>
+
+      <!-- Section 3: Items Table -->
+      <div class="space-y-2">
+        <h4 class="text-xs font-bold text-neutral-300 uppercase tracking-wider">Productos Recibidos (Editar Cantidades, Costos y Vencimientos)</h4>
+        <div class="overflow-x-auto border border-neutral-850 rounded-xl bg-neutral-950">
+          <table class="min-w-full divide-y divide-neutral-850 text-left text-xs text-neutral-300">
+            <thead>
+              <tr class="text-neutral-500 font-semibold uppercase text-[10px] tracking-wider">
+                <th class="py-2.5 px-3">Producto</th>
+                <th class="py-2.5 px-3">Lote</th>
+                <th class="py-2.5 px-3 text-center">Cant. Recibida</th>
+                <th class="py-2.5 px-3 text-center">Costo ($)</th>
+                <th class="py-2.5 px-3 text-center">PVP ($)</th>
+                <th class="py-2.5 px-3 text-center">Vencimiento (15d por defecto)</th>
+                <th class="py-2.5 px-3 text-right">Subtotal</th>
+                <th class="py-2.5 px-2 text-center"></th>
+              </tr>
+            </thead>
+            <tbody id="receive-items-tbody" class="divide-y divide-neutral-850">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="flex justify-between items-center border-t border-neutral-800 pt-4 flex-shrink-0">
+      <div class="text-xs">
+        <span class="text-neutral-400 font-bold uppercase">Total a Ingresar:</span>
+        <span id="receive-total-amount" class="font-mono text-xl font-black text-emerald-400 ml-2">$0.00</span>
+      </div>
+      <div class="flex gap-2">
+        <button type="button" onclick="closeReceiveModal()" class="px-4 py-2.5 bg-neutral-800 hover:bg-neutral-750 text-white text-xs font-bold rounded-xl cursor-pointer">Cancelar</button>
+        <button type="button" id="btn-submit-receive" onclick="submitReceiveOrder()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold rounded-xl transition-all shadow-md shadow-emerald-600/10 cursor-pointer">PROCESAR E INGRESAR AL INVENTARIO</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentYear = new Date().getFullYear();
+  let currentMonth = new Date().getMonth();
+  let calendarEvents = [];
+  const rawOrdersData = <%- JSON.stringify(orders) %>;
+  const rawProductsData = <%- JSON.stringify(typeof products !== 'undefined' ? products : []) %>;
+
+  function switchOrdersTab(tab) {
+    const btnCal = document.getElementById('tab-calendar-btn');
+    const btnList = document.getElementById('tab-list-btn');
+    const viewCal = document.getElementById('view-calendar');
+    const viewList = document.getElementById('view-list');
+
+    const activeClass = "px-6 py-3 text-sm font-bold border-b-2 border-blue-500 text-blue-400 transition-all cursor-pointer flex items-center gap-2";
+    const inactiveClass = "px-6 py-3 text-sm font-bold border-b-2 border-transparent text-neutral-400 hover:text-white transition-all cursor-pointer flex items-center gap-2";
+
+    if (tab === 'calendar') {
+      btnCal.className = activeClass;
+      btnList.className = inactiveClass;
+      viewCal.classList.remove('hidden');
+      viewList.classList.add('hidden');
+    } else {
+      btnList.className = activeClass;
+      btnCal.className = inactiveClass;
+      viewCal.classList.add('hidden');
+      viewList.classList.remove('hidden');
+    }
+  }
+
+  async function fetchCalendarEvents() {
+    try {
+      const resp = await fetch('/purchases/orders/api/events');
+      calendarEvents = await resp.json();
+      renderCalendar();
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  function renderCalendar() {
+    const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+    document.getElementById('calendar-month-year').innerText = `${monthNames[currentMonth]} ${currentYear}`;
+
+    const container = document.getElementById('calendar-days-container');
+    container.innerHTML = '';
+
+    const firstDayIndex = new Date(currentYear, currentMonth, 1).getDay();
+    const totalDaysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+    for (let i = 0; i < firstDayIndex; i++) {
+      const emptyDiv = document.createElement('div');
+      emptyDiv.className = "bg-neutral-950/40 p-2 min-h-[110px] text-neutral-700 select-none";
+      container.appendChild(emptyDiv);
+    }
+
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    for (let day = 1; day <= totalDaysInMonth; day++) {
+      const dayStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const isToday = dayStr === todayStr;
+
+      const dayCell = document.createElement('div');
+      dayCell.className = `bg-neutral-950 p-2 min-h-[110px] flex flex-col justify-between transition-colors ${isToday ? 'ring-2 ring-blue-500/80 bg-neutral-900/60' : 'hover:bg-neutral-900/40'}`;
+
+      let cellHtml = `<div class="flex justify-between items-center mb-1"><span class="font-bold ${isToday ? 'text-blue-400 bg-blue-950 px-1.5 py-0.5 rounded-md' : 'text-neutral-400'}">${day}</span></div>`;
+
+      const dayEvents = calendarEvents.filter(ev => ev.start === dayStr);
+
+      if (dayEvents.length > 0) {
+        cellHtml += `<div class="space-y-1 overflow-y-auto max-h-[85px] no-scrollbar">`;
+        dayEvents.forEach(ev => {
+          const isOrderDate = ev.type === 'order_date';
+          const bgColor = isOrderDate ? 'bg-blue-950/80 border-blue-800 text-blue-300' : (ev.status === 'received' ? 'bg-emerald-950/80 border-emerald-800 text-emerald-300' : 'bg-amber-950/80 border-amber-800 text-amber-300');
+
+          cellHtml += `
+            <div onclick="openOrderModalByNumber('${ev.orderNumber}')" class="p-1.5 rounded-lg border text-[10px] font-bold cursor-pointer truncate transition-transform hover:scale-[1.02] ${bgColor}" title="${ev.title}">
+              ${ev.title}
+            </div>
+          `;
+        });
+        cellHtml += `</div>`;
+      }
+
+      dayCell.innerHTML = cellHtml;
+      container.appendChild(dayCell);
+    }
+  }
+
+  function changeMonth(delta) {
+    currentMonth += delta;
+    if (currentMonth < 0) {
+      currentMonth = 11;
+      currentYear -= 1;
+    } else if (currentMonth > 11) {
+      currentMonth = 0;
+      currentYear += 1;
+    }
+    renderCalendar();
+  }
+
+  function goToToday() {
+    currentYear = new Date().getFullYear();
+    currentMonth = new Date().getMonth();
+    renderCalendar();
+  }
+
+  function openOrderModal(orderId) {
+    const order = rawOrdersData.find(o => String(o.id) === String(orderId));
+    if (!order) return;
+
+    document.getElementById('modal-order-number').innerText = `Pedido #${order.orderNumber}`;
+    document.getElementById('modal-order-supplier').innerText = `Proveedor: ${order.supplier ? order.supplier.name : 'N/A'} | Sucursal: ${order.branch ? order.branch.name : 'N/A'}`;
+    document.getElementById('modal-order-date').innerText = order.orderDate;
+    document.getElementById('modal-delivery-date').innerText = order.expectedDeliveryDate;
+    document.getElementById('modal-order-total').innerText = `$${parseFloat(order.totalAmount).toFixed(2)}`;
+
+    const itemsContainer = document.getElementById('modal-order-items');
+    itemsContainer.innerHTML = '';
+
+    if (order.details && order.details.length > 0) {
+      order.details.forEach(d => {
+        const div = document.createElement('div');
+        div.className = "flex justify-between items-center p-2.5 bg-neutral-950 border border-neutral-850 rounded-xl text-xs";
+        div.innerHTML = `
+          <div>
+            <strong class="text-white block">${d.product ? d.product.name : 'Producto'}</strong>
+            <span class="text-neutral-500 text-[10px]">Costo: $${parseFloat(d.unitCost).toFixed(2)} x ${d.quantity} uds</span>
+          </div>
+          <span class="font-mono font-bold text-emerald-400">$${parseFloat(d.subtotal).toFixed(2)}</span>
+        `;
+        itemsContainer.appendChild(div);
+      });
+    }
+
+    document.getElementById('order-detail-modal').classList.remove('hidden');
+  }
+
+  function openOrderModalByNumber(num) {
+    const order = rawOrdersData.find(o => o.orderNumber === num);
+    if (order) openOrderModal(order.id);
+  }
+
+  function closeOrderModal() {
+    document.getElementById('order-detail-modal').classList.add('hidden');
+  }
+
+  // --- Lógica del Modal de Recepción de Pedido ---
+  let currentReceiveOrder = null;
+
+  async function openReceiveModal(orderId) {
+    const order = rawOrdersData.find(o => String(o.id) === String(orderId));
+    if (!order) return;
+    currentReceiveOrder = order;
+
+    document.getElementById('receive-order-id').value = order.id;
+    document.getElementById('receive-modal-title').innerText = `Recepción de Pedido #${order.orderNumber}`;
+    document.getElementById('receive-modal-subtitle').innerText = `Proveedor: ${order.supplier ? order.supplier.name : 'N/A'}`;
+    document.getElementById('receive-invoiceNumber').value = `FAC-${order.orderNumber}`;
+
+    document.getElementById('receive-paymentMethod').value = 'cash';
+    toggleReceivePaymentMethod();
+    toggleReceivePaymentSource();
+
+    // Fecha de vencimiento por defecto = Hoy + 15 días
+    const expDate = new Date();
+    expDate.setDate(expDate.getDate() + 15);
+    const defaultExpStr = expDate.toISOString().split('T')[0];
+
+    // Cargar cajas chicas abiertas
+    try {
+      const resp = await fetch('/purchases/api/available-turns');
+      const data = await resp.json();
+      const turnSelect = document.getElementById('receive-turnId');
+      turnSelect.innerHTML = '';
+      if (data.success && data.turns.length > 0) {
+        data.turns.forEach(t => {
+          const opt = document.createElement('option');
+          opt.value = t.id;
+          opt.innerText = `${t.boxName} - ${t.userName} (Disp: $${parseFloat(t.balance || 0).toFixed(2)})`;
+          turnSelect.appendChild(opt);
+        });
+      } else {
+        turnSelect.innerHTML = '<option value="">No hay cajas abiertas</option>';
+      }
+    } catch (e) {}
+
+    // Llenar tabla de ítems recibidos
+    const tbody = document.getElementById('receive-items-tbody');
+    tbody.innerHTML = '';
+
+    if (order.details && order.details.length > 0) {
+      order.details.forEach(d => {
+        addReceiveItemRow({
+          productId: d.productId,
+          name: d.product ? d.product.name : 'Producto',
+          batchCode: `LOTE-${order.orderNumber}`,
+          quantity: d.quantity,
+          unitCost: parseFloat(d.unitCost),
+          salePrice: d.product ? parseFloat(d.product.salePrice || 0) : 0,
+          expirationDate: defaultExpStr
+        });
+      });
+    }
+
+    calcReceiveTotals();
+    document.getElementById('receive-order-modal').classList.remove('hidden');
+  }
+
+  function addReceiveItemRow(item) {
+    const tbody = document.getElementById('receive-items-tbody');
+    const tr = document.createElement('tr');
+    tr.className = "hover:bg-neutral-900/50";
+    const subtotal = item.quantity * item.unitCost;
+
+    tr.innerHTML = `
+      <td class="py-2.5 px-3">
+        <strong class="text-white block">${item.name}</strong>
+        <input type="hidden" class="rec-product-id" value="${item.productId}">
+      </td>
+      <td class="py-2.5 px-3">
+        <input type="text" class="rec-batch-code w-28 px-2 py-1 bg-neutral-900 border border-neutral-800 text-white rounded text-xs font-mono" value="${item.batchCode}">
+      </td>
+      <td class="py-2.5 px-3 text-center">
+        <input type="number" min="1" oninput="calcReceiveTotals()" class="rec-qty w-16 text-center px-2 py-1 bg-neutral-900 border border-neutral-800 text-white rounded text-xs font-mono font-bold" value="${item.quantity}">
+      </td>
+      <td class="py-2.5 px-3 text-center">
+        <input type="number" step="0.01" min="0" oninput="calcReceiveTotals()" class="rec-unit-cost w-20 text-center px-2 py-1 bg-neutral-900 border border-neutral-800 text-white rounded text-xs font-mono" value="${item.unitCost.toFixed(2)}">
+      </td>
+      <td class="py-2.5 px-3 text-center">
+        <input type="number" step="0.01" min="0" class="rec-sale-price w-20 text-center px-2 py-1 bg-neutral-900 border border-neutral-800 text-white rounded text-xs font-mono text-emerald-400 font-bold" value="${item.salePrice.toFixed(2)}">
+      </td>
+      <td class="py-2.5 px-3 text-center">
+        <input type="date" class="rec-exp-date px-2 py-1 bg-neutral-900 border border-neutral-800 text-white rounded text-xs" value="${item.expirationDate}">
+      </td>
+      <td class="py-2.5 px-3 text-right font-mono font-bold text-emerald-400 rec-subtotal-display">
+        $${subtotal.toFixed(2)}
+      </td>
+      <td class="py-2.5 px-2 text-center">
+        <button type="button" onclick="removeReceiveRow(this)" class="text-red-500 hover:text-red-400 font-bold text-xs cursor-pointer" title="Remover producto">✕</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  function removeReceiveRow(btn) {
+    const tr = btn.closest('tr');
+    if (tr) {
+      tr.remove();
+      calcReceiveTotals();
+    }
+  }
+
+  // --- Autocompletado para compras en caliente (Insumos extra al pedido) ---
+  const extraInput = document.getElementById('receive-extra-product-input');
+  const extraResults = document.getElementById('receive-extra-product-results');
+
+  if (extraInput) {
+    extraInput.addEventListener('input', (e) => {
+      const q = e.target.value.trim().toLowerCase();
+      if (q.length < 1) {
+        extraResults.innerHTML = '';
+        extraResults.classList.add('hidden');
+        return;
+      }
+
+      const matches = rawProductsData.filter(p => p.name.toLowerCase().includes(q) || (p.barCode && p.barCode.toLowerCase().includes(q)));
+      extraResults.innerHTML = '';
+
+      if (matches.length > 0) {
+        matches.slice(0, 8).forEach(p => {
+          const div = document.createElement('div');
+          div.className = "p-2.5 hover:bg-neutral-800 cursor-pointer text-xs flex justify-between items-center transition-colors";
+          div.innerHTML = `<strong>${p.name}</strong><span class="text-neutral-400 font-mono">PVP: $${parseFloat(p.salePrice || 0).toFixed(2)}</span>`;
+          div.onclick = () => {
+            const expDate = new Date();
+            expDate.setDate(expDate.getDate() + 15);
+            const defaultExpStr = expDate.toISOString().split('T')[0];
+            const orderNum = currentReceiveOrder ? currentReceiveOrder.orderNumber : 'EXTRA';
+
+            addReceiveItemRow({
+              productId: p.id,
+              name: p.name,
+              batchCode: `LOTE-${orderNum}`,
+              quantity: 1,
+              unitCost: parseFloat(p.costPrice || 0),
+              salePrice: parseFloat(p.salePrice || 0),
+              expirationDate: defaultExpStr
+            });
+
+            calcReceiveTotals();
+            extraInput.value = '';
+            extraResults.innerHTML = '';
+            extraResults.classList.add('hidden');
+          };
+          extraResults.appendChild(div);
+        });
+        extraResults.classList.remove('hidden');
+      } else {
+        extraResults.innerHTML = '<div class="p-2.5 text-neutral-500 text-xs text-center">Sin productos encontrados</div>';
+        extraResults.classList.remove('hidden');
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (extraInput && extraResults && !extraInput.contains(e.target) && !extraResults.contains(e.target)) {
+        extraResults.classList.add('hidden');
+      }
+    });
+  }
+
+  function closeReceiveModal() {
+    document.getElementById('receive-order-modal').classList.add('hidden');
+  }
+
+  function toggleReceivePaymentMethod() {
+    const method = document.getElementById('receive-paymentMethod').value;
+    const dueDateContainer = document.getElementById('receive-due-date-container');
+    const cashContainer = document.getElementById('receive-cash-details-container');
+    if (method === 'credit') {
+      dueDateContainer.classList.remove('hidden');
+      cashContainer.classList.add('hidden');
+      const d = new Date(); d.setDate(d.getDate() + 30);
+      document.getElementById('receive-dueDate').value = d.toISOString().split('T')[0];
+    } else {
+      dueDateContainer.classList.add('hidden');
+      cashContainer.classList.remove('hidden');
+    }
+  }
+
+  function toggleReceivePaymentSource() {
+    const source = document.querySelector('input[name="receivePaymentSource"]:checked')?.value || 'cashier';
+    const cajaSec = document.getElementById('receive-caja-section');
+    const bankSec = document.getElementById('receive-bank-section');
+    const cashierLabel = document.getElementById('receive-source-cashier-label');
+    const externalLabel = document.getElementById('receive-source-external-label');
+
+    if (source === 'cashier') {
+      cajaSec.classList.remove('hidden');
+      bankSec.classList.add('hidden');
+      cashierLabel.className = "flex items-center gap-2 px-3 py-2 bg-neutral-900 border-2 border-blue-500 rounded-xl cursor-pointer";
+      externalLabel.className = "flex items-center gap-2 px-3 py-2 bg-neutral-900 border-2 border-neutral-800 rounded-xl cursor-pointer";
+    } else {
+      cajaSec.classList.add('hidden');
+      bankSec.classList.remove('hidden');
+      externalLabel.className = "flex items-center gap-2 px-3 py-2 bg-neutral-900 border-2 border-blue-500 rounded-xl cursor-pointer";
+      cashierLabel.className = "flex items-center gap-2 px-3 py-2 bg-neutral-900 border-2 border-neutral-800 rounded-xl cursor-pointer";
+    }
+  }
+
+  function calcReceiveTotals() {
+    const rows = document.querySelectorAll('#receive-items-tbody tr');
+    let total = 0;
+    rows.forEach(tr => {
+      const qty = parseInt(tr.querySelector('.rec-qty').value, 10) || 0;
+      const cost = parseFloat(tr.querySelector('.rec-unit-cost').value) || 0;
+      const sub = qty * cost;
+      total += sub;
+      const display = tr.querySelector('.rec-subtotal-display');
+      if (display) display.innerText = `$${sub.toFixed(2)}`;
+    });
+    document.getElementById('receive-total-amount').innerText = `$${total.toFixed(2)}`;
+  }
+
+  async function submitReceiveOrder() {
+    const orderId = document.getElementById('receive-order-id').value;
+    const invoiceNumber = document.getElementById('receive-invoiceNumber').value.trim();
+    const paymentMethod = document.getElementById('receive-paymentMethod').value;
+    const dueDate = document.getElementById('receive-dueDate').value;
+    const paymentSource = document.querySelector('input[name="receivePaymentSource"]:checked')?.value || 'cashier';
+    const turnId = document.getElementById('receive-turnId').value;
+    const transactionRef = document.getElementById('receive-transactionRef').value.trim();
+
+    if (!invoiceNumber) {
+      alert('Ingrese el número de factura.');
+      return;
+    }
+
+    if (paymentMethod === 'cash' && paymentSource === 'cashier' && !turnId) {
+      alert('Seleccione una caja chica abierta.');
+      return;
+    }
+    if (paymentMethod === 'cash' && paymentSource === 'external' && !transactionRef) {
+      alert('Ingrese el número de autorización o voucher del banco.');
+      return;
+    }
+    if (paymentMethod === 'credit' && !dueDate) {
+      alert('Ingrese la fecha de vencimiento del crédito.');
+      return;
+    }
+
+    const rows = document.querySelectorAll('#receive-items-tbody tr');
+    const items = [];
+    let hasError = false;
+
+    rows.forEach(tr => {
+      const productId = tr.querySelector('.rec-product-id').value;
+      const batchCode = tr.querySelector('.rec-batch-code').value.trim();
+      const quantity = parseInt(tr.querySelector('.rec-qty').value, 10);
+      const unitCost = parseFloat(tr.querySelector('.rec-unit-cost').value);
+      const salePrice = parseFloat(tr.querySelector('.rec-sale-price').value);
+      const expirationDate = tr.querySelector('.rec-exp-date').value;
+
+      if (isNaN(quantity) || quantity <= 0 || isNaN(unitCost) || unitCost < 0 || !batchCode) {
+        hasError = true;
+      }
+
+      items.push({
+        productId,
+        batchCode,
+        quantity,
+        unitCost,
+        salePrice,
+        expirationDate
+      });
+    });
+
+    if (hasError || items.length === 0) {
+      alert('Verifique que las cantidades, costos y lotes de los productos sean válidos.');
+      return;
+    }
+
+    const btnSubmit = document.getElementById('btn-submit-receive');
+    btnSubmit.disabled = true;
+    btnSubmit.innerText = 'PROCESANDO...';
+
+    try {
+      const resp = await fetch(`/purchases/orders/${orderId}/receive`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          invoiceNumber,
+          paymentMethod,
+          dueDate,
+          paymentSource,
+          turnId,
+          transactionRef,
+          items
+        })
+      });
+
+      const data = await resp.json();
+      if (data.success) {
+        alert(data.message);
+        window.location.reload();
+      } else {
+        alert(data.message || 'Error al recibir pedido.');
+        btnSubmit.disabled = false;
+        btnSubmit.innerText = 'PROCESAR E INGRESAR AL INVENTARIO';
+      }
+    } catch (e) {
+      alert('Error de conexión con el servidor.');
+      btnSubmit.disabled = false;
+      btnSubmit.innerText = 'PROCESAR E INGRESAR AL INVENTARIO';
+    }
+  }
+
+  // Preset Range buttons helper
+  function setPresetRange(preset) {
+    const startInput = document.getElementById('filter-startDate');
+    const endInput = document.getElementById('filter-endDate');
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth(); // 0-indexed
+
+    const pad = (n) => String(n).padStart(2, '0');
+
+    if (preset === 'this_month') {
+      const first = new Date(year, month, 1);
+      const last = new Date(year, month + 1, 0);
+      startInput.value = `${year}-${pad(month + 1)}-01`;
+      endInput.value = `${year}-${pad(month + 1)}-${pad(last.getDate())}`;
+    } else if (preset === 'last_month') {
+      const first = new Date(year, month - 1, 1);
+      const last = new Date(year, month, 0);
+      const prevM = first.getMonth();
+      const prevY = first.getFullYear();
+      startInput.value = `${prevY}-${pad(prevM + 1)}-01`;
+      endInput.value = `${prevY}-${pad(prevM + 1)}-${pad(last.getDate())}`;
+    } else if (preset === 'last_30_days') {
+      const past30 = new Date();
+      past30.setDate(now.getDate() - 30);
+      startInput.value = past30.toISOString().split('T')[0];
+      endInput.value = now.toISOString().split('T')[0];
+    } else if (preset === 'this_year') {
+      startInput.value = `${year}-01-01`;
+      endInput.value = `${year}-12-31`;
+    }
+
+    document.getElementById('orders-filter-form').submit();
+  }
+
+  // Render Purchases and Orders Chart
+  function initPurchasesOrdersChart() {
+    const canvas = document.getElementById('purchasesOrdersChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const chartRawData = <%- JSON.stringify(chartData || { labels: [], purchases: [], orders: [] }) %>;
+    
+    // Format labels for chart X-axis
+    const formattedLabels = chartRawData.labels.map(d => {
+      const parts = d.split('-');
+      if (parts.length === 3) return `${parts[2]}/${parts[1]}`;
+      return d;
+    });
+
+    const isLightMode = document.documentElement.classList.contains('light-mode');
+    const textColor = isLightMode ? '#4b5563' : '#9ca3af';
+    const gridColor = isLightMode ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)';
+
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: formattedLabels,
+        datasets: [
+          {
+            label: 'Compras Facturadas ($)',
+            data: chartRawData.purchases,
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.15)',
+            borderWidth: 2.5,
+            tension: 0.35,
+            fill: true,
+            pointBackgroundColor: '#3b82f6',
+            pointRadius: 3,
+            pointHoverRadius: 6
+          },
+          {
+            label: 'Pedidos Registrados ($)',
+            data: chartRawData.orders,
+            borderColor: '#f59e0b',
+            backgroundColor: 'rgba(245, 158, 11, 0.15)',
+            borderWidth: 2.5,
+            tension: 0.35,
+            fill: true,
+            pointBackgroundColor: '#f59e0b',
+            pointRadius: 3,
+            pointHoverRadius: 6
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          mode: 'index',
+          intersect: false
+        },
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            backgroundColor: isLightMode ? '#ffffff' : '#171717',
+            titleColor: isLightMode ? '#111827' : '#ffffff',
+            bodyColor: isLightMode ? '#374151' : '#e5e7eb',
+            borderColor: isLightMode ? '#e5e7eb' : '#262626',
+            borderWidth: 1,
+            padding: 10,
+            callbacks: {
+              label: function(context) {
+                let label = context.dataset.label || '';
+                if (label) {
+                  label += ': ';
+                }
+                if (context.parsed.y !== null) {
+                  label += '$' + context.parsed.y.toLocaleString('es-SV', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                }
+                return label;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: {
+              color: gridColor
+            },
+            ticks: {
+              color: textColor,
+              font: { size: 10 }
+            }
+          },
+          y: {
+            beginAtZero: true,
+            grid: {
+              color: gridColor
+            },
+            ticks: {
+              color: textColor,
+              font: { size: 10 },
+              callback: function(value) {
+                return '$' + value.toLocaleString('es-SV');
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  window.onload = function() {
+    fetchCalendarEvents();
+    initPurchasesOrdersChart();
+  };
+</script>
+
+<%- include('../../partials/foot') %>
