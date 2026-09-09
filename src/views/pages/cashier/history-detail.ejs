@@ -4,11 +4,11 @@
   <!-- Nav Bar -->
   <nav class="bg-neutral-900 border-b border-neutral-800 px-6 py-4 flex items-center justify-between shadow-md">
     <div class="flex items-center gap-3">
-      <a href="/cashier/history" class="text-neutral-400 hover:text-white transition-colors">
+      <button type="button" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href = '/cashier/history'; }" class="text-neutral-400 hover:text-white transition-colors cursor-pointer" title="Volver atrás">
         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
         </svg>
-      </a>
+      </button>
       <div>
         <span class="text-xl font-bold text-white tracking-wide">Arqueo Detallado: Turno #<%= turn.id %></span>
         <span class="text-xs block text-neutral-400 font-medium">
@@ -37,6 +37,59 @@
         </span>
       </div>
     </div>
+
+<%
+  const openingAmt = parseFloat(turn.openingAmount) || 0;
+  
+  // Construct chronological timeline of events
+  const timelineEvents = [];
+
+  // Movements
+  movements.forEach(m => {
+    timelineEvents.push({
+      id: m.id,
+      type: m.type, // 'deposit' or 'withdrawal'
+      amount: parseFloat(m.amount) || 0,
+      createdAt: new Date(m.createdAt),
+      reason: m.reason,
+      isMovement: true
+    });
+  });
+
+  // Cash sales
+  cashSales.forEach(s => {
+    const cashAmt = parseFloat(s.amountCash);
+    const amt = (cashAmt === 0 && s.paymentMethod === 'cash') ? parseFloat(s.totalAmount) : (cashAmt || parseFloat(s.totalAmount) || 0);
+    timelineEvents.push({
+      id: s.id,
+      type: 'sale',
+      amount: amt,
+      createdAt: new Date(s.createdAt),
+      reason: `Venta Ticket #${s.ticketNumber}`,
+      isMovement: false
+    });
+  });
+
+  // Sort ascending by time
+  timelineEvents.sort((a, b) => a.createdAt - b.createdAt);
+
+  // Compute running balance after each event
+  let currentRunning = openingAmt;
+  timelineEvents.forEach(evt => {
+    if (evt.type === 'deposit' || evt.type === 'sale') {
+      currentRunning += evt.amount;
+    } else if (evt.type === 'withdrawal') {
+      currentRunning -= evt.amount;
+    }
+    evt.balanceAfter = currentRunning;
+  });
+
+  // Map balanceAfter to movement id
+  const movementBalanceMap = new Map();
+  timelineEvents.filter(e => e.isMovement).forEach(e => {
+    movementBalanceMap.set(e.id, e.balanceAfter);
+  });
+%>
 
     <!-- Cards Summary -->
     <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
@@ -116,19 +169,26 @@
                   <th class="py-2.5 px-3">Tipo</th>
                   <th class="py-2.5 px-3">Monto</th>
                   <th class="py-2.5 px-3">Concepto</th>
+                  <th class="py-2.5 px-3 text-right">Saldo Después</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-neutral-800">
                 <% movements.forEach(m => { %>
-                <tr class="hover:bg-neutral-950/40">
-                  <td class="py-3 px-3 text-xs text-neutral-400"><%= new Date(m.createdAt).toLocaleTimeString('es-SV') %></td>
+                <% const balAfter = movementBalanceMap.get(m.id) !== undefined ? movementBalanceMap.get(m.id) : 0; %>
+                <tr class="hover:bg-neutral-950/40 transition-colors">
+                  <td class="py-3 px-3 text-xs text-neutral-400 font-mono"><%= new Date(m.createdAt).toLocaleTimeString('es-SV') %></td>
                   <td class="py-3 px-3">
                     <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase <%= m.type === 'deposit' ? 'bg-blue-950 text-blue-400 border border-blue-900/60' : 'bg-red-950 text-red-400 border border-red-900/60' %>">
                       <%= m.type === 'deposit' ? 'Reintegro' : 'Retiro' %>
                     </span>
                   </td>
-                  <td class="py-3 px-3 font-semibold text-white">$<%= parseFloat(m.amount).toFixed(2) %></td>
-                  <td class="py-3 px-3 text-neutral-400"><%= m.reason %></td>
+                  <td class="py-3 px-3 font-semibold <%= m.type === 'deposit' ? 'text-blue-400' : 'text-red-400' %> font-mono">
+                    <%= m.type === 'deposit' ? '+' : '-' %>$<%= parseFloat(m.amount).toFixed(2) %>
+                  </td>
+                  <td class="py-3 px-3 text-neutral-300"><%= m.reason %></td>
+                  <td class="py-3 px-3 text-right font-mono font-bold text-emerald-400">
+                    $<%= balAfter.toFixed(2) %>
+                  </td>
                 </tr>
                 <% }) %>
               </tbody>
@@ -153,7 +213,7 @@
                 <span class="text-xs font-bold text-white block"><%= s.ticketNumber %></span>
                 <span class="text-[10px] text-neutral-500"><%= new Date(s.createdAt).toLocaleTimeString('es-SV') %></span>
               </div>
-              <span class="text-sm font-semibold text-emerald-400">$<%= parseFloat(s.totalAmount).toFixed(2) %></span>
+              <span class="text-sm font-semibold text-emerald-400">+$<%= parseFloat(s.totalAmount).toFixed(2) %></span>
             </div>
             <% }) %>
           </div>

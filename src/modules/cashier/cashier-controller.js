@@ -400,8 +400,28 @@ const handleForceClose = async (req, res, next) => {
 
 const renderHistory = async (req, res, next) => {
   try {
+    const { Op } = require('sequelize');
     const { User, Branch } = require('../../core/models');
     const whereClause = req.user.roleId === 'admin' ? {} : { branchId: req.user.branchId };
+
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const lastDayOfMonth = new Date(year, now.getMonth() + 1, 0).getDate();
+
+    const defaultStart = `${year}-${month}-01`;
+    const defaultEnd = `${year}-${month}-${String(lastDayOfMonth).padStart(2, '0')}`;
+
+    const startDate = req.query.startDate !== undefined ? req.query.startDate.trim() : defaultStart;
+    const endDate = req.query.endDate !== undefined ? req.query.endDate.trim() : defaultEnd;
+    const showAll = req.query.all === 'true';
+
+    if (!showAll && startDate && endDate) {
+      whereClause.openedAt = {
+        [Op.between]: [new Date(`${startDate}T00:00:00`), new Date(`${endDate}T23:59:59.999`)]
+      };
+    }
+
     const turns = await CashierTurn.findAll({
       where: whereClause,
       include: [
@@ -411,9 +431,24 @@ const renderHistory = async (req, res, next) => {
       order: [['openedAt', 'DESC']]
     });
 
+    const closedTurns = turns.filter(t => t.status === 'closed');
+    const openTurns = turns.filter(t => t.status === 'open');
+    const totalDeclared = closedTurns.reduce((sum, t) => sum + parseFloat(t.declaredAmount || 0), 0);
+    const totalOpening = turns.reduce((sum, t) => sum + parseFloat(t.openingAmount || 0), 0);
+
     return res.render('pages/cashier/history', {
       title: 'Historial de Cortes y Arqueos',
-      turns
+      turns,
+      startDate: showAll ? '' : startDate,
+      endDate: showAll ? '' : endDate,
+      showAll,
+      stats: {
+        totalTurns: turns.length,
+        closedTurns: closedTurns.length,
+        openTurns: openTurns.length,
+        totalDeclared,
+        totalOpening
+      }
     });
   } catch (error) {
     return next(error);

@@ -4,11 +4,11 @@
   <!-- Nav Bar -->
   <nav class="bg-neutral-900 border-b border-neutral-800 px-6 py-4 flex items-center justify-between shadow-md">
     <div class="flex items-center gap-3">
-      <a href="/inventory/audits" class="text-neutral-400 hover:text-white transition-colors">
+      <button type="button" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href = '/inventory/audits'; }" class="text-neutral-400 hover:text-white transition-colors cursor-pointer" title="Volver atrás">
         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
         </svg>
-      </a>
+      </button>
       <div>
         <span class="text-xl font-bold text-white tracking-wide">Hoja de Conteo</span>
         <span class="text-xs block text-neutral-400 font-medium">Sucursal: <strong class="text-blue-400"><%= audit.branch ? audit.branch.name : '' %></strong> | Sector: <strong class="text-emerald-400"><%= audit.sector %></strong></span>

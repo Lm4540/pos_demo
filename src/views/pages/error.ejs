@@ -87,7 +87,7 @@
       <a href="/dashboard" class="py-2.5 px-6 border border-transparent text-sm font-semibold rounded-xl text-white bg-blue-600 hover:bg-blue-500 transition-all cursor-pointer shadow-md shadow-blue-500/10 text-center">
         Regresar al Dashboard
       </a>
-      <button onclick="window.history.back()" class="py-2.5 px-6 border border-neutral-800 hover:bg-neutral-800 text-sm font-semibold rounded-xl text-neutral-300 transition-all cursor-pointer text-center">
+      <button onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href = '/dashboard'; }" class="py-2.5 px-6 border border-neutral-800 hover:bg-neutral-800 text-sm font-semibold rounded-xl text-neutral-300 transition-all cursor-pointer text-center">
         Volver Atrás
       </button>
     </div>

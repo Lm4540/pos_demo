@@ -1,1042 +1,625 @@
-<%- include('../../partials/head', { title: title || 'Pedidos a Proveedores' }) %>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<%- include('../../partials/head', { title: 'Calendario de Órdenes de Compra' }) %>
 
 <div class="min-h-screen bg-neutral-950 flex flex-col">
   <!-- Nav Bar -->
   <nav class="bg-neutral-900 border-b border-neutral-800 px-6 py-4 flex items-center justify-between shadow-md">
     <div class="flex items-center gap-3">
-      <a href="/purchases" class="text-neutral-400 hover:text-white transition-colors">
+      <button type="button" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href = '/dashboard'; }" class="text-neutral-400 hover:text-white transition-colors cursor-pointer" title="Volver atrás">
         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
         </svg>
-      </a>
+      </button>
       <div>
-        <span class="text-xl font-bold text-white tracking-wide">Pedidos y Calendario de Entregas</span>
-        <span class="text-xs block text-neutral-400 font-medium">Control de órdenes a proveedores, analítica de compras e ingreso programado</span>
+        <span class="text-xl font-bold text-white tracking-wide">Calendario de Órdenes de Compra</span>
+        <span class="text-xs block text-neutral-400 font-medium">Anotaciones de pedidos a proveedores y fechas de entrega</span>
       </div>
     </div>
 
     <div class="flex items-center gap-3">
-      <a href="/purchases/orders/new" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-md shadow-blue-500/10 flex items-center gap-2">
+      <button onclick="openNewOrderModal()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-md shadow-blue-500/10 flex items-center gap-2 cursor-pointer">
         <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
         </svg>
-        <span>Registrar Nuevo Pedido</span>
-      </a>
+        <span>Anotar Pedido / Orden</span>
+      </button>
     </div>
   </nav>
 
   <main class="flex-grow p-6 max-w-7xl w-full mx-auto space-y-6">
     
-    <!-- Filtros de Rango de Fechas -->
-    <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 shadow-sm space-y-4">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-            <svg class="h-4 w-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-            </svg>
-            <span>Filtro de Periodo & Inversión</span>
-          </h2>
-          <p class="text-xs text-neutral-400 mt-0.5">Seleccione el rango de fechas para actualizar los totales y el gráfico de compras y pedidos.</p>
-        </div>
-
-        <!-- Quick Presets -->
-        <div class="flex flex-wrap items-center gap-1.5 text-xs">
-          <button type="button" onclick="setPresetRange('this_month')" class="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-750 text-neutral-300 rounded-xl font-semibold cursor-pointer transition-colors border border-neutral-750">Este Mes</button>
-          <button type="button" onclick="setPresetRange('last_month')" class="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-750 text-neutral-300 rounded-xl font-semibold cursor-pointer transition-colors border border-neutral-750">Mes Anterior</button>
-          <button type="button" onclick="setPresetRange('last_30_days')" class="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-750 text-neutral-300 rounded-xl font-semibold cursor-pointer transition-colors border border-neutral-750">Últimos 30 Días</button>
-          <button type="button" onclick="setPresetRange('this_year')" class="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-750 text-neutral-300 rounded-xl font-semibold cursor-pointer transition-colors border border-neutral-750">Este Año</button>
-        </div>
+    <!-- KPI Summary Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <!-- Total Anotaciones -->
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+        <span class="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Total de Pedidos</span>
+        <span class="text-2xl font-black text-white mt-1"><%= stats.totalCount %></span>
+        <span class="text-[10px] text-neutral-500 mt-1">Anotaciones registradas</span>
       </div>
 
-      <form id="orders-filter-form" method="GET" action="/purchases/orders" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 pt-2 border-t border-neutral-800">
-        <div class="md:col-span-2">
-          <label class="block text-[10px] font-bold text-neutral-400 uppercase mb-1">Fecha Desde</label>
-          <input type="date" id="filter-startDate" name="startDate" value="<%= startDate %>" class="w-full px-3.5 py-2.5 bg-neutral-950 border border-neutral-800 text-white rounded-xl text-xs focus:ring-2 focus:ring-blue-500">
+      <!-- En Espera -->
+      <div class="bg-neutral-900 border border-amber-900/50 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold text-amber-400 uppercase tracking-wider">En Espera</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-950 text-amber-300 border border-amber-800/60"><%= stats.pendingCount %></span>
         </div>
-        <div class="md:col-span-2">
-          <label class="block text-[10px] font-bold text-neutral-400 uppercase mb-1">Fecha Hasta</label>
-          <input type="date" id="filter-endDate" name="endDate" value="<%= endDate %>" class="w-full px-3.5 py-2.5 bg-neutral-950 border border-neutral-800 text-white rounded-xl text-xs focus:ring-2 focus:ring-blue-500">
+        <span class="text-2xl font-black text-amber-400 mt-1 font-mono">$<%= stats.pendingAmount.toFixed(2) %></span>
+        <span class="text-[10px] text-neutral-500 mt-1">Por recibir de proveedores</span>
+      </div>
+
+      <!-- Recibidos -->
+      <div class="bg-neutral-900 border border-emerald-900/50 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">Recibidos</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-800/60"><%= stats.receivedCount %></span>
         </div>
-        <div class="flex items-end">
-          <button type="submit" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-blue-500/10 flex items-center justify-center gap-1.5 cursor-pointer">
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <span>Filtrar</span>
+        <span class="text-2xl font-black text-emerald-400 mt-1 font-mono">$<%= stats.receivedAmount.toFixed(2) %></span>
+        <span class="text-[10px] text-neutral-500 mt-1">Pedidos entregados</span>
+      </div>
+
+      <!-- Monto Total -->
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+        <span class="text-[11px] font-bold text-indigo-400 uppercase tracking-wider">Monto Total Estimado</span>
+        <span class="text-2xl font-black text-white mt-1 font-mono">$<%= stats.totalAmount.toFixed(2) %></span>
+        <span class="text-[10px] text-neutral-500 mt-1">Suma global de órdenes</span>
+      </div>
+    </div>
+
+    <!-- Navigation View Switcher (Calendario vs Lista) -->
+    <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+      <div class="flex items-center gap-2">
+        <button onclick="switchView('calendar')" id="btn-view-calendar" class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 bg-blue-600 text-white cursor-pointer shadow-md shadow-blue-500/10">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <span>Vista Calendario</span>
+        </button>
+        <button onclick="switchView('list')" id="btn-view-list" class="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white cursor-pointer">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+          </svg>
+          <span>Vista Lista (<%= orders.length %>)</span>
+        </button>
+      </div>
+
+      <!-- Quick Legend -->
+      <div class="hidden sm:flex items-center gap-4 text-xs">
+        <div class="flex items-center gap-1.5">
+          <span class="w-3 h-3 rounded-full bg-amber-500 inline-block shadow-sm shadow-amber-500/30"></span>
+          <span class="text-neutral-400">En espera</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block shadow-sm shadow-emerald-500/30"></span>
+          <span class="text-neutral-400">Recibido</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 1: Interactive Calendar -->
+    <div id="calendar-container" class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm space-y-4">
+      <!-- Calendar Header Controls -->
+      <div class="flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-neutral-800 pb-4">
+        <div class="flex items-center gap-3">
+          <button onclick="prevMonth()" class="p-2.5 bg-neutral-950 border border-neutral-800 hover:bg-neutral-800 text-white rounded-xl transition-all cursor-pointer">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <h2 id="calendar-title" class="text-lg font-black text-white min-w-[200px] text-center tracking-wide uppercase font-mono"></h2>
+          <button onclick="nextMonth()" class="p-2.5 bg-neutral-950 border border-neutral-800 hover:bg-neutral-800 text-white rounded-xl transition-all cursor-pointer">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </button>
+          <button onclick="goToCurrentMonth()" class="px-3.5 py-1.5 bg-neutral-950 border border-neutral-800 hover:bg-neutral-800 text-neutral-300 text-xs font-bold rounded-xl transition-all cursor-pointer ml-1">
+            Hoy
           </button>
         </div>
-      </form>
-    </div>
 
-    <!-- Tarjetas KPI de Resumen Financiero -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <!-- Gran Total Invertido -->
-      <div class="bg-gradient-to-br from-neutral-900 to-indigo-950/40 border-2 border-indigo-500/60 rounded-2xl p-5 shadow-lg relative overflow-hidden">
-        <div class="flex items-center justify-between">
-          <span class="text-[10px] font-extrabold text-indigo-400 uppercase tracking-widest">Gran Total Invertido</span>
-          <div class="h-9 w-9 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center border border-indigo-500/30">
-            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-        </div>
-        <div class="mt-3">
-          <span class="text-2xl font-black text-white font-mono tracking-tight">$<%= stats ? stats.grandTotalInvested.toLocaleString('es-SV', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00' %></span>
-          <p class="text-[10px] text-neutral-400 mt-1">Compras facturadas + pedidos pendientes en el rango</p>
+        <div class="text-xs text-neutral-400 flex items-center gap-2">
+          <span>💡 Haga clic en cualquier fecha para anotar un pedido rápidamente.</span>
         </div>
       </div>
 
-      <!-- Compras Facturadas / Recibidas -->
-      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 shadow-sm">
-        <div class="flex items-center justify-between">
-          <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Compras Facturadas</span>
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-950 text-blue-400 border border-blue-900"><%= stats ? stats.purchasesCount : 0 %> compras</span>
-        </div>
-        <div class="mt-3">
-          <span class="text-2xl font-bold text-white font-mono">$<%= stats ? stats.totalPurchasesAmount.toLocaleString('es-SV', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00' %></span>
-          <p class="text-[10px] text-neutral-400 mt-1">Ingresadas directamente al inventario</p>
-        </div>
+      <!-- Days of Week Header -->
+      <div class="grid grid-cols-7 gap-1.5 text-center font-bold text-xs uppercase tracking-wider text-neutral-500 py-1">
+        <div>Dom</div>
+        <div>Lun</div>
+        <div>Mar</div>
+        <div>Mié</div>
+        <div>Jue</div>
+        <div>Vie</div>
+        <div>Sáb</div>
       </div>
 
-      <!-- Pedidos Pendientes -->
-      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 shadow-sm">
-        <div class="flex items-center justify-between">
-          <span class="text-[10px] font-bold text-amber-400 uppercase tracking-widest">Pedidos Pendientes</span>
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-950 text-amber-400 border border-amber-900"><%= stats ? stats.pendingCount : 0 %> pendientes</span>
-        </div>
-        <div class="mt-3">
-          <span class="text-2xl font-bold text-amber-400 font-mono">$<%= stats ? stats.pendingOrdersAmount.toLocaleString('es-SV', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00' %></span>
-          <p class="text-[10px] text-neutral-400 mt-1">Órdenes pendientes por recibir</p>
-        </div>
-      </div>
-
-      <!-- Total Pedidos Registrados -->
-      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 shadow-sm">
-        <div class="flex items-center justify-between">
-          <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Total en Órdenes</span>
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-900"><%= stats ? stats.ordersCount : 0 %> órdenes</span>
-        </div>
-        <div class="mt-3">
-          <span class="text-2xl font-bold text-emerald-400 font-mono">$<%= stats ? stats.totalOrdersAmount.toLocaleString('es-SV', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00' %></span>
-          <p class="text-[10px] text-neutral-400 mt-1">Monto total ordenado en el periodo</p>
-        </div>
+      <!-- Calendar Month Days Grid -->
+      <div id="calendar-grid" class="grid grid-cols-7 gap-1.5 min-h-[500px]">
+        <!-- Rendered by JavaScript -->
       </div>
     </div>
 
-    <!-- Gráfico de Compras y Pedidos del Periodo -->
-    <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm space-y-4">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-neutral-800 pb-3">
-        <div>
-          <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-            <svg class="h-4.5 w-4.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
-            </svg>
-            <span>Gráfico de Compras y Pedidos del Periodo</span>
-          </h3>
-          <span class="text-xs text-neutral-400">Comparativa de montos ($) entre facturas de compras ejecutadas y pedidos registrados</span>
+    <!-- VIEW 2: List View -->
+    <div id="list-container" class="hidden bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm space-y-4">
+      <div class="flex flex-col sm:flex-row justify-between items-center gap-3">
+        <div class="relative w-full sm:w-80">
+          <input type="text" id="filter-search" oninput="filterOrdersList()" placeholder="Buscar por proveedor o notas..." class="w-full pl-9 pr-4 py-2 bg-neutral-950 border border-neutral-800 text-white rounded-xl text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none">
+          <svg class="h-4 w-4 text-neutral-500 absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
         </div>
-        <div class="flex items-center gap-4 text-xs font-semibold">
-          <div class="flex items-center gap-1.5">
-            <span class="w-3 h-3 rounded-full bg-blue-500 inline-block"></span>
-            <span class="text-neutral-300">Compras Facturadas ($)</span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <span class="w-3 h-3 rounded-full bg-amber-500 inline-block"></span>
-            <span class="text-neutral-300">Pedidos a Proveedores ($)</span>
-          </div>
+
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <select id="filter-status" onchange="filterOrdersList()" class="px-3 py-2 bg-neutral-950 border border-neutral-800 text-white rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="all">Todos los estados</option>
+            <option value="pending">En espera</option>
+            <option value="received">Recibido</option>
+          </select>
         </div>
       </div>
-      <div class="relative w-full h-72">
-        <canvas id="purchasesOrdersChart"></canvas>
+
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-neutral-800 text-left text-sm text-neutral-300">
+          <thead>
+            <tr class="text-neutral-500 font-semibold uppercase tracking-wider text-xs">
+              <th class="py-3 px-4">Proveedor</th>
+              <th class="py-3 px-4">Fecha Compra</th>
+              <th class="py-3 px-4">Fecha Recepción</th>
+              <th class="py-3 px-4">Estado</th>
+              <th class="py-3 px-4 text-right">Monto ($)</th>
+              <th class="py-3 px-4 text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="orders-table-body" class="divide-y divide-neutral-800">
+            <% if (orders.length === 0) { %>
+            <tr>
+              <td colspan="6" class="py-12 text-center text-neutral-500 text-xs">No hay anotaciones de órdenes registradas aún.</td>
+            </tr>
+            <% } else { %>
+            <% orders.forEach(o => { %>
+            <% const name = o.supplierName || (o.supplier ? o.supplier.name : 'Sin nombre'); %>
+            <tr class="hover:bg-neutral-950/40 transition-colors order-row" data-name="<%= name.toLowerCase() %>" data-notes="<%= (o.notes || '').toLowerCase() %>" data-status="<%= o.status %>">
+              <td class="py-3.5 px-4 font-bold text-white">
+                <span class="block"><%= name %></span>
+                <% if (o.notes) { %>
+                <span class="text-[11px] text-neutral-500 font-normal block mt-0.5"><%= o.notes %></span>
+                <% } %>
+              </td>
+              <td class="py-3.5 px-4 font-mono text-xs text-neutral-300"><%= o.orderDate %></td>
+              <td class="py-3.5 px-4 font-mono text-xs text-neutral-300">
+                <span class="font-bold <%= o.status === 'received' ? 'text-emerald-400' : 'text-amber-400' %>"><%= o.expectedDeliveryDate %></span>
+              </td>
+              <td class="py-3.5 px-4">
+                <button onclick="toggleOrderStatus(<%= o.id %>)" class="cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold uppercase transition-all <%= o.status === 'received' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800/60 hover:bg-emerald-900/60' : 'bg-amber-950 text-amber-400 border border-amber-800/60 hover:bg-amber-900/60' %>">
+                  <span><%= o.status === 'received' ? '✓ Recibido' : '⏳ En espera' %></span>
+                </button>
+              </td>
+              <td class="py-3.5 px-4 text-right font-mono font-bold text-white text-sm">
+                $<%= parseFloat(o.totalAmount || 0).toFixed(2) %>
+              </td>
+              <td class="py-3.5 px-4 text-right space-x-2">
+                <button onclick="openEditOrderModal(<%= JSON.stringify(o) %>)" class="text-blue-400 hover:text-blue-300 text-xs font-semibold cursor-pointer">
+                  Editar
+                </button>
+                <button onclick="confirmDeleteOrder(<%= o.id %>)" class="text-red-400 hover:text-red-300 text-xs font-semibold cursor-pointer">
+                  Eliminar
+                </button>
+              </td>
+            </tr>
+            <% }) %>
+            <% } %>
+          </tbody>
+        </table>
       </div>
-    </div>
-    
-    <!-- Navigation Tabs -->
-    <div class="flex border-b border-neutral-800">
-      <button onclick="switchOrdersTab('calendar')" id="tab-calendar-btn" class="px-6 py-3 text-sm font-bold border-b-2 border-blue-500 text-blue-400 transition-all cursor-pointer flex items-center gap-2">
-        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
-        <span>Calendario Interactivo</span>
-      </button>
-      <button onclick="switchOrdersTab('list')" id="tab-list-btn" class="px-6 py-3 text-sm font-bold border-b-2 border-transparent text-neutral-400 hover:text-white transition-all cursor-pointer flex items-center gap-2">
-        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-        </svg>
-        <span>Listado de Pedidos (<%= orders.length %>)</span>
-      </button>
-    </div>
-
-    <!-- Tab 1: Interactive Calendar View -->
-    <div id="view-calendar" class="space-y-4">
-      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm">
-        <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
-          <div class="flex items-center gap-3">
-            <button onclick="changeMonth(-1)" class="p-2 bg-neutral-800 hover:bg-neutral-750 text-white rounded-xl cursor-pointer">
-              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-            </button>
-            <h2 id="calendar-month-year" class="text-lg font-extrabold text-white min-w-[180px] text-center uppercase tracking-wide"></h2>
-            <button onclick="changeMonth(1)" class="p-2 bg-neutral-800 hover:bg-neutral-750 text-white rounded-xl cursor-pointer">
-              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-            </button>
-            <button onclick="goToToday()" class="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-750 text-neutral-300 text-xs font-bold rounded-xl cursor-pointer ml-2">Hoy</button>
-          </div>
-
-          <!-- Calendar Legend -->
-          <div class="flex items-center gap-4 text-xs">
-            <div class="flex items-center gap-1.5">
-              <span class="w-3 h-3 rounded-full bg-blue-500 inline-block"></span>
-              <span class="text-neutral-400">Fecha de Compra</span>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <span class="w-3 h-3 rounded-full bg-amber-500 inline-block"></span>
-              <span class="text-neutral-400">Entrega Pendiente</span>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
-              <span class="text-neutral-400">Entrega Recibida</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Calendar Grid -->
-        <div class="grid grid-cols-7 gap-px bg-neutral-800 border border-neutral-800 rounded-xl overflow-hidden text-xs">
-          <!-- Weekday Headers -->
-          <div class="bg-neutral-950 p-2.5 text-center font-bold text-neutral-400">DOM</div>
-          <div class="bg-neutral-950 p-2.5 text-center font-bold text-neutral-400">LUN</div>
-          <div class="bg-neutral-950 p-2.5 text-center font-bold text-neutral-400">MAR</div>
-          <div class="bg-neutral-950 p-2.5 text-center font-bold text-neutral-400">MIÉ</div>
-          <div class="bg-neutral-950 p-2.5 text-center font-bold text-neutral-400">JUE</div>
-          <div class="bg-neutral-950 p-2.5 text-center font-bold text-neutral-400">VIE</div>
-          <div class="bg-neutral-950 p-2.5 text-center font-bold text-neutral-400">SÁB</div>
-          
-          <!-- Calendar Days -->
-          <div id="calendar-days-container" class="contents"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Tab 2: Orders List View -->
-    <div id="view-list" class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm hidden">
-      <h2 class="text-lg font-bold text-white mb-4">Registro Histórico de Pedidos</h2>
-
-      <% if (orders.length === 0) { %>
-        <p class="text-sm text-neutral-500 py-8 text-center">No se han registrado pedidos a proveedores.</p>
-      <% } else { %>
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-neutral-800 text-left text-sm text-neutral-300">
-            <thead>
-              <tr class="text-neutral-500 font-semibold uppercase tracking-wider text-xs">
-                <th class="py-3 px-4">Pedido No.</th>
-                <th class="py-3 px-4">Proveedor</th>
-                <th class="py-3 px-4">Sucursal</th>
-                <th class="py-3 px-4">Fecha Compra</th>
-                <th class="py-3 px-4">Fecha Llegada</th>
-                <th class="py-3 px-4">Monto Total</th>
-                <th class="py-3 px-4 text-center">Estado</th>
-                <th class="py-3 px-4 text-right">Acciones</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-neutral-800">
-              <% orders.forEach(o => { %>
-                <tr class="hover:bg-neutral-950/40 transition-colors">
-                  <td class="py-4 px-4 font-mono font-bold text-blue-400"><%= o.orderNumber %></td>
-                  <td class="py-4 px-4 font-bold text-white"><%= o.supplier ? o.supplier.name : 'N/A' %></td>
-                  <td class="py-4 px-4 text-neutral-400"><%= o.branch ? o.branch.name : 'N/A' %></td>
-                  <td class="py-4 px-4 font-mono text-xs text-neutral-300"><%= o.orderDate %></td>
-                  <td class="py-4 px-4 font-mono text-xs text-neutral-300"><%= o.expectedDeliveryDate %></td>
-                  <td class="py-4 px-4 font-mono font-bold text-emerald-400">$<%= parseFloat(o.totalAmount).toFixed(2) %></td>
-                  <td class="py-4 px-4 text-center">
-                    <% if (o.status === 'received') { %>
-                      <% if (o.purchase) { %>
-                        <a href="/purchases/<%= o.purchase.id %>" class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-emerald-950 text-emerald-400 border border-emerald-900 hover:bg-emerald-900 transition-colors inline-flex items-center gap-1" title="Ver Factura #<%= o.purchase.invoiceNumber %>">
-                          <span>Recibido</span>
-                          <span class="text-emerald-300 font-mono">(<%= o.purchase.invoiceNumber %>)</span>
-                        </a>
-                      <% } else { %>
-                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-emerald-950 text-emerald-400 border border-emerald-900">Recibido</span>
-                      <% } %>
-                    <% } else if (o.status === 'pending') { %>
-                      <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-amber-950 text-amber-400 border border-amber-900">Pendiente</span>
-                    <% } else { %>
-                      <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-neutral-800 text-neutral-500 border border-neutral-700">Cancelado</span>
-                    <% } %>
-                  </td>
-                  <td class="py-4 px-4 text-right space-x-2">
-                    <button type="button" onclick="openOrderModal('<%= o.id %>')" class="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-750 text-white text-xs font-semibold rounded-lg cursor-pointer">Detalles</button>
-                    <% if (o.status === 'pending') { %>
-                      <button type="button" onclick="openReceiveModal('<%= o.id %>')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg cursor-pointer transition-all shadow-md shadow-emerald-600/10">Marcar Recibido</button>
-                    <% } %>
-                  </td>
-                </tr>
-              <% }) %>
-            </tbody>
-          </table>
-        </div>
-      <% } %>
     </div>
   </main>
 </div>
 
-<!-- Modal para ver detalle de Pedido -->
-<div id="order-detail-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-  <div class="bg-neutral-900 border border-neutral-800 rounded-2xl max-w-2xl w-full overflow-hidden shadow-2xl p-6 space-y-4">
-    <div class="flex justify-between items-center border-b border-neutral-800 pb-3">
+<!-- ================= MODAL: NUEVA ANOTACIÓN DE COMPRA ================= -->
+<div id="modal-order" class="fixed inset-0 bg-neutral-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50 transition-opacity">
+  <div class="bg-neutral-900 border border-neutral-800 w-full max-w-lg p-6 rounded-2xl shadow-2xl relative space-y-4">
+    <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+      <h3 id="modal-order-title" class="text-base font-bold text-white flex items-center gap-2">
+        <svg class="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+        </svg>
+        <span>Nueva Anotación de Compra</span>
+      </h3>
+      <button onclick="closeOrderModal()" class="text-neutral-500 hover:text-white cursor-pointer transition-colors text-lg font-bold">
+        ✕
+      </button>
+    </div>
+
+    <form id="form-order" onsubmit="submitOrderForm(event)" class="space-y-4">
+      <input type="hidden" id="order-id" value="">
+
+      <!-- Proveedor Escrito a Mano -->
       <div>
-        <h3 id="modal-order-number" class="text-lg font-bold text-white">Detalle de Pedido</h3>
-        <span id="modal-order-supplier" class="text-xs text-neutral-400 block"></span>
+        <label for="order-supplierName" class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">
+          Nombre del Proveedor (Escrito a mano) *
+        </label>
+        <input type="text" id="order-supplierName" required placeholder="Ej. Lácteos La Granja, Distribuidora Santa Ana, Don Juan..." class="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-2.5 text-white text-sm focus:border-blue-500 focus:outline-none transition-all">
       </div>
-      <button type="button" onclick="closeOrderModal()" class="text-neutral-400 hover:text-white font-bold text-lg cursor-pointer">✕</button>
-    </div>
 
-    <div class="grid grid-cols-2 gap-4 bg-neutral-950 p-4 rounded-xl border border-neutral-850 text-xs">
-      <div>
-        <span class="text-neutral-500 block uppercase font-bold text-[10px]">Fecha de Compra</span>
-        <span id="modal-order-date" class="font-mono font-bold text-white"></span>
-      </div>
-      <div>
-        <span class="text-neutral-500 block uppercase font-bold text-[10px]">Fecha Estimada Llegada</span>
-        <span id="modal-delivery-date" class="font-mono font-bold text-amber-400"></span>
-      </div>
-    </div>
-
-    <div class="space-y-2">
-      <h4 class="text-xs font-bold text-neutral-400 uppercase tracking-wider">Productos Solicitados</h4>
-      <div id="modal-order-items" class="max-h-60 overflow-y-auto space-y-2"></div>
-    </div>
-
-    <div class="flex justify-between items-center border-t border-neutral-800 pt-4">
-      <div class="text-xs">
-        <span class="text-neutral-400">Total Pedido:</span>
-        <span id="modal-order-total" class="font-mono text-base font-bold text-emerald-400 ml-1"></span>
-      </div>
-      <button type="button" onclick="closeOrderModal()" class="px-4 py-2 bg-neutral-800 hover:bg-neutral-750 text-white text-xs font-bold rounded-xl cursor-pointer">Cerrar</button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal para Procesar Recepción de Pedido -->
-<div id="receive-order-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-  <div class="bg-neutral-900 border border-neutral-800 rounded-2xl max-w-4xl w-full overflow-hidden shadow-2xl p-6 space-y-4 max-h-[92vh] flex flex-col">
-    <!-- Modal Header -->
-    <div class="flex justify-between items-center border-b border-neutral-800 pb-3 flex-shrink-0">
-      <div>
-        <h3 id="receive-modal-title" class="text-lg font-bold text-white">Recepción de Pedido</h3>
-        <span id="receive-modal-subtitle" class="text-xs text-neutral-400 block">Complete los datos de la factura e insumos recibidos</span>
-      </div>
-      <button type="button" onclick="closeReceiveModal()" class="text-neutral-400 hover:text-white font-bold text-lg cursor-pointer">✕</button>
-    </div>
-
-    <!-- Scrollable Modal Body -->
-    <div class="overflow-y-auto space-y-4 pr-1 flex-grow">
-      <input type="hidden" id="receive-order-id">
-
-      <!-- Section 1: Factura & Pago -->
-      <div class="bg-neutral-950 p-4 rounded-xl border border-neutral-850 space-y-4">
-        <h4 class="text-xs font-bold text-neutral-300 uppercase tracking-wider">Datos de Facturación y Pago</h4>
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label class="block text-[10px] font-bold text-neutral-400 uppercase mb-1">Número de Factura *</label>
-            <input type="text" id="receive-invoiceNumber" class="w-full px-3 py-2 bg-neutral-900 border border-neutral-800 text-white rounded-xl text-xs font-mono focus:ring-2 focus:ring-blue-500" placeholder="FAC-00123">
-          </div>
-
-          <div>
-            <label class="block text-[10px] font-bold text-neutral-400 uppercase mb-1">Condición de Pago</label>
-            <select id="receive-paymentMethod" onchange="toggleReceivePaymentMethod()" class="w-full px-3 py-2 bg-neutral-900 border border-neutral-800 text-white rounded-xl text-xs focus:ring-2 focus:ring-blue-500">
-              <option value="cash">Contado (Pagado)</option>
-              <option value="credit">Crédito (CxP)</option>
-            </select>
-          </div>
-
-          <div id="receive-due-date-container" class="hidden">
-            <label class="block text-[10px] font-bold text-neutral-400 uppercase mb-1">Fecha Vencimiento *</label>
-            <input type="date" id="receive-dueDate" class="w-full px-3 py-2 bg-neutral-900 border border-neutral-800 text-white rounded-xl text-xs focus:ring-2 focus:ring-blue-500">
-          </div>
+      <!-- Fechas: Compra y Recepción -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label for="order-orderDate" class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">
+            Fecha de Compra / Pedido *
+          </label>
+          <input type="date" id="order-orderDate" required class="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2.5 text-white text-xs focus:border-blue-500 focus:outline-none transition-all">
         </div>
-
-        <!-- Cash Details -->
-        <div id="receive-cash-details-container" class="space-y-3 pt-2 border-t border-neutral-900">
-          <label class="block text-[10px] font-bold text-neutral-400 uppercase">Origen de Fondos (Contado)</label>
-          <div class="grid grid-cols-2 gap-3">
-            <label id="receive-source-cashier-label" class="flex items-center gap-2 px-3 py-2 bg-neutral-900 border-2 border-blue-500 rounded-xl cursor-pointer">
-              <input type="radio" name="receivePaymentSource" value="cashier" checked onchange="toggleReceivePaymentSource()" class="text-blue-600 bg-neutral-950 border-neutral-800">
-              <span class="text-xs font-semibold text-white">💵 Caja Chica</span>
-            </label>
-            <label id="receive-source-external-label" class="flex items-center gap-2 px-3 py-2 bg-neutral-900 border-2 border-neutral-800 rounded-xl cursor-pointer">
-              <input type="radio" name="receivePaymentSource" value="external" onchange="toggleReceivePaymentSource()" class="text-blue-600 bg-neutral-950 border-neutral-800">
-              <span class="text-xs font-semibold text-white">🏦 Banco / Depósito</span>
-            </label>
-          </div>
-
-          <div id="receive-caja-section" class="space-y-1">
-            <label class="block text-[10px] font-bold text-neutral-400 uppercase">Caja Chica de Retiro *</label>
-            <select id="receive-turnId" class="w-full px-3 py-2 bg-neutral-900 border border-neutral-800 text-white rounded-xl text-xs focus:ring-2 focus:ring-blue-500">
-            </select>
-          </div>
-
-          <div id="receive-bank-section" class="hidden space-y-1">
-            <label class="block text-[10px] font-bold text-neutral-400 uppercase">No. Voucher / Autorización *</label>
-            <input type="text" id="receive-transactionRef" class="w-full px-3 py-2 bg-neutral-900 border border-neutral-800 text-white rounded-xl text-xs font-mono" placeholder="VOUCHER-12345">
-          </div>
+        <div>
+          <label for="order-expectedDeliveryDate" class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">
+            Fecha de Recepción *
+          </label>
+          <input type="date" id="order-expectedDeliveryDate" required class="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2.5 text-white text-xs focus:border-blue-500 focus:outline-none transition-all">
         </div>
       </div>
 
-      <!-- Section 2: Extra Product Hot Purchase Add Input -->
-      <div class="bg-neutral-950 p-3 rounded-xl border border-neutral-850 space-y-2">
-        <label class="block text-[10px] font-bold text-emerald-400 uppercase tracking-wider">➕ Agregar Producto Extra al Camión / Factura ("Compra en caliente")</label>
-        <div class="relative">
-          <input type="text" id="receive-extra-product-input" autocomplete="off" placeholder="Escriba para buscar y agregar otro producto que venía en el camión..." class="w-full px-3 py-2 bg-neutral-900 border border-neutral-800 text-white rounded-xl text-xs focus:ring-2 focus:ring-emerald-500">
-          <div id="receive-extra-product-results" class="absolute left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-neutral-900 border border-neutral-800 rounded-xl shadow-2xl z-50 hidden divide-y divide-neutral-850"></div>
+      <!-- Estado y Monto -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label for="order-status" class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">
+            Estado *
+          </label>
+          <select id="order-status" required class="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2.5 text-white text-xs focus:border-blue-500 focus:outline-none transition-all">
+            <option value="pending">⏳ En espera (Pendiente)</option>
+            <option value="received">✓ Recibido</option>
+          </select>
+        </div>
+        <div>
+          <label for="order-amount" class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">
+            Monto ($ USD) *
+          </label>
+          <input type="number" id="order-amount" step="0.01" min="0" required placeholder="0.00" class="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2.5 text-white text-xs font-mono focus:border-blue-500 focus:outline-none transition-all">
         </div>
       </div>
 
-      <!-- Section 3: Items Table -->
-      <div class="space-y-2">
-        <h4 class="text-xs font-bold text-neutral-300 uppercase tracking-wider">Productos Recibidos (Editar Cantidades, Costos y Vencimientos)</h4>
-        <div class="overflow-x-auto border border-neutral-850 rounded-xl bg-neutral-950">
-          <table class="min-w-full divide-y divide-neutral-850 text-left text-xs text-neutral-300">
-            <thead>
-              <tr class="text-neutral-500 font-semibold uppercase text-[10px] tracking-wider">
-                <th class="py-2.5 px-3">Producto</th>
-                <th class="py-2.5 px-3">Lote</th>
-                <th class="py-2.5 px-3 text-center">Cant. Recibida</th>
-                <th class="py-2.5 px-3 text-center">Costo ($)</th>
-                <th class="py-2.5 px-3 text-center">PVP ($)</th>
-                <th class="py-2.5 px-3 text-center">Vencimiento (15d por defecto)</th>
-                <th class="py-2.5 px-3 text-right">Subtotal</th>
-                <th class="py-2.5 px-2 text-center"></th>
-              </tr>
-            </thead>
-            <tbody id="receive-items-tbody" class="divide-y divide-neutral-850">
-            </tbody>
-          </table>
+      <!-- Notas adicionales -->
+      <div>
+        <label for="order-notes" class="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-1">
+          Notas / Observaciones (Opcional)
+        </label>
+        <input type="text" id="order-notes" placeholder="Ej. Traer 5 cajas de leche, llamar al chofer..." class="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-2 text-white text-xs focus:border-blue-500 focus:outline-none transition-all">
+      </div>
+
+      <!-- Actions -->
+      <div class="flex items-center justify-between pt-4 border-t border-neutral-800">
+        <button type="button" id="btn-delete-order" onclick="deleteCurrentOrder()" class="hidden px-3.5 py-2 text-xs font-bold text-red-400 bg-red-950/40 border border-red-900/60 hover:bg-red-900/60 rounded-xl transition-all cursor-pointer">
+          Eliminar
+        </button>
+        <div class="flex items-center gap-2 ml-auto">
+          <button type="button" onclick="closeOrderModal()" class="px-4 py-2 text-xs font-semibold text-neutral-400 bg-neutral-800 hover:bg-neutral-750 rounded-xl transition-all cursor-pointer">
+            Cancelar
+          </button>
+          <button type="submit" id="btn-submit-order" class="px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 rounded-xl transition-all shadow-md shadow-blue-500/10 cursor-pointer">
+            Guardar Anotación
+          </button>
         </div>
       </div>
-    </div>
-
-    <!-- Modal Footer -->
-    <div class="flex justify-between items-center border-t border-neutral-800 pt-4 flex-shrink-0">
-      <div class="text-xs">
-        <span class="text-neutral-400 font-bold uppercase">Total a Ingresar:</span>
-        <span id="receive-total-amount" class="font-mono text-xl font-black text-emerald-400 ml-2">$0.00</span>
-      </div>
-      <div class="flex gap-2">
-        <button type="button" onclick="closeReceiveModal()" class="px-4 py-2.5 bg-neutral-800 hover:bg-neutral-750 text-white text-xs font-bold rounded-xl cursor-pointer">Cancelar</button>
-        <button type="button" id="btn-submit-receive" onclick="submitReceiveOrder()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold rounded-xl transition-all shadow-md shadow-emerald-600/10 cursor-pointer">PROCESAR E INGRESAR AL INVENTARIO</button>
-      </div>
-    </div>
+    </form>
   </div>
 </div>
 
 <script>
+  // Initial dataset passed from controller
+  let allOrders = <%- JSON.stringify(orders) %>;
   let currentYear = new Date().getFullYear();
-  let currentMonth = new Date().getMonth();
-  let calendarEvents = [];
-  const rawOrdersData = <%- JSON.stringify(orders) %>;
-  const rawProductsData = <%- JSON.stringify(typeof products !== 'undefined' ? products : []) %>;
+  let currentMonth = new Date().getMonth(); // 0-indexed
 
-  function switchOrdersTab(tab) {
-    const btnCal = document.getElementById('tab-calendar-btn');
-    const btnList = document.getElementById('tab-list-btn');
-    const viewCal = document.getElementById('view-calendar');
-    const viewList = document.getElementById('view-list');
+  const monthNames = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  ];
 
-    const activeClass = "px-6 py-3 text-sm font-bold border-b-2 border-blue-500 text-blue-400 transition-all cursor-pointer flex items-center gap-2";
-    const inactiveClass = "px-6 py-3 text-sm font-bold border-b-2 border-transparent text-neutral-400 hover:text-white transition-all cursor-pointer flex items-center gap-2";
+  // --- VIEW SWITCHER ---
+  function switchView(view) {
+    const calContainer = document.getElementById('calendar-container');
+    const listContainer = document.getElementById('list-container');
+    const btnCal = document.getElementById('btn-view-calendar');
+    const btnList = document.getElementById('btn-view-list');
 
-    if (tab === 'calendar') {
-      btnCal.className = activeClass;
-      btnList.className = inactiveClass;
-      viewCal.classList.remove('hidden');
-      viewList.classList.add('hidden');
-    } else {
-      btnList.className = activeClass;
-      btnCal.className = inactiveClass;
-      viewCal.classList.add('hidden');
-      viewList.classList.remove('hidden');
-    }
-  }
-
-  async function fetchCalendarEvents() {
-    try {
-      const resp = await fetch('/purchases/orders/api/events');
-      calendarEvents = await resp.json();
+    if (view === 'calendar') {
+      calContainer.classList.remove('hidden');
+      listContainer.classList.add('hidden');
+      btnCal.className = "px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 bg-blue-600 text-white cursor-pointer shadow-md shadow-blue-500/10";
+      btnList.className = "px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white cursor-pointer";
       renderCalendar();
-    } catch (e) {
-      console.error(e);
+    } else {
+      calContainer.classList.add('hidden');
+      listContainer.classList.remove('hidden');
+      btnList.className = "px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 bg-blue-600 text-white cursor-pointer shadow-md shadow-blue-500/10";
+      btnCal.className = "px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white cursor-pointer";
     }
   }
 
+  // --- CALENDAR LOGIC ---
   function renderCalendar() {
-    const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-    document.getElementById('calendar-month-year').innerText = `${monthNames[currentMonth]} ${currentYear}`;
+    const titleEl = document.getElementById('calendar-title');
+    const gridEl = document.getElementById('calendar-grid');
 
-    const container = document.getElementById('calendar-days-container');
-    container.innerHTML = '';
+    titleEl.textContent = `${monthNames[currentMonth]} ${currentYear}`;
+    gridEl.innerHTML = '';
 
-    const firstDayIndex = new Date(currentYear, currentMonth, 1).getDay();
-    const totalDaysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-
-    for (let i = 0; i < firstDayIndex; i++) {
-      const emptyDiv = document.createElement('div');
-      emptyDiv.className = "bg-neutral-950/40 p-2 min-h-[110px] text-neutral-700 select-none";
-      container.appendChild(emptyDiv);
-    }
+    // First day of month and total days in month
+    const firstDayIndex = new Date(currentYear, currentMonth, 1).getDay(); // 0 = Sunday
+    const totalDays = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const prevMonthTotalDays = new Date(currentYear, currentMonth, 0).getDate();
 
     const todayStr = new Date().toISOString().split('T')[0];
 
-    for (let day = 1; day <= totalDaysInMonth; day++) {
-      const dayStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      const isToday = dayStr === todayStr;
+    // Padding cells from previous month
+    for (let i = firstDayIndex - 1; i >= 0; i--) {
+      const prevDay = prevMonthTotalDays - i;
+      const cell = document.createElement('div');
+      cell.className = "bg-neutral-950/40 border border-neutral-800/40 rounded-xl p-2 min-h-[90px] opacity-40 flex flex-col justify-between";
+      cell.innerHTML = `<span class="text-xs font-mono text-neutral-600">${prevDay}</span>`;
+      gridEl.appendChild(cell);
+    }
 
-      const dayCell = document.createElement('div');
-      dayCell.className = `bg-neutral-950 p-2 min-h-[110px] flex flex-col justify-between transition-colors ${isToday ? 'ring-2 ring-blue-500/80 bg-neutral-900/60' : 'hover:bg-neutral-900/40'}`;
+    // Days of current month
+    for (let day = 1; day <= totalDays; day++) {
+      const monthStr = String(currentMonth + 1).padStart(2, '0');
+      const dayStr = String(day).padStart(2, '0');
+      const dateKey = `${currentYear}-${monthStr}-${dayStr}`;
+      const isToday = dateKey === todayStr;
 
-      let cellHtml = `<div class="flex justify-between items-center mb-1"><span class="font-bold ${isToday ? 'text-blue-400 bg-blue-950 px-1.5 py-0.5 rounded-md' : 'text-neutral-400'}">${day}</span></div>`;
+      // Find orders matching this date (either orderDate or expectedDeliveryDate)
+      const dayOrders = allOrders.filter(o => o.expectedDeliveryDate === dateKey || (!o.expectedDeliveryDate && o.orderDate === dateKey));
 
-      const dayEvents = calendarEvents.filter(ev => ev.start === dayStr);
+      const cell = document.createElement('div');
+      cell.className = `group bg-neutral-950 border ${isToday ? 'border-blue-500/80 shadow-md shadow-blue-500/10' : 'border-neutral-800'} hover:border-neutral-700 rounded-xl p-2 min-h-[100px] flex flex-col transition-all cursor-pointer`;
+      cell.onclick = (e) => {
+        if (!e.target.closest('.order-badge-item')) {
+          openNewOrderModal(dateKey);
+        }
+      };
 
-      if (dayEvents.length > 0) {
-        cellHtml += `<div class="space-y-1 overflow-y-auto max-h-[85px] no-scrollbar">`;
-        dayEvents.forEach(ev => {
-          const isOrderDate = ev.type === 'order_date';
-          const bgColor = isOrderDate ? 'bg-blue-950/80 border-blue-800 text-blue-300' : (ev.status === 'received' ? 'bg-emerald-950/80 border-emerald-800 text-emerald-300' : 'bg-amber-950/80 border-amber-800 text-amber-300');
-
-          cellHtml += `
-            <div onclick="openOrderModalByNumber('${ev.orderNumber}')" class="p-1.5 rounded-lg border text-[10px] font-bold cursor-pointer truncate transition-transform hover:scale-[1.02] ${bgColor}" title="${ev.title}">
-              ${ev.title}
+      let badgesHtml = '';
+      if (dayOrders.length > 0) {
+        badgesHtml = dayOrders.map(o => {
+          const name = o.supplierName || (o.supplier ? o.supplier.name : 'Proveedor');
+          const isReceived = o.status === 'received';
+          const badgeClass = isReceived 
+            ? 'bg-emerald-950 text-emerald-300 border-emerald-800/60 hover:bg-emerald-900' 
+            : 'bg-amber-950 text-amber-300 border-amber-800/60 hover:bg-amber-900';
+          const icon = isReceived ? '✓' : '⏳';
+          
+          return `
+            <div class="order-badge-item text-[11px] font-semibold px-2 py-1 rounded-lg border ${badgeClass} truncate cursor-pointer transition-all shadow-sm flex items-center justify-between gap-1"
+                 onclick="event.stopPropagation(); openEditOrderModalById(${o.id})"
+                 title="${name} ($${parseFloat(o.totalAmount || 0).toFixed(2)}) - ${isReceived ? 'Recibido' : 'En espera'}">
+              <span class="truncate">${icon} ${name}</span>
+              <span class="font-mono font-bold text-[10px]">$${parseFloat(o.totalAmount || 0).toFixed(0)}</span>
             </div>
           `;
-        });
-        cellHtml += `</div>`;
+        }).join('');
       }
 
-      dayCell.innerHTML = cellHtml;
-      container.appendChild(dayCell);
+      cell.innerHTML = `
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-xs font-mono font-bold ${isToday ? 'bg-blue-600 text-white px-1.5 py-0.5 rounded-md' : 'text-neutral-400'}">${day}</span>
+          <button type="button" onclick="event.stopPropagation(); openNewOrderModal('${dateKey}')" class="opacity-0 group-hover:opacity-100 text-[10px] text-blue-400 hover:text-white transition-opacity px-1 rounded hover:bg-neutral-800" title="Anotar en esta fecha">+</button>
+        </div>
+        <div class="space-y-1 overflow-y-auto max-h-[85px] pr-0.5">
+          ${badgesHtml}
+        </div>
+      `;
+
+      gridEl.appendChild(cell);
+    }
+
+    // Remaining padding cells for next month
+    const totalRendered = firstDayIndex + totalDays;
+    const remaining = (7 - (totalRendered % 7)) % 7;
+    for (let i = 1; i <= remaining; i++) {
+      const cell = document.createElement('div');
+      cell.className = "bg-neutral-950/40 border border-neutral-800/40 rounded-xl p-2 min-h-[90px] opacity-40 flex flex-col justify-between";
+      cell.innerHTML = `<span class="text-xs font-mono text-neutral-600">${i}</span>`;
+      gridEl.appendChild(cell);
     }
   }
 
-  function changeMonth(delta) {
-    currentMonth += delta;
+  function prevMonth() {
+    currentMonth--;
     if (currentMonth < 0) {
       currentMonth = 11;
-      currentYear -= 1;
-    } else if (currentMonth > 11) {
+      currentYear--;
+    }
+    renderCalendar();
+  }
+
+  function nextMonth() {
+    currentMonth++;
+    if (currentMonth > 11) {
       currentMonth = 0;
-      currentYear += 1;
+      currentYear++;
     }
     renderCalendar();
   }
 
-  function goToToday() {
-    currentYear = new Date().getFullYear();
-    currentMonth = new Date().getMonth();
+  function goToCurrentMonth() {
+    const d = new Date();
+    currentYear = d.getFullYear();
+    currentMonth = d.getMonth();
     renderCalendar();
   }
 
-  function openOrderModal(orderId) {
-    const order = rawOrdersData.find(o => String(o.id) === String(orderId));
-    if (!order) return;
+  // --- MODAL & FORM LOGIC ---
+  function openNewOrderModal(defaultDate) {
+    const today = defaultDate || new Date().toISOString().split('T')[0];
 
-    document.getElementById('modal-order-number').innerText = `Pedido #${order.orderNumber}`;
-    document.getElementById('modal-order-supplier').innerText = `Proveedor: ${order.supplier ? order.supplier.name : 'N/A'} | Sucursal: ${order.branch ? order.branch.name : 'N/A'}`;
-    document.getElementById('modal-order-date').innerText = order.orderDate;
-    document.getElementById('modal-delivery-date').innerText = order.expectedDeliveryDate;
-    document.getElementById('modal-order-total').innerText = `$${parseFloat(order.totalAmount).toFixed(2)}`;
+    document.getElementById('modal-order-title').querySelector('span').textContent = 'Nueva Anotación de Compra';
+    document.getElementById('order-id').value = '';
+    document.getElementById('order-supplierName').value = '';
+    document.getElementById('order-orderDate').value = today;
+    document.getElementById('order-expectedDeliveryDate').value = today;
+    document.getElementById('order-status').value = 'pending';
+    document.getElementById('order-amount').value = '';
+    document.getElementById('order-notes').value = '';
+    document.getElementById('btn-delete-order').classList.add('hidden');
+    document.getElementById('btn-submit-order').textContent = 'Guardar Anotación';
 
-    const itemsContainer = document.getElementById('modal-order-items');
-    itemsContainer.innerHTML = '';
-
-    if (order.details && order.details.length > 0) {
-      order.details.forEach(d => {
-        const div = document.createElement('div');
-        div.className = "flex justify-between items-center p-2.5 bg-neutral-950 border border-neutral-850 rounded-xl text-xs";
-        div.innerHTML = `
-          <div>
-            <strong class="text-white block">${d.product ? d.product.name : 'Producto'}</strong>
-            <span class="text-neutral-500 text-[10px]">Costo: $${parseFloat(d.unitCost).toFixed(2)} x ${d.quantity} uds</span>
-          </div>
-          <span class="font-mono font-bold text-emerald-400">$${parseFloat(d.subtotal).toFixed(2)}</span>
-        `;
-        itemsContainer.appendChild(div);
-      });
-    }
-
-    document.getElementById('order-detail-modal').classList.remove('hidden');
+    document.getElementById('modal-order').classList.remove('hidden');
+    document.getElementById('order-supplierName').focus();
   }
 
-  function openOrderModalByNumber(num) {
-    const order = rawOrdersData.find(o => o.orderNumber === num);
-    if (order) openOrderModal(order.id);
+  function openEditOrderModal(order) {
+    document.getElementById('modal-order-title').querySelector('span').textContent = 'Editar Anotación de Compra';
+    document.getElementById('order-id').value = order.id;
+    document.getElementById('order-supplierName').value = order.supplierName || (order.supplier ? order.supplier.name : '');
+    document.getElementById('order-orderDate').value = order.orderDate;
+    document.getElementById('order-expectedDeliveryDate').value = order.expectedDeliveryDate || order.orderDate;
+    document.getElementById('order-status').value = order.status;
+    document.getElementById('order-amount').value = parseFloat(order.totalAmount || 0).toFixed(2);
+    document.getElementById('order-notes').value = order.notes || '';
+    document.getElementById('btn-delete-order').classList.remove('hidden');
+    document.getElementById('btn-submit-order').textContent = 'Actualizar Anotación';
+
+    document.getElementById('modal-order').classList.remove('hidden');
+  }
+
+  function openEditOrderModalById(orderId) {
+    const order = allOrders.find(o => o.id === orderId);
+    if (order) {
+      openEditOrderModal(order);
+    }
   }
 
   function closeOrderModal() {
-    document.getElementById('order-detail-modal').classList.add('hidden');
+    document.getElementById('modal-order').classList.add('hidden');
   }
 
-  // --- Lógica del Modal de Recepción de Pedido ---
-  let currentReceiveOrder = null;
+  async function submitOrderForm(e) {
+    e.preventDefault();
 
-  async function openReceiveModal(orderId) {
-    const order = rawOrdersData.find(o => String(o.id) === String(orderId));
-    if (!order) return;
-    currentReceiveOrder = order;
+    const orderId = document.getElementById('order-id').value;
+    const supplierName = document.getElementById('order-supplierName').value.trim();
+    const orderDate = document.getElementById('order-orderDate').value;
+    const expectedDeliveryDate = document.getElementById('order-expectedDeliveryDate').value;
+    const status = document.getElementById('order-status').value;
+    const amount = parseFloat(document.getElementById('order-amount').value) || 0;
+    const notes = document.getElementById('order-notes').value.trim();
 
-    document.getElementById('receive-order-id').value = order.id;
-    document.getElementById('receive-modal-title').innerText = `Recepción de Pedido #${order.orderNumber}`;
-    document.getElementById('receive-modal-subtitle').innerText = `Proveedor: ${order.supplier ? order.supplier.name : 'N/A'}`;
-    document.getElementById('receive-invoiceNumber').value = `FAC-${order.orderNumber}`;
-
-    document.getElementById('receive-paymentMethod').value = 'cash';
-    toggleReceivePaymentMethod();
-    toggleReceivePaymentSource();
-
-    // Fecha de vencimiento por defecto = Hoy + 15 días
-    const expDate = new Date();
-    expDate.setDate(expDate.getDate() + 15);
-    const defaultExpStr = expDate.toISOString().split('T')[0];
-
-    // Cargar cajas chicas abiertas
-    try {
-      const resp = await fetch('/purchases/api/available-turns');
-      const data = await resp.json();
-      const turnSelect = document.getElementById('receive-turnId');
-      turnSelect.innerHTML = '';
-      if (data.success && data.turns.length > 0) {
-        data.turns.forEach(t => {
-          const opt = document.createElement('option');
-          opt.value = t.id;
-          opt.innerText = `${t.boxName} - ${t.userName} (Disp: $${parseFloat(t.balance || 0).toFixed(2)})`;
-          turnSelect.appendChild(opt);
-        });
-      } else {
-        turnSelect.innerHTML = '<option value="">No hay cajas abiertas</option>';
-      }
-    } catch (e) {}
-
-    // Llenar tabla de ítems recibidos
-    const tbody = document.getElementById('receive-items-tbody');
-    tbody.innerHTML = '';
-
-    if (order.details && order.details.length > 0) {
-      order.details.forEach(d => {
-        addReceiveItemRow({
-          productId: d.productId,
-          name: d.product ? d.product.name : 'Producto',
-          batchCode: `LOTE-${order.orderNumber}`,
-          quantity: d.quantity,
-          unitCost: parseFloat(d.unitCost),
-          salePrice: d.product ? parseFloat(d.product.salePrice || 0) : 0,
-          expirationDate: defaultExpStr
-        });
-      });
-    }
-
-    calcReceiveTotals();
-    document.getElementById('receive-order-modal').classList.remove('hidden');
-  }
-
-  function addReceiveItemRow(item) {
-    const tbody = document.getElementById('receive-items-tbody');
-    const tr = document.createElement('tr');
-    tr.className = "hover:bg-neutral-900/50";
-    const subtotal = item.quantity * item.unitCost;
-
-    tr.innerHTML = `
-      <td class="py-2.5 px-3">
-        <strong class="text-white block">${item.name}</strong>
-        <input type="hidden" class="rec-product-id" value="${item.productId}">
-      </td>
-      <td class="py-2.5 px-3">
-        <input type="text" class="rec-batch-code w-28 px-2 py-1 bg-neutral-900 border border-neutral-800 text-white rounded text-xs font-mono" value="${item.batchCode}">
-      </td>
-      <td class="py-2.5 px-3 text-center">
-        <input type="number" min="1" oninput="calcReceiveTotals()" class="rec-qty w-16 text-center px-2 py-1 bg-neutral-900 border border-neutral-800 text-white rounded text-xs font-mono font-bold" value="${item.quantity}">
-      </td>
-      <td class="py-2.5 px-3 text-center">
-        <input type="number" step="0.01" min="0" oninput="calcReceiveTotals()" class="rec-unit-cost w-20 text-center px-2 py-1 bg-neutral-900 border border-neutral-800 text-white rounded text-xs font-mono" value="${item.unitCost.toFixed(2)}">
-      </td>
-      <td class="py-2.5 px-3 text-center">
-        <input type="number" step="0.01" min="0" class="rec-sale-price w-20 text-center px-2 py-1 bg-neutral-900 border border-neutral-800 text-white rounded text-xs font-mono text-emerald-400 font-bold" value="${item.salePrice.toFixed(2)}">
-      </td>
-      <td class="py-2.5 px-3 text-center">
-        <input type="date" class="rec-exp-date px-2 py-1 bg-neutral-900 border border-neutral-800 text-white rounded text-xs" value="${item.expirationDate}">
-      </td>
-      <td class="py-2.5 px-3 text-right font-mono font-bold text-emerald-400 rec-subtotal-display">
-        $${subtotal.toFixed(2)}
-      </td>
-      <td class="py-2.5 px-2 text-center">
-        <button type="button" onclick="removeReceiveRow(this)" class="text-red-500 hover:text-red-400 font-bold text-xs cursor-pointer" title="Remover producto">✕</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  }
-
-  function removeReceiveRow(btn) {
-    const tr = btn.closest('tr');
-    if (tr) {
-      tr.remove();
-      calcReceiveTotals();
-    }
-  }
-
-  // --- Autocompletado para compras en caliente (Insumos extra al pedido) ---
-  const extraInput = document.getElementById('receive-extra-product-input');
-  const extraResults = document.getElementById('receive-extra-product-results');
-
-  if (extraInput) {
-    extraInput.addEventListener('input', (e) => {
-      const q = e.target.value.trim().toLowerCase();
-      if (q.length < 1) {
-        extraResults.innerHTML = '';
-        extraResults.classList.add('hidden');
-        return;
-      }
-
-      const matches = rawProductsData.filter(p => p.name.toLowerCase().includes(q) || (p.barCode && p.barCode.toLowerCase().includes(q)));
-      extraResults.innerHTML = '';
-
-      if (matches.length > 0) {
-        matches.slice(0, 8).forEach(p => {
-          const div = document.createElement('div');
-          div.className = "p-2.5 hover:bg-neutral-800 cursor-pointer text-xs flex justify-between items-center transition-colors";
-          div.innerHTML = `<strong>${p.name}</strong><span class="text-neutral-400 font-mono">PVP: $${parseFloat(p.salePrice || 0).toFixed(2)}</span>`;
-          div.onclick = () => {
-            const expDate = new Date();
-            expDate.setDate(expDate.getDate() + 15);
-            const defaultExpStr = expDate.toISOString().split('T')[0];
-            const orderNum = currentReceiveOrder ? currentReceiveOrder.orderNumber : 'EXTRA';
-
-            addReceiveItemRow({
-              productId: p.id,
-              name: p.name,
-              batchCode: `LOTE-${orderNum}`,
-              quantity: 1,
-              unitCost: parseFloat(p.costPrice || 0),
-              salePrice: parseFloat(p.salePrice || 0),
-              expirationDate: defaultExpStr
-            });
-
-            calcReceiveTotals();
-            extraInput.value = '';
-            extraResults.innerHTML = '';
-            extraResults.classList.add('hidden');
-          };
-          extraResults.appendChild(div);
-        });
-        extraResults.classList.remove('hidden');
-      } else {
-        extraResults.innerHTML = '<div class="p-2.5 text-neutral-500 text-xs text-center">Sin productos encontrados</div>';
-        extraResults.classList.remove('hidden');
-      }
-    });
-
-    document.addEventListener('click', (e) => {
-      if (extraInput && extraResults && !extraInput.contains(e.target) && !extraResults.contains(e.target)) {
-        extraResults.classList.add('hidden');
-      }
-    });
-  }
-
-  function closeReceiveModal() {
-    document.getElementById('receive-order-modal').classList.add('hidden');
-  }
-
-  function toggleReceivePaymentMethod() {
-    const method = document.getElementById('receive-paymentMethod').value;
-    const dueDateContainer = document.getElementById('receive-due-date-container');
-    const cashContainer = document.getElementById('receive-cash-details-container');
-    if (method === 'credit') {
-      dueDateContainer.classList.remove('hidden');
-      cashContainer.classList.add('hidden');
-      const d = new Date(); d.setDate(d.getDate() + 30);
-      document.getElementById('receive-dueDate').value = d.toISOString().split('T')[0];
-    } else {
-      dueDateContainer.classList.add('hidden');
-      cashContainer.classList.remove('hidden');
-    }
-  }
-
-  function toggleReceivePaymentSource() {
-    const source = document.querySelector('input[name="receivePaymentSource"]:checked')?.value || 'cashier';
-    const cajaSec = document.getElementById('receive-caja-section');
-    const bankSec = document.getElementById('receive-bank-section');
-    const cashierLabel = document.getElementById('receive-source-cashier-label');
-    const externalLabel = document.getElementById('receive-source-external-label');
-
-    if (source === 'cashier') {
-      cajaSec.classList.remove('hidden');
-      bankSec.classList.add('hidden');
-      cashierLabel.className = "flex items-center gap-2 px-3 py-2 bg-neutral-900 border-2 border-blue-500 rounded-xl cursor-pointer";
-      externalLabel.className = "flex items-center gap-2 px-3 py-2 bg-neutral-900 border-2 border-neutral-800 rounded-xl cursor-pointer";
-    } else {
-      cajaSec.classList.add('hidden');
-      bankSec.classList.remove('hidden');
-      externalLabel.className = "flex items-center gap-2 px-3 py-2 bg-neutral-900 border-2 border-blue-500 rounded-xl cursor-pointer";
-      cashierLabel.className = "flex items-center gap-2 px-3 py-2 bg-neutral-900 border-2 border-neutral-800 rounded-xl cursor-pointer";
-    }
-  }
-
-  function calcReceiveTotals() {
-    const rows = document.querySelectorAll('#receive-items-tbody tr');
-    let total = 0;
-    rows.forEach(tr => {
-      const qty = parseInt(tr.querySelector('.rec-qty').value, 10) || 0;
-      const cost = parseFloat(tr.querySelector('.rec-unit-cost').value) || 0;
-      const sub = qty * cost;
-      total += sub;
-      const display = tr.querySelector('.rec-subtotal-display');
-      if (display) display.innerText = `$${sub.toFixed(2)}`;
-    });
-    document.getElementById('receive-total-amount').innerText = `$${total.toFixed(2)}`;
-  }
-
-  async function submitReceiveOrder() {
-    const orderId = document.getElementById('receive-order-id').value;
-    const invoiceNumber = document.getElementById('receive-invoiceNumber').value.trim();
-    const paymentMethod = document.getElementById('receive-paymentMethod').value;
-    const dueDate = document.getElementById('receive-dueDate').value;
-    const paymentSource = document.querySelector('input[name="receivePaymentSource"]:checked')?.value || 'cashier';
-    const turnId = document.getElementById('receive-turnId').value;
-    const transactionRef = document.getElementById('receive-transactionRef').value.trim();
-
-    if (!invoiceNumber) {
-      alert('Ingrese el número de factura.');
+    if (!supplierName) {
+      showToast('Por favor escriba el nombre del proveedor.', 'warning');
       return;
     }
 
-    if (paymentMethod === 'cash' && paymentSource === 'cashier' && !turnId) {
-      alert('Seleccione una caja chica abierta.');
-      return;
-    }
-    if (paymentMethod === 'cash' && paymentSource === 'external' && !transactionRef) {
-      alert('Ingrese el número de autorización o voucher del banco.');
-      return;
-    }
-    if (paymentMethod === 'credit' && !dueDate) {
-      alert('Ingrese la fecha de vencimiento del crédito.');
-      return;
-    }
-
-    const rows = document.querySelectorAll('#receive-items-tbody tr');
-    const items = [];
-    let hasError = false;
-
-    rows.forEach(tr => {
-      const productId = tr.querySelector('.rec-product-id').value;
-      const batchCode = tr.querySelector('.rec-batch-code').value.trim();
-      const quantity = parseInt(tr.querySelector('.rec-qty').value, 10);
-      const unitCost = parseFloat(tr.querySelector('.rec-unit-cost').value);
-      const salePrice = parseFloat(tr.querySelector('.rec-sale-price').value);
-      const expirationDate = tr.querySelector('.rec-exp-date').value;
-
-      if (isNaN(quantity) || quantity <= 0 || isNaN(unitCost) || unitCost < 0 || !batchCode) {
-        hasError = true;
-      }
-
-      items.push({
-        productId,
-        batchCode,
-        quantity,
-        unitCost,
-        salePrice,
-        expirationDate
-      });
-    });
-
-    if (hasError || items.length === 0) {
-      alert('Verifique que las cantidades, costos y lotes de los productos sean válidos.');
-      return;
-    }
-
-    const btnSubmit = document.getElementById('btn-submit-receive');
+    const btnSubmit = document.getElementById('btn-submit-order');
     btnSubmit.disabled = true;
-    btnSubmit.innerText = 'PROCESANDO...';
+    btnSubmit.innerText = 'Guardando...';
+
+    const payload = {
+      supplierName,
+      orderDate,
+      expectedDeliveryDate,
+      status,
+      amount,
+      notes
+    };
 
     try {
-      const resp = await fetch(`/purchases/orders/${orderId}/receive`, {
+      const url = orderId ? `/purchases/orders/${orderId}/update` : '/purchases/orders';
+      const resp = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          invoiceNumber,
-          paymentMethod,
-          dueDate,
-          paymentSource,
-          turnId,
-          transactionRef,
-          items
-        })
+        body: JSON.stringify(payload)
       });
+      const result = await resp.json();
 
-      const data = await resp.json();
-      if (data.success) {
-        alert(data.message);
-        window.location.reload();
+      if (result.success) {
+        showToast(result.message, 'success');
+        closeOrderModal();
+        setTimeout(() => {
+          window.location.reload();
+        }, 600);
       } else {
-        alert(data.message || 'Error al recibir pedido.');
+        showToast(result.message || 'Error al guardar.', 'error');
         btnSubmit.disabled = false;
-        btnSubmit.innerText = 'PROCESAR E INGRESAR AL INVENTARIO';
+        btnSubmit.innerText = orderId ? 'Actualizar Anotación' : 'Guardar Anotación';
       }
-    } catch (e) {
-      alert('Error de conexión con el servidor.');
+    } catch (err) {
+      console.error(err);
+      showToast('Error de conexión al guardar.', 'error');
       btnSubmit.disabled = false;
-      btnSubmit.innerText = 'PROCESAR E INGRESAR AL INVENTARIO';
+      btnSubmit.innerText = orderId ? 'Actualizar Anotación' : 'Guardar Anotación';
     }
   }
 
-  // Preset Range buttons helper
-  function setPresetRange(preset) {
-    const startInput = document.getElementById('filter-startDate');
-    const endInput = document.getElementById('filter-endDate');
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth(); // 0-indexed
-
-    const pad = (n) => String(n).padStart(2, '0');
-
-    if (preset === 'this_month') {
-      const first = new Date(year, month, 1);
-      const last = new Date(year, month + 1, 0);
-      startInput.value = `${year}-${pad(month + 1)}-01`;
-      endInput.value = `${year}-${pad(month + 1)}-${pad(last.getDate())}`;
-    } else if (preset === 'last_month') {
-      const first = new Date(year, month - 1, 1);
-      const last = new Date(year, month, 0);
-      const prevM = first.getMonth();
-      const prevY = first.getFullYear();
-      startInput.value = `${prevY}-${pad(prevM + 1)}-01`;
-      endInput.value = `${prevY}-${pad(prevM + 1)}-${pad(last.getDate())}`;
-    } else if (preset === 'last_30_days') {
-      const past30 = new Date();
-      past30.setDate(now.getDate() - 30);
-      startInput.value = past30.toISOString().split('T')[0];
-      endInput.value = now.toISOString().split('T')[0];
-    } else if (preset === 'this_year') {
-      startInput.value = `${year}-01-01`;
-      endInput.value = `${year}-12-31`;
+  async function toggleOrderStatus(orderId) {
+    try {
+      const resp = await fetch(`/purchases/orders/${orderId}/toggle-status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const result = await resp.json();
+      if (result.success) {
+        showToast(result.message, 'success');
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+      } else {
+        showToast(result.message || 'Error al cambiar estado.', 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Error al actualizar estado.', 'error');
     }
-
-    document.getElementById('orders-filter-form').submit();
   }
 
-  // Render Purchases and Orders Chart
-  function initPurchasesOrdersChart() {
-    const canvas = document.getElementById('purchasesOrdersChart');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const chartRawData = <%- JSON.stringify(chartData || { labels: [], purchases: [], orders: [] }) %>;
-    
-    // Format labels for chart X-axis
-    const formattedLabels = chartRawData.labels.map(d => {
-      const parts = d.split('-');
-      if (parts.length === 3) return `${parts[2]}/${parts[1]}`;
-      return d;
-    });
-
-    const isLightMode = document.documentElement.classList.contains('light-mode');
-    const textColor = isLightMode ? '#4b5563' : '#9ca3af';
-    const gridColor = isLightMode ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)';
-
-    new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: formattedLabels,
-        datasets: [
-          {
-            label: 'Compras Facturadas ($)',
-            data: chartRawData.purchases,
-            borderColor: '#3b82f6',
-            backgroundColor: 'rgba(59, 130, 246, 0.15)',
-            borderWidth: 2.5,
-            tension: 0.35,
-            fill: true,
-            pointBackgroundColor: '#3b82f6',
-            pointRadius: 3,
-            pointHoverRadius: 6
-          },
-          {
-            label: 'Pedidos Registrados ($)',
-            data: chartRawData.orders,
-            borderColor: '#f59e0b',
-            backgroundColor: 'rgba(245, 158, 11, 0.15)',
-            borderWidth: 2.5,
-            tension: 0.35,
-            fill: true,
-            pointBackgroundColor: '#f59e0b',
-            pointRadius: 3,
-            pointHoverRadius: 6
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: {
-          mode: 'index',
-          intersect: false
-        },
-        plugins: {
-          legend: {
-            display: false
-          },
-          tooltip: {
-            backgroundColor: isLightMode ? '#ffffff' : '#171717',
-            titleColor: isLightMode ? '#111827' : '#ffffff',
-            bodyColor: isLightMode ? '#374151' : '#e5e7eb',
-            borderColor: isLightMode ? '#e5e7eb' : '#262626',
-            borderWidth: 1,
-            padding: 10,
-            callbacks: {
-              label: function(context) {
-                let label = context.dataset.label || '';
-                if (label) {
-                  label += ': ';
-                }
-                if (context.parsed.y !== null) {
-                  label += '$' + context.parsed.y.toLocaleString('es-SV', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                }
-                return label;
-              }
-            }
-          }
-        },
-        scales: {
-          x: {
-            grid: {
-              color: gridColor
-            },
-            ticks: {
-              color: textColor,
-              font: { size: 10 }
-            }
-          },
-          y: {
-            beginAtZero: true,
-            grid: {
-              color: gridColor
-            },
-            ticks: {
-              color: textColor,
-              font: { size: 10 },
-              callback: function(value) {
-                return '$' + value.toLocaleString('es-SV');
-              }
-            }
-          }
+  function confirmDeleteOrder(orderId) {
+    showConfirm('¿Estás seguro de eliminar esta anotación de orden de compra?', async () => {
+      try {
+        const resp = await fetch(`/purchases/orders/${orderId}/delete`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const result = await resp.json();
+        if (result.success) {
+          showToast(result.message, 'success');
+          setTimeout(() => {
+            window.location.reload();
+          }, 500);
+        } else {
+          showToast(result.message || 'Error al eliminar.', 'error');
         }
+      } catch (err) {
+        console.error(err);
+        showToast('Error al eliminar anotación.', 'error');
       }
     });
   }
 
-  window.onload = function() {
-    fetchCalendarEvents();
-    initPurchasesOrdersChart();
-  };
+  function deleteCurrentOrder() {
+    const orderId = document.getElementById('order-id').value;
+    if (orderId) {
+      closeOrderModal();
+      confirmDeleteOrder(orderId);
+    }
+  }
+
+  // --- LIST FILTERING ---
+  function filterOrdersList() {
+    const searchVal = document.getElementById('filter-search').value.toLowerCase().trim();
+    const statusVal = document.getElementById('filter-status').value;
+    const rows = document.querySelectorAll('.order-row');
+
+    rows.forEach(row => {
+      const name = row.getAttribute('data-name') || '';
+      const notes = row.getAttribute('data-notes') || '';
+      const status = row.getAttribute('data-status') || '';
+
+      const matchesSearch = !searchVal || name.includes(searchVal) || notes.includes(searchVal);
+      const matchesStatus = statusVal === 'all' || status === statusVal;
+
+      if (matchesSearch && matchesStatus) {
+        row.classList.remove('hidden');
+      } else {
+        row.classList.add('hidden');
+      }
+    });
+  }
+
+  // Initialize Calendar on load
+  window.addEventListener('DOMContentLoaded', () => {
+    renderCalendar();
+  });
 </script>
 
 <%- include('../../partials/foot') %>

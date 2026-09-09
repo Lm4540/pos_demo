@@ -57,9 +57,9 @@
       </div>
 
       <div class="flex gap-4">
-        <a href="/dashboard" class="w-1/2 text-center py-3 border border-neutral-800 text-sm font-medium rounded-xl text-neutral-400 bg-neutral-950 hover:bg-neutral-900 transition-all cursor-pointer">
+        <button type="button" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href = '/dashboard'; }" class="w-1/2 text-center py-3 border border-neutral-800 text-sm font-medium rounded-xl text-neutral-400 bg-neutral-950 hover:bg-neutral-900 transition-all cursor-pointer">
           Volver al Panel
-        </a>
+        </button>
         <button type="submit" class="w-1/2 py-3 px-4 border border-transparent text-sm font-semibold rounded-xl text-white bg-indigo-600 hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-neutral-900 focus:ring-indigo-500 transition-all cursor-pointer shadow-lg shadow-indigo-500/20">
           Abrir Caja
         </button>

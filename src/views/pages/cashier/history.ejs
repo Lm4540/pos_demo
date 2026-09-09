@@ -4,25 +4,133 @@
   <!-- Nav Bar -->
   <nav class="bg-neutral-900 border-b border-neutral-800 px-6 py-4 flex items-center justify-between shadow-md">
     <div class="flex items-center gap-3">
-      <a href="/dashboard" class="text-neutral-400 hover:text-white transition-colors">
+      <button type="button" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href = '/dashboard'; }" class="text-neutral-400 hover:text-white transition-colors cursor-pointer" title="Volver atrás">
         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
         </svg>
-      </a>
+      </button>
       <div>
         <span class="text-xl font-bold text-white tracking-wide">Historial de Cortes y Arqueos</span>
-        <span class="text-xs block text-neutral-400 font-medium">Historial y Auditoría de Turnos de Caja</span>
+        <span class="text-xs block text-neutral-400 font-medium">Auditoría, filtros por fecha y control de turnos de caja</span>
       </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <a href="/cashier/details" class="bg-neutral-800 border border-neutral-700 hover:bg-neutral-750 px-4 py-2 rounded-xl text-xs font-semibold text-neutral-300 transition-all flex items-center gap-2">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>Ir a Caja Activa</span>
+      </a>
     </div>
   </nav>
 
   <main class="flex-grow p-6 max-w-7xl w-full mx-auto space-y-6">
-    <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm">
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="text-lg font-bold text-white">Turnos Registrados</h2>
-        <span class="text-xs text-neutral-400 font-semibold bg-neutral-950 px-3 py-1.5 border border-neutral-800 rounded-lg">
-          Muestra todos los turnos para <%= user.roleId === 'admin' ? 'todas las sucursales' : 'tu sucursal' %>
-        </span>
+
+    <!-- Filtro de Rango de Fechas y Períodos -->
+    <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 shadow-sm space-y-4">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+            <svg class="h-4 w-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span>Filtro por Rango de Fechas</span>
+          </h2>
+          <p class="text-xs text-neutral-400 mt-0.5">Seleccione el período o use los accesos rápidos para auditar los arqueos.</p>
+        </div>
+
+        <!-- Presets Rápidos -->
+        <div class="flex flex-wrap items-center gap-1.5 text-xs">
+          <button type="button" onclick="setHistoryPreset('this_month')" class="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-750 text-neutral-300 rounded-xl font-semibold cursor-pointer transition-colors border border-neutral-700/60">
+            Este Mes
+          </button>
+          <button type="button" onclick="setHistoryPreset('last_month')" class="px-3 py-1.5 bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 rounded-xl font-bold cursor-pointer transition-colors border border-indigo-800/80 shadow-sm shadow-indigo-500/10">
+            📅 Mes Anterior
+          </button>
+          <button type="button" onclick="setHistoryPreset('last_30_days')" class="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-750 text-neutral-300 rounded-xl font-semibold cursor-pointer transition-colors border border-neutral-700/60">
+            Últimos 30 Días
+          </button>
+          <button type="button" onclick="setHistoryPreset('last_90_days')" class="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-750 text-neutral-300 rounded-xl font-semibold cursor-pointer transition-colors border border-neutral-700/60">
+            Últimos 3 Meses
+          </button>
+          <button type="button" onclick="setHistoryPreset('this_year')" class="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-750 text-neutral-300 rounded-xl font-semibold cursor-pointer transition-colors border border-neutral-700/60">
+            Este Año
+          </button>
+          <button type="button" onclick="setHistoryPreset('all')" class="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-750 text-neutral-300 rounded-xl font-semibold cursor-pointer transition-colors border border-neutral-700/60">
+            Todo el Historial
+          </button>
+        </div>
+      </div>
+
+      <!-- Formulario de Búsqueda de Rango -->
+      <form id="history-filter-form" method="GET" action="/cashier/history" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 pt-3 border-t border-neutral-800">
+        <div class="md:col-span-2">
+          <label class="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1">Fecha Desde</label>
+          <input type="date" id="filter-startDate" name="startDate" value="<%= startDate %>" class="w-full px-3.5 py-2.5 bg-neutral-950 border border-neutral-800 text-white rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all">
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1">Fecha Hasta</label>
+          <input type="date" id="filter-endDate" name="endDate" value="<%= endDate %>" class="w-full px-3.5 py-2.5 bg-neutral-950 border border-neutral-800 text-white rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all">
+        </div>
+        <div class="flex items-end">
+          <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-indigo-500/10 flex items-center justify-center gap-1.5 cursor-pointer">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <span>Filtrar</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Resumen KPI -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+        <span class="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Total de Turnos</span>
+        <span class="text-2xl font-black text-white mt-1"><%= stats ? stats.totalTurns : turns.length %></span>
+        <span class="text-[10px] text-neutral-500 mt-0.5">En el rango seleccionado</span>
+      </div>
+
+      <div class="bg-neutral-900 border border-emerald-900/50 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">Turnos Cerrados</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-800/60"><%= stats ? stats.closedTurns : 0 %></span>
+        </div>
+        <span class="text-2xl font-black text-emerald-400 mt-1 font-mono">$<%= stats ? stats.totalDeclared.toFixed(2) : '0.00' %></span>
+        <span class="text-[10px] text-neutral-500 mt-0.5">Efectivo físico auditado</span>
+      </div>
+
+      <div class="bg-neutral-900 border border-amber-900/50 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold text-amber-400 uppercase tracking-wider">Turnos Abiertos</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-950 text-amber-300 border border-amber-800/60"><%= stats ? stats.openTurns : 0 %></span>
+        </div>
+        <span class="text-2xl font-black text-amber-400 mt-1"><%= stats ? stats.openTurns : 0 %> en curso</span>
+        <span class="text-[10px] text-neutral-500 mt-0.5">Actualmente en operación</span>
+      </div>
+
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+        <span class="text-[11px] font-bold text-blue-400 uppercase tracking-wider">Fondo Inicial Total</span>
+        <span class="text-2xl font-black text-white mt-1 font-mono">$<%= stats ? stats.totalOpening.toFixed(2) : '0.00' %></span>
+        <span class="text-[10px] text-neutral-500 mt-0.5">Suma de aperturas</span>
+      </div>
+    </div>
+
+    <!-- Tabla de Turnos -->
+    <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-sm space-y-4">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <h2 class="text-base font-bold text-white">Arqueos y Cortes Registrados</h2>
+          <span class="text-xs text-neutral-400 font-semibold bg-neutral-950 px-2.5 py-1 border border-neutral-800 rounded-lg">
+            <%= turns.length %> registros
+          </span>
+        </div>
+
+        <!-- Buscador en tiempo real -->
+        <div class="w-full sm:w-72">
+          <input type="text" id="table-search" oninput="filterTurnsTable()" placeholder="Buscar por cajero, caja o sucursal..." class="w-full px-3.5 py-2 bg-neutral-950 border border-neutral-800 text-white rounded-xl text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
       </div>
 
       <div class="overflow-x-auto">
@@ -35,39 +143,48 @@
               <th class="py-3 px-4">Cajero</th>
               <th class="py-3 px-4">Apertura</th>
               <th class="py-3 px-4">Cierre</th>
-              <th class="py-3 px-4">Inicial</th>
-              <th class="py-3 px-4">Final Contado</th>
-              <th class="py-3 px-4">Estado</th>
+              <th class="py-3 px-4 text-right">Inicial</th>
+              <th class="py-3 px-4 text-right">Final Contado</th>
+              <th class="py-3 px-4 text-center">Estado</th>
               <th class="py-3 px-4 text-right">Acciones</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-neutral-800">
+          <tbody id="turns-tbody" class="divide-y divide-neutral-800">
+            <% if (turns.length === 0) { %>
+            <tr>
+              <td colspan="10" class="py-12 text-center text-neutral-500 text-xs">
+                No se encontraron turnos de caja en el período seleccionado.
+              </td>
+            </tr>
+            <% } else { %>
             <% turns.forEach(t => { %>
-              <tr class="hover:bg-neutral-950/40 transition-colors">
-                <td class="py-4 px-4 font-mono font-bold text-indigo-400">#<%= t.id %></td>
-                <td class="py-4 px-4 text-neutral-300 font-semibold"><%= t.branch ? t.branch.name : 'N/A' %></td>
-                <td class="py-4 px-4 font-mono text-xs text-amber-400 font-bold"><%= t.boxName %></td>
-                <td class="py-4 px-4"><%= t.user ? t.user.fullName : 'Usuario' %></td>
-                <td class="py-4 px-4 text-xs text-neutral-400"><%= new Date(t.openedAt).toLocaleString('es-SV') %></td>
-                <td class="py-4 px-4 text-xs text-neutral-400">
+              <% const cashierName = t.user ? t.user.fullName : 'Usuario'; %>
+              <% const branchName = t.branch ? t.branch.name : 'N/A'; %>
+              <tr class="hover:bg-neutral-950/40 transition-colors turn-row" data-search="<%= `${t.id} ${branchName} ${t.boxName} ${cashierName}`.toLowerCase() %>">
+                <td class="py-3.5 px-4 font-mono font-bold text-indigo-400">#<%= t.id %></td>
+                <td class="py-3.5 px-4 text-neutral-300 font-semibold"><%= branchName %></td>
+                <td class="py-3.5 px-4 font-mono text-xs text-amber-400 font-bold"><%= t.boxName %></td>
+                <td class="py-3.5 px-4 font-medium text-white"><%= cashierName %></td>
+                <td class="py-3.5 px-4 text-xs font-mono text-neutral-400"><%= new Date(t.openedAt).toLocaleString('es-SV') %></td>
+                <td class="py-3.5 px-4 text-xs font-mono text-neutral-400">
                   <%= t.closedAt ? new Date(t.closedAt).toLocaleString('es-SV') : '-' %>
                 </td>
-                <td class="py-4 px-4 font-mono">$<%= parseFloat(t.openingAmount).toFixed(2) %></td>
-                <td class="py-4 px-4 font-mono">
+                <td class="py-3.5 px-4 font-mono text-right text-neutral-300">$<%= parseFloat(t.openingAmount).toFixed(2) %></td>
+                <td class="py-3.5 px-4 font-mono text-right font-bold <%= t.declaredAmount !== null ? 'text-emerald-400' : 'text-neutral-500' %>">
                   <%= t.declaredAmount !== null ? '$' + parseFloat(t.declaredAmount).toFixed(2) : '-' %>
                 </td>
-                <td class="py-4 px-4">
-                  <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase <%= t.status === 'open' ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-900/60 animate-pulse' : 'bg-neutral-800 text-neutral-400 border border-neutral-700/60' %>">
+                <td class="py-3.5 px-4 text-center">
+                  <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase <%= t.status === 'open' ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-900/60 animate-pulse' : 'bg-neutral-800 text-neutral-400 border border-neutral-700/60' %>">
                     <%= t.status === 'open' ? 'Abierta' : 'Cerrada' %>
                   </span>
                 </td>
-                <td class="py-4 px-4 text-right space-x-3 text-xs">
+                <td class="py-3.5 px-4 text-right space-x-3 text-xs">
                   <a href="/cashier/history/<%= t.id %>" class="text-indigo-400 hover:text-indigo-300 font-bold hover:underline cursor-pointer">
                     Ver Arqueo
                   </a>
                   <% if (t.status === 'open' && (user.roleId === 'admin' || user.roleId === 'supervisor') && t.userId !== user.id) { %>
                     <button 
-                      onclick="forceCloseTurn(<%= t.id %>, '<%= t.user ? t.user.fullName : 'Usuario' %>')"
+                      onclick="forceCloseTurn(<%= t.id %>, '<%= cashierName %>')"
                       class="text-red-500 hover:text-red-400 font-bold hover:underline cursor-pointer">
                       Cierre Forzado
                     </button>
@@ -75,6 +192,7 @@
                 </td>
               </tr>
             <% }) %>
+            <% } %>
           </tbody>
         </table>
       </div>
@@ -107,6 +225,64 @@
 </div>
 
 <script>
+  // --- PRESETS DE FECHA ---
+  function setHistoryPreset(preset) {
+    const startInput = document.getElementById('filter-startDate');
+    const endInput = document.getElementById('filter-endDate');
+    const form = document.getElementById('history-filter-form');
+    const today = new Date();
+
+    if (preset === 'this_month') {
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const lastDay = new Date(year, today.getMonth() + 1, 0).getDate();
+      startInput.value = `${year}-${month}-01`;
+      endInput.value = `${year}-${month}-${String(lastDay).padStart(2, '0')}`;
+    } else if (preset === 'last_month') {
+      const year = today.getMonth() === 0 ? today.getFullYear() - 1 : today.getFullYear();
+      const prevMonthIdx = today.getMonth() === 0 ? 11 : today.getMonth() - 1;
+      const month = String(prevMonthIdx + 1).padStart(2, '0');
+      const lastDay = new Date(year, prevMonthIdx + 1, 0).getDate();
+      startInput.value = `${year}-${month}-01`;
+      endInput.value = `${year}-${month}-${String(lastDay).padStart(2, '0')}`;
+    } else if (preset === 'last_30_days') {
+      const past = new Date();
+      past.setDate(past.getDate() - 30);
+      startInput.value = past.toISOString().split('T')[0];
+      endInput.value = today.toISOString().split('T')[0];
+    } else if (preset === 'last_90_days') {
+      const past = new Date();
+      past.setDate(past.getDate() - 90);
+      startInput.value = past.toISOString().split('T')[0];
+      endInput.value = today.toISOString().split('T')[0];
+    } else if (preset === 'this_year') {
+      const year = today.getFullYear();
+      startInput.value = `${year}-01-01`;
+      endInput.value = `${year}-12-31`;
+    } else if (preset === 'all') {
+      window.location.href = '/cashier/history?all=true';
+      return;
+    }
+
+    form.submit();
+  }
+
+  // --- FILTRO EN TABLA ---
+  function filterTurnsTable() {
+    const search = document.getElementById('table-search').value.toLowerCase().trim();
+    const rows = document.querySelectorAll('.turn-row');
+
+    rows.forEach(r => {
+      const data = r.getAttribute('data-search') || '';
+      if (!search || data.includes(search)) {
+        r.classList.remove('hidden');
+      } else {
+        r.classList.add('hidden');
+      }
+    });
+  }
+
+  // --- CIERRE FORZADO ---
   let activeForceTurnId = null;
 
   function forceCloseTurn(turnId, userName) {

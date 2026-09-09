@@ -10,11 +10,15 @@ class PurchaseOrder extends Model {
       },
       orderNumber: {
         type: DataTypes.STRING(50),
-        allowNull: false
+        allowNull: true
+      },
+      supplierName: {
+        type: DataTypes.STRING(255),
+        allowNull: true
       },
       supplierId: {
         type: DataTypes.INTEGER,
-        allowNull: false
+        allowNull: true
       },
       branchId: {
         type: DataTypes.INTEGER,

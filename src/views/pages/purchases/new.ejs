@@ -4,11 +4,11 @@
   <!-- Nav Bar -->
   <nav class="bg-neutral-900 border-b border-neutral-800 px-6 py-4 flex items-center justify-between shadow-md">
     <div class="flex items-center gap-3">
-      <a href="/purchases" class="text-neutral-400 hover:text-white transition-colors">
+      <button type="button" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href = '/purchases'; }" class="text-neutral-400 hover:text-white transition-colors cursor-pointer" title="Volver atrás">
         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
         </svg>
-      </a>
+      </button>
       <div>
         <span class="text-xl font-bold text-white tracking-wide">Ingresar Factura de Compra</span>
         <span class="text-xs block text-neutral-400 font-medium">Abastecimiento de stock por lotes y caducidades</span>
@@ -347,6 +347,7 @@
         result.turns.forEach(turn => {
           const opt = document.createElement('option');
           opt.value = turn.id;
+          opt.dataset.balance = turn.balance;
           const ownLabel = turn.isOwn ? ' ★ Mi caja' : '';
           opt.textContent = `${turn.boxName} - ${turn.userName} ($${turn.balance.toFixed(2)})${ownLabel}`;
           turnSelect.appendChild(opt);
@@ -382,7 +383,8 @@
     const dueDate = document.getElementById('dueDate').value;
 
     const paymentSource = paymentMethod === 'cash' ? document.querySelector('input[name="paymentSource"]:checked').value : null;
-    const turnId = paymentMethod === 'cash' && paymentSource === 'cashier' ? document.getElementById('purchase-turnId').value : null;
+    const turnSelect = document.getElementById('purchase-turnId');
+    const turnId = paymentMethod === 'cash' && paymentSource === 'cashier' ? turnSelect.value : null;
     const transactionRef = paymentMethod === 'cash' && paymentSource === 'external' ? document.getElementById('purchase-transactionRef').value.trim() : null;
 
     if (invoiceNumber === '' || !supplierId) {
@@ -395,20 +397,30 @@
       return;
     }
 
+    if (items.length === 0) {
+      showToast('Debe agregar al menos un artículo a la factura.', 'warning');
+      return;
+    }
+
+    const totalInvoice = items.reduce((sum, item) => sum + (item.unitCost * item.quantity), 0);
+
     if (paymentMethod === 'cash') {
-      if (paymentSource === 'cashier' && !turnId) {
-        showToast('Debe seleccionar una caja activa para efectuar el pago en efectivo.', 'warning');
-        return;
+      if (paymentSource === 'cashier') {
+        if (!turnId) {
+          showToast('Debe seleccionar una caja activa para efectuar el pago en efectivo.', 'warning');
+          return;
+        }
+        const selectedOpt = turnSelect.options[turnSelect.selectedIndex];
+        const availableBalance = selectedOpt ? parseFloat(selectedOpt.dataset.balance || 0) : 0;
+        if (totalInvoice > availableBalance + 0.0001) {
+          showToast(`No es posible registrar la compra: El total ($${totalInvoice.toFixed(2)}) supera el saldo disponible en la caja seleccionada ($${availableBalance.toFixed(2)}).`, 'error');
+          return;
+        }
       }
       if (paymentSource === 'external' && transactionRef === '') {
         showToast('Debe ingresar el número de autorización o Voucher del pago bancario.', 'warning');
         return;
       }
-    }
-
-    if (items.length === 0) {
-      showToast('Debe agregar al menos un artículo a la factura.', 'warning');
-      return;
     }
 
     const saveBtn = document.getElementById('btn-save-purchase');
